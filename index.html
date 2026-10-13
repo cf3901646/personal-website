@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3901646.xyz — cf3901646@gmail.com</title>
+  <meta name="description" content="3901646.xyz · AI & Tools Digital Garden · cf3901646@gmail.com" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+SC:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper-base: #e6dfd1;
+      --paper-warm: #efe8da;
+      --paper-shadow: #cfc6b4;
+      --sun-core: rgba(255, 247, 226, 0.78);
+      --sun-glow: rgba(247, 223, 176, 0.42);
+      --amber-rim: #c88d48;
+      --amber-bright: #e0a358;
+      --deboss-ink: #b8ae9c;
+      --deboss-deep: #8c7f6a;
+      --light-angle-x: -1px;
+      --light-angle-y: -1.5px;
+      --highlight-x: 1.5px;
+      --highlight-y: 2px;
+      --sun-shift-x: 0px;
+      --sun-shift-y: 0px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--paper-base);
+      color: #5c5346;
+      font-family: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      selection-background-color: rgba(200, 141, 72, 0.2);
+    }
+
+    ::selection {
+      background: rgba(200, 141, 72, 0.18);
+      color: #4a3f31;
+    }
+
+    /* 第一幕：首屏留白序幕（午后斜阳 · 活字压痕） */
+    .hero-sanctuary {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse 90% 80% at 62% 38%, var(--paper-warm) 0%, var(--paper-base) 58%, #dcd3c2 100%);
+      cursor: default;
+    }
+
+    /* 亚麻棉纸纤维噪点层 */
+    .paper-grain {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0.42;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.9 0 0 0 0.05  0 0.86 0 0 0.04  0 0 0.8 0 0.02  0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
+    }
+
+    /* 斜阳丁达尔主光束与树叶百叶窗斑驳树影 (Gobo Light) */
+    .sunbeam-layer {
+      position: absolute;
+      inset: -15%;
+      pointer-events: none;
+      z-index: 3;
+      transform: translate3d(var(--sun-shift-x), var(--sun-shift-y), 0) rotate(-32deg);
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      background:
+        linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(214, 203, 185, 0.15) 28%,
+          var(--sun-glow) 41%,
+          var(--sun-core) 49%,
+          var(--sun-glow) 58%,
+          transparent 74%
+        );
+      filter: blur(18px);
+      mix-blend-mode: soft-light;
+      animation: breezeSway 14s ease-in-out infinite alternate;
+    }
+
+    /* 窗外枝叶与百叶窗投射的斑驳光影 */
+    .gobo-dapple {
+      position: absolute;
+      inset: -10%;
+      pointer-events: none;
+      z-index: 4;
+      transform: translate3d(calc(var(--sun-shift-x) * 1.4), calc(var(--sun-shift-y) * 1.4), 0);
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0.72;
+      mix-blend-mode: overlay;
+      background:
+        radial-gradient(ellipse 320px 90px at 68% 24%, rgba(255, 250, 238, 0.85) 0%, transparent 70%),
+        radial-gradient(ellipse 260px 75px at 54% 44%, rgba(255, 248, 232, 0.9) 0%, transparent 72%),
+        radial-gradient(ellipse 380px 110px at 38% 66%, rgba(255, 246, 225, 0.78) 0%, transparent 75%),
+        radial-gradient(circle 45px at 74% 32%, rgba(168, 154, 132, 0.36) 0%, transparent 80%),
+        radial-gradient(circle 65px at 63% 48%, rgba(168, 154, 132, 0.32) 0%, transparent 82%),
+        radial-gradient(circle 55px at 71% 56%, rgba(168, 154, 132, 0.28) 0%, transparent 78%),
+        radial-gradient(circle 40px at 58% 36%, rgba(168, 154, 132, 0.26) 0%, transparent 75%);
+      filter: blur(14px);
+      animation: leafShadowBreeze 11s ease-in-out infinite alternate;
+    }
+
+    @keyframes breezeSway {
+      0% { transform: translate3d(var(--sun-shift-x), var(--sun-shift-y), 0) rotate(-32deg) scale(1); }
+      100% { transform: translate3d(calc(var(--sun-shift-x) + 14px), calc(var(--sun-shift-y) - 8px), 0) rotate(-30.8deg) scale(1.03); }
+    }
+
+    @keyframes leafShadowBreeze {
+      0% { transform: translate3d(calc(var(--sun-shift-x) * 1.4), calc(var(--sun-shift-y) * 1.4), 0) scale(1); }
+      100% { transform: translate3d(calc(var(--sun-shift-x) * 1.4 - 18px), calc(var(--sun-shift-y) * 1.4 + 10px), 0) scale(1.04); }
+    }
+
+    /* 阳光浮尘粒子画布 */
+    #dust-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* 中央唯一的视觉核心：活字凹印邮箱 */
+    .letterpress-stage {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 3rem;
+      user-select: none;
+    }
+
+    .email-imprint {
+      position: relative;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(1.85rem, 4.4vw, 3.75rem);
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      line-height: 1.2;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.4em 0.6em;
+      transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease;
+      animation: imprintReveal 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes imprintReveal {
+      0% {
+        opacity: 0;
+        transform: scale(0.985);
+        filter: blur(3px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+      }
+    }
+
+    /* 外围淡淡凹印的 cf 与 @gmail.com */
+    .email-imprint .part-muted {
+      color: rgba(182, 171, 153, 0.72);
+      text-shadow:
+        var(--light-angle-x) var(--light-angle-y) 1.5px rgba(108, 95, 76, 0.48),
+        var(--highlight-x) var(--highlight-y) 2px rgba(255, 251, 242, 0.88),
+        0 0 1px rgba(140, 127, 106, 0.25);
+      transition: color 0.5s ease, text-shadow 0.5s ease;
+    }
+
+    /* 核心同源数字 3901646：被斜阳点亮的琥珀暖金压痕边缘 */
+    .email-imprint .part-sunlit {
+      position: relative;
+      color: rgba(206, 158, 98, 0.88);
+      text-shadow:
+        var(--light-angle-x) var(--light-angle-y) 1.5px rgba(115, 82, 40, 0.62),
+        var(--highlight-x) var(--highlight-y) 2.5px rgba(255, 248, 228, 0.96),
+        0 0 14px rgba(232, 175, 100, 0.28);
+      transition: color 0.5s ease, text-shadow 0.5s ease;
+    }
+
+    .email-imprint:hover {
+      transform: translateY(-1px);
+    }
+
+    .email-imprint:hover .part-muted {
+      color: rgba(166, 148, 124, 0.88);
+      text-shadow:
+        var(--light-angle-x) var(--light-angle-y) 1.8px rgba(98, 84, 64, 0.58),
+        var(--highlight-x) var(--highlight-y) 2.2px rgba(255, 252, 245, 0.95),
+        0 0 8px rgba(218, 176, 120, 0.18);
+    }
+
+    .email-imprint:hover .part-sunlit {
+      color: rgba(214, 152, 76, 0.98);
+      text-shadow:
+        var(--light-angle-x) var(--light-angle-y) 1.8px rgba(105, 70, 28, 0.72),
+        var(--highlight-x) var(--highlight-y) 3px rgba(255, 250, 235, 1),
+        0 0 22px rgba(236, 176, 92, 0.45);
+    }
+
+    .email-imprint:active {
+      transform: translateY(0.5px) scale(0.997);
+    }
+
+    /* 极淡的拓印反馈提示（仅在点击复制后浮现） */
+    .copy-whisper {
+      margin-top: 0.75rem;
+      font-family: 'Noto Serif SC', 'Cormorant Garamond', serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.22em;
+      color: rgba(138, 118, 90, 0);
+      text-shadow: 0 1px 0 rgba(255, 252, 245, 0.7);
+      transition: color 0.5s ease, transform 0.5s ease;
+      transform: translateY(4px);
+      pointer-events: none;
+    }
+
+    .copy-whisper.visible {
+      color: rgba(138, 112, 78, 0.78);
+      transform: translateY(0);
+    }
+
+    /* 底部极简向下呼吸游丝 */
+    .scroll-whisper {
+      position: absolute;
+      bottom: 2.2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0.38;
+      transition: opacity 0.4s ease;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .scroll-whisper:hover {
+      opacity: 0.72;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 34px;
+      background: linear-gradient(to bottom, rgba(138, 122, 98, 0.65), transparent);
+      box-shadow: 1px 0 0 rgba(255, 252, 244, 0.6);
+      animation: scrollPulse 3.2s ease-in-out infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { transform: scaleY(0.85); opacity: 0.45; }
+      50% { transform: scaleY(1.1); opacity: 0.9; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 第一页：午后斜阳 · 活字压痕序幕 -->
+  <main class="hero-sanctuary" id="top">
+    <div class="paper-grain" aria-hidden="true"></div>
+    <div class="sunbeam-layer" aria-hidden="true"></div>
+    <div class="gobo-dapple" aria-hidden="true"></div>
+    <canvas id="dust-canvas" aria-hidden="true"></canvas>
+
+    <div class="letterpress-stage">
+      <button
+        type="button"
+        class="email-imprint"
+        id="email-btn"
+        aria-label="复制邮箱 cf3901646@gmail.com"
+        title="点击复制 cf3901646@gmail.com"
+      ><span class="part-muted">cf</span><span class="part-sunlit">3901646</span><span class="part-muted">@gmail.com</span></button>
+      <div class="copy-whisper" id="copy-whisper" role="status" aria-live="polite">
+        已拓印至剪贴板 · 3901646.xyz
+      </div>
+    </div>
+
+    <a href="#sanctuary-next" class="scroll-whisper" aria-label="向下滚动">
+      <span class="scroll-line"></span>
+    </a>
+  </main>
+
+  <script>
+    // 1. 鼠标移动时，阳光角度与活字压痕的凹印高光细腻联动
+    const root = document.documentElement;
+    window.addEventListener('pointermove', (e) => {
+      const nx = (e.clientX / window.innerWidth) - 0.5;
+      const ny = (e.clientY / window.innerHeight) - 0.5;
+
+      // 活字凹印阴影与高光微偏移
+      const shadowX = (-1.1 - nx * 1.2).toFixed(2) + 'px';
+      const shadowY = (-1.4 - ny * 1.2).toFixed(2) + 'px';
+      const hiX = (1.4 + nx * 1.4).toFixed(2) + 'px';
+      const hiY = (1.8 + ny * 1.4).toFixed(2) + 'px';
+
+      root.style.setProperty('--light-angle-x', shadowX);
+      root.style.setProperty('--light-angle-y', shadowY);
+      root.style.setProperty('--highlight-x', hiX);
+      root.style.setProperty('--highlight-y', hiY);
+
+      // 树影与斜阳轻微视差
+      root.style.setProperty('--sun-shift-x', (nx * -22).toFixed(1) + 'px');
+      root.style.setProperty('--sun-shift-y', (ny * -16).toFixed(1) + 'px');
+    });
+
+    // 2. 点击邮箱一键拓印（复制）
+    const emailBtn = document.getElementById('email-btn');
+    const copyWhisper = document.getElementById('copy-whisper');
+    let whisperTimer = null;
+
+    emailBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText('cf3901646@gmail.com');
+      } catch (_) {
+        const area = document.createElement('textarea');
+        area.value = 'cf3901646@gmail.com';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        document.body.removeChild(area);
+      }
+      copyWhisper.classList.add('visible');
+      clearTimeout(whisperTimer);
+      whisperTimer = setTimeout(() => {
+        copyWhisper.classList.remove('visible');
+      }, 2400);
+    });
+
+    // 3. 午后斜阳中的金色微尘粒子 (Floating Golden Dust Motes)
+    const canvas = document.getElementById('dust-canvas');
+    const ctx = canvas.getContext('2d');
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const MOTES_COUNT = 28;
+    const motes = Array.from({ length: MOTES_COUNT }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      r: 0.7 + Math.random() * 1.5,
+      vx: 0.08 + Math.random() * 0.18,
+      vy: -0.06 - Math.random() * 0.14,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.008 + Math.random() * 0.015
+    }));
+
+    function renderDust() {
+      ctx.clearRect(0, 0, width, height);
+      for (const m of motes) {
+        m.x += m.vx;
+        m.y += m.vy;
+        m.phase += m.speed;
+
+        if (m.x > width + 10) m.x = -10;
+        if (m.y < -10) m.y = height + 10;
+
+        // 仅在斜阳光束经过的对角线区域更明亮
+        const diagDist = Math.abs((m.x / width) + (m.y / height) - 1.02);
+        const sunFactor = Math.max(0.12, 1 - diagDist * 1.9);
+        const alpha = (0.25 + 0.45 * Math.sin(m.phase)) * sunFactor;
+
+        if (alpha > 0.05) {
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 236, 190, ${alpha.toFixed(3)})`;
+          ctx.shadowColor = 'rgba(232, 178, 98, 0.55)';
+          ctx.shadowBlur = 6;
+          ctx.fill();
+        }
+      }
+      requestAnimationFrame(renderDust);
+    }
+    renderDust();
+  </script>
+</body>
+</html>
