@@ -1,26 +1,134 @@
 ---
 // src/components/Hero.astro
-// 首屏：1:1 物理复刻「午后斜阳 · 活字压痕 cf3901646@gmail.com」
+// 高保真摄影级实景光影 ＋ SVG 动态法线活字凹印
 ---
 
 <section class="hero-sanctuary" id="hero">
-  <div class="sunbeam-layer" id="sunbeam" aria-hidden="true"></div>
-  <div class="gobo-dapple" id="gobo" aria-hidden="true"></div>
+  <!-- 1. 真实摄影级斜阳树影基底层 -->
+  <div class="hero-bg-frame" id="hero-bg-frame" aria-hidden="true">
+    <img
+      src="/hero-bg-clean.webp"
+      alt=""
+      class="hero-bg-photo"
+      id="hero-bg-img"
+      loading="eager"
+      decoding="async"
+    />
+  </div>
+
+  <!-- 2. 悬浮金尘粒子层 -->
   <canvas id="dust-canvas" aria-hidden="true"></canvas>
 
+  <!-- 3. 中央高保真活字凹印舞台 -->
   <div class="letterpress-stage" id="letterpress-stage">
     <button
       type="button"
-      class="email-imprint"
+      class="email-press-btn"
       id="email-btn"
       aria-label="复制邮箱 cf3901646@gmail.com"
       title="点击拓印复制 cf3901646@gmail.com"
-    ><span class="part-muted">cf</span><span class="part-sunlit">3901646</span><span class="part-muted">@gmail.com</span></button>
+    >
+      <svg
+        class="deboss-svg"
+        viewBox="0 0 920 180"
+        xmlns="http://www.w3.org/2000/svg"
+        id="deboss-svg"
+      >
+        <defs>
+          <!-- 核心：负 surfaceScale 凹印光学法线滤镜 -->
+          <filter id="blind-deboss" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="linearRGB">
+            <!-- 1. 边缘斜坡高度场 (Bevel Ramp) -->
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blurredAlpha" />
+
+            <!-- 2. 漫反射下凹受光 (负 surfaceScale 让法线向内反折实现下凹) -->
+            <feDiffuseLighting in="blurredAlpha" surfaceScale="-4.2" diffuseConstant="1.25" lighting-color="#ffffff" result="diffuseBump">
+              <fePointLight id="pl-deboss" x="460" y="90" z="65" />
+            </feDiffuseLighting>
+
+            <!-- 3. 镜面柔焦微高光 (Specular Rim Highlight) -->
+            <feSpecularLighting in="blurredAlpha" surfaceScale="-3.2" specularConstant="0.45" specularExponent="16" lighting-color="#fff8ea" result="specularBump">
+              <fePointLight id="pl-specular" x="460" y="90" z="65" />
+            </feSpecularLighting>
+
+            <!-- 4. 组合漫反射与文字 Alpha -->
+            <feComposite in="diffuseBump" in2="SourceAlpha" operator="in" result="litDeboss" />
+            <feBlend in="litDeboss" in2="specularBump" mode="screen" result="shadedDeboss" />
+
+            <!-- 5. 凹陷深处微调暗 (Cavity Compaction) -->
+            <feColorMatrix in="SourceAlpha" type="matrix"
+              values="0 0 0 0 0.18
+                      0 0 0 0 0.16
+                      0 0 0 0 0.13
+                      0 0 0 0 0.12 0" result="cavityTone" />
+
+            <feMerge>
+              <feMergeNode in="cavityTone" />
+              <feMergeNode in="shadedDeboss" />
+            </feMerge>
+          </filter>
+
+          <!-- 同源数字 3901646 琥珀金微光渐变 -->
+          <linearGradient id="amber-sunlit-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#dfa45c" />
+            <stop offset="50%" stop-color="#c98e4d" />
+            <stop offset="100%" stop-color="#b87b38" />
+          </linearGradient>
+
+          <!-- 琥珀微光滤镜 -->
+          <filter id="amber-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3.5" result="glow" />
+            <feComposite in="SourceGraphic" in2="glow" operator="over" />
+          </filter>
+        </defs>
+
+        <!-- 活字压印文字编排 -->
+        <g class="letterpress-group">
+          <!-- 前缀 cf -->
+          <text
+            x="85"
+            y="112"
+            font-family="'Cormorant Garamond', Georgia, serif"
+            font-size="64"
+            font-weight="400"
+            letter-spacing="2"
+            fill="#ede6d8"
+            filter="url(#blind-deboss)"
+          >cf</text>
+
+          <!-- 核心同源数字 3901646（受斜阳照耀的琥珀金光芒） -->
+          <text
+            x="148"
+            y="112"
+            font-family="'Cormorant Garamond', Georgia, serif"
+            font-size="64"
+            font-weight="500"
+            letter-spacing="3"
+            fill="url(#amber-sunlit-grad)"
+            filter="url(#blind-deboss)"
+            class="sunlit-digits"
+          >3901646</text>
+
+          <!-- 后缀 @gmail.com -->
+          <text
+            x="455"
+            y="112"
+            font-family="'Cormorant Garamond', Georgia, serif"
+            font-size="64"
+            font-weight="400"
+            letter-spacing="2"
+            fill="#ede6d8"
+            filter="url(#blind-deboss)"
+          >@gmail.com</text>
+        </g>
+      </svg>
+    </button>
+
     <div class="copy-whisper" id="copy-whisper" role="status" aria-live="polite">
       已拓印至剪贴板 · 3901646.xyz
     </div>
   </div>
 
+  <!-- 底部呼吸导引线 -->
   <a href="#sanctuary-content" class="scroll-whisper" aria-label="向下滚动阅读">
     <span class="scroll-line"></span>
   </a>
@@ -35,75 +143,51 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background: radial-gradient(ellipse 95% 85% at 60% 36%, var(--paper-warm) 0%, var(--paper-base) 65%, #dcd3c0 100%);
-    will-change: opacity, transform;
+    background-color: #f5f2ea;
   }
 
-  /* 1. 斜阳主光束层（加色滤镜，3200K 暖金入射） */
-  .sunbeam-layer {
+  /* 摄影级斜阳树影真实底图层 */
+  .hero-bg-frame {
     position: absolute;
-    inset: -20%;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
     pointer-events: none;
-    z-index: 2;
-    transform: translate3d(var(--sun-shift-x), var(--sun-shift-y), 0) rotate(-32deg);
-    transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(215, 204, 186, 0.12) 26%,
-      var(--sun-glow) 41%,
-      var(--sun-core) 50%,
-      var(--sun-glow) 59%,
-      transparent 75%
-    );
-    filter: blur(20px);
-    mix-blend-mode: soft-light;
-    animation: sunbeamBreeze 15s ease-in-out infinite alternate;
+    z-index: 1;
   }
 
-  /* 2. 真实窗景与枝叶斑驳树影（Gobo 遮蔽层，大光圈柔和弥散） */
-  .gobo-dapple {
-    position: absolute;
-    inset: -15%;
-    pointer-events: none;
-    z-index: 3;
-    transform: translate3d(calc(var(--sun-shift-x) * 1.35), calc(var(--sun-shift-y) * 1.35), 0);
-    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-    opacity: 0.74;
-    mix-blend-mode: multiply;
-    background-image:
-      radial-gradient(ellipse 340px 95px at 68% 22%, rgba(255, 250, 238, 0.95) 0%, transparent 72%),
-      radial-gradient(ellipse 270px 80px at 53% 45%, rgba(255, 248, 232, 0.98) 0%, transparent 74%),
-      radial-gradient(ellipse 390px 115px at 36% 68%, rgba(255, 246, 225, 0.85) 0%, transparent 75%),
-      radial-gradient(circle 50px at 73% 30%, rgba(142, 126, 102, 0.42) 0%, transparent 80%),
-      radial-gradient(circle 70px at 62% 49%, rgba(142, 126, 102, 0.38) 0%, transparent 82%),
-      radial-gradient(circle 60px at 70% 58%, rgba(142, 126, 102, 0.34) 0%, transparent 78%),
-      radial-gradient(circle 42px at 56% 35%, rgba(142, 126, 102, 0.32) 0%, transparent 75%);
-    filter: blur(14px);
-    animation: leavesSway 12s ease-in-out infinite alternate;
+  .hero-bg-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transform: scale(1.02);
+    transform-origin: center;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: gentleBreeze 16s ease-in-out infinite alternate;
   }
 
-  @keyframes sunbeamBreeze {
-    0% { transform: translate3d(var(--sun-shift-x), var(--sun-shift-y), 0) rotate(-32deg) scale(1); }
-    100% { transform: translate3d(calc(var(--sun-shift-x) + 15px), calc(var(--sun-shift-y) - 8px), 0) rotate(-30.5deg) scale(1.025); }
+  @keyframes gentleBreeze {
+    0% {
+      transform: scale(1.02) translate(0, 0);
+    }
+    100% {
+      transform: scale(1.035) translate(4px, -3px);
+    }
   }
 
-  @keyframes leavesSway {
-    0% { transform: translate3d(calc(var(--sun-shift-x) * 1.35), calc(var(--sun-shift-y) * 1.35), 0) scale(1); }
-    100% { transform: translate3d(calc(var(--sun-shift-x) * 1.35 - 16px), calc(var(--sun-shift-y) * 1.35 + 10px), 0) scale(1.035); }
-  }
-
-  /* 3. 悬浮金色微尘粒子画布 */
+  /* 悬浮金尘粒子画布 */
   #dust-canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 4;
+    z-index: 2;
   }
 
-  /* 4. 首屏唯一视觉重心：纯净活字凹印邮箱 */
+  /* 活字压印交互舞台 */
   .letterpress-stage {
     position: relative;
     z-index: 10;
@@ -111,85 +195,61 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2rem 3rem;
+    padding: 1rem;
     user-select: none;
-    will-change: transform, opacity;
   }
 
-  .email-imprint {
-    position: relative;
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: clamp(2rem, 4.6vw, 3.85rem);
-    font-weight: 500;
-    letter-spacing: 0.03em;
-    line-height: 1.2;
+  .email-press-btn {
     background: none;
     border: none;
+    padding: 0;
     cursor: pointer;
-    padding: 0.4em 0.6em;
-    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     outline: none;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
   }
 
-  .email-imprint .part-muted {
-    color: rgba(180, 168, 149, 0.75);
-    text-shadow:
-      var(--light-dir-x) var(--light-dir-y) 1.5px rgba(98, 84, 65, 0.52),
-      var(--highlight-x) var(--highlight-y) 2px rgba(255, 252, 245, 0.92),
-      0 0 1px rgba(125, 112, 92, 0.22);
-    transition: color 0.5s ease, text-shadow 0.5s ease;
+  .email-press-btn:hover {
+    transform: translateY(-2px);
   }
 
-  .email-imprint .part-sunlit {
-    position: relative;
-    color: rgba(208, 158, 96, 0.9);
-    text-shadow:
-      var(--light-dir-x) var(--light-dir-y) 1.5px rgba(108, 74, 32, 0.68),
-      var(--highlight-x) var(--highlight-y) 2.5px rgba(255, 250, 235, 1.0),
-      0 0 16px var(--amber-glow);
-    transition: color 0.5s ease, text-shadow 0.5s ease;
+  .email-press-btn:hover .sunlit-digits {
+    filter: drop-shadow(0 0 8px rgba(228, 160, 76, 0.55));
   }
 
-  .email-imprint:hover {
-    transform: translateY(-1.5px);
+  .email-press-btn:active {
+    transform: translateY(1px) scale(0.995);
   }
 
-  .email-imprint:hover .part-muted {
-    color: rgba(162, 144, 120, 0.92);
-    text-shadow:
-      var(--light-dir-x) var(--light-dir-y) 1.8px rgba(88, 74, 55, 0.62),
-      var(--highlight-x) var(--highlight-y) 2.4px rgba(255, 253, 248, 0.98);
+  .deboss-svg {
+    width: clamp(340px, 68vw, 880px);
+    height: auto;
+    display: block;
+    overflow: visible;
   }
 
-  .email-imprint:hover .part-sunlit {
-    color: rgba(218, 154, 76, 1.0);
-    text-shadow:
-      var(--light-dir-x) var(--light-dir-y) 1.8px rgba(98, 62, 22, 0.78),
-      var(--highlight-x) var(--highlight-y) 3px rgba(255, 252, 238, 1.0),
-      0 0 24px rgba(236, 175, 90, 0.52);
+  .sunlit-digits {
+    transition: filter 0.4s ease;
   }
 
-  .email-imprint:active {
-    transform: translateY(0.5px) scale(0.995);
-  }
-
+  /* 拓印成功提示 */
   .copy-whisper {
-    margin-top: 0.85rem;
-    font-family: 'Noto Serif SC', 'Cormorant Garamond', serif;
-    font-size: 0.78rem;
-    letter-spacing: 0.22em;
-    color: rgba(135, 110, 78, 0);
-    text-shadow: 0 1px 0 rgba(255, 252, 245, 0.7);
+    margin-top: 1rem;
+    font-family: 'Noto Serif SC', 'Cormorant Garamond', Georgia, serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.24em;
+    color: rgba(145, 118, 80, 0);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
     transition: color 0.5s ease, transform 0.5s ease;
-    transform: translateY(4px);
+    transform: translateY(6px);
     pointer-events: none;
   }
 
   :global(.copy-whisper.visible) {
-    color: rgba(135, 110, 78, 0.82) !important;
+    color: rgba(145, 118, 80, 0.95) !important;
     transform: translateY(0) !important;
   }
 
+  /* 底部向下呼吸标 */
   .scroll-whisper {
     position: absolute;
     bottom: 2.2rem;
@@ -200,58 +260,58 @@
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
-    opacity: 0.38;
+    opacity: 0.45;
     transition: opacity 0.4s ease;
     cursor: pointer;
     text-decoration: none;
   }
 
   .scroll-whisper:hover {
-    opacity: 0.78;
+    opacity: 0.9;
   }
 
   .scroll-line {
     width: 1px;
-    height: 36px;
-    background: linear-gradient(to bottom, rgba(132, 116, 92, 0.7), transparent);
-    box-shadow: 1px 0 0 rgba(255, 252, 244, 0.65);
-    animation: scrollPulse 3.2s ease-in-out infinite;
+    height: 38px;
+    background: linear-gradient(to bottom, rgba(120, 105, 82, 0.8), transparent);
+    animation: scrollPulse 3.5s ease-in-out infinite;
   }
 
   @keyframes scrollPulse {
-    0%, 100% { transform: scaleY(0.85); opacity: 0.42; }
-    50% { transform: scaleY(1.12); opacity: 0.92; }
-  }
-
-  @media (max-width: 640px) {
-    .letterpress-stage {
-      padding: 1rem;
-    }
+    0%, 100% { transform: scaleY(0.85); opacity: 0.45; }
+    50% { transform: scaleY(1.15); opacity: 1; }
   }
 </style>
 
 <script>
-  // 1. 光标移动与首屏斜阳活字压痕物理光学联动
-  const root = document.documentElement;
+  // 1. 光标三维点光源与 SVG 活字凹印滤镜光学联动 (Optical Relighting)
+  const svg = document.getElementById('deboss-svg');
+  const lightDiffuse = document.getElementById('pl-deboss');
+  const lightSpecular = document.getElementById('pl-specular');
+  const bgImg = document.getElementById('hero-bg-img');
+
   window.addEventListener('pointermove', (e) => {
-    const nx = (e.clientX / window.innerWidth) - 0.5;
-    const ny = (e.clientY / window.innerHeight) - 0.5;
+    if (!svg || !lightDiffuse || !lightSpecular) return;
+    const rect = svg.getBoundingClientRect();
 
-    const shadowX = (-1.1 - nx * 1.3).toFixed(2) + 'px';
-    const shadowY = (-1.5 - ny * 1.3).toFixed(2) + 'px';
-    const hiX = (1.4 + nx * 1.3).toFixed(2) + 'px';
-    const hiY = (2.0 + ny * 1.3).toFixed(2) + 'px';
+    // 映射到 SVG 920x180 坐标系
+    const svgX = ((e.clientX - rect.left) / rect.width) * 920;
+    const svgY = ((e.clientY - rect.top) / rect.height) * 180;
 
-    root.style.setProperty('--light-dir-x', shadowX);
-    root.style.setProperty('--light-dir-y', shadowY);
-    root.style.setProperty('--highlight-x', hiX);
-    root.style.setProperty('--highlight-y', hiY);
+    lightDiffuse.setAttribute('x', svgX.toFixed(1));
+    lightDiffuse.setAttribute('y', svgY.toFixed(1));
+    lightSpecular.setAttribute('x', svgX.toFixed(1));
+    lightSpecular.setAttribute('y', svgY.toFixed(1));
 
-    root.style.setProperty('--sun-shift-x', (nx * -20).toFixed(1) + 'px');
-    root.style.setProperty('--sun-shift-y', (ny * -14).toFixed(1) + 'px');
+    // 背景树影微视差联动
+    if (bgImg) {
+      const nx = (e.clientX / window.innerWidth) - 0.5;
+      const ny = (e.clientY / window.innerHeight) - 0.5;
+      bgImg.style.transform = `scale(1.03) translate(${(nx * -12).toFixed(1)}px, ${(ny * -8).toFixed(1)}px)`;
+    }
   }, { passive: true });
 
-  // 2. 点击邮箱拓印复制
+  // 2. 点击拓印复制邮箱
   const emailBtn = document.getElementById('email-btn');
   const copyWhisper = document.getElementById('copy-whisper');
   let whisperTimer: number | undefined;
@@ -274,7 +334,7 @@
     }, 2400);
   });
 
-  // 3. 悬浮金尘粒子系统
+  // 3. 丁达尔浮尘粒子系统
   const canvas = document.getElementById('dust-canvas') as HTMLCanvasElement | null;
   if (canvas) {
     const ctx = canvas.getContext('2d');
@@ -287,15 +347,15 @@
       height = canvas.height = window.innerHeight;
     }, { passive: true });
 
-    const DUST_COUNT = 28;
+    const DUST_COUNT = 32;
     const motes = Array.from({ length: DUST_COUNT }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      r: 0.65 + Math.random() * 1.45,
-      vx: 0.07 + Math.random() * 0.16,
-      vy: -0.05 - Math.random() * 0.13,
+      r: 0.6 + Math.random() * 1.5,
+      vx: 0.08 + Math.random() * 0.18,
+      vy: -0.06 - Math.random() * 0.14,
       phase: Math.random() * Math.PI * 2,
-      speed: 0.007 + Math.random() * 0.014
+      speed: 0.008 + Math.random() * 0.015
     }));
 
     function renderDust() {
@@ -309,16 +369,17 @@
         if (m.x > width + 10) m.x = -10;
         if (m.y < -10) m.y = height + 10;
 
+        // 斜阳对角线光锥通道
         const diagDist = Math.abs((m.x / width) + (m.y / height) - 1.02);
-        const sunFactor = Math.max(0.08, 1 - diagDist * 2.1);
-        const alpha = (0.2 + 0.48 * Math.sin(m.phase)) * sunFactor;
+        const sunFactor = Math.max(0.1, 1 - diagDist * 2.0);
+        const alpha = (0.22 + 0.52 * Math.sin(m.phase)) * sunFactor;
 
-        if (alpha > 0.04) {
+        if (alpha > 0.05) {
           ctx.beginPath();
           ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 238, 194, ${alpha.toFixed(3)})`;
-          ctx.shadowColor = 'rgba(232, 175, 96, 0.45)';
-          ctx.shadowBlur = 5;
+          ctx.fillStyle = `rgba(255, 242, 210, ${alpha.toFixed(3)})`;
+          ctx.shadowColor = 'rgba(235, 175, 85, 0.55)';
+          ctx.shadowBlur = 6;
           ctx.fill();
         }
       }

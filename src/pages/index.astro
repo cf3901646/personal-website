@@ -18,48 +18,44 @@ const publishedPosts = allPosts.filter(p => !p.data.draft);
   title="3901646.xyz — cf3901646@gmail.com"
   description="3901646.xyz · AI & Tools Digital Garden · cf3901646@gmail.com"
 >
-  <!-- 幕 I · 开场第一页：午后斜阳 · 活字压痕 -->
+  <!-- 幕 I · 高保真摄影级斜阳树影与活字凹印 -->
   <Hero />
 
-  <!-- 幕 II · 极简正文画布：发丝网格 ＋ 滚动展开 -->
+  <!-- 幕 II · Cursor / Steph Ango 级极简工程画布 -->
   <main class="content-sanctuary" id="sanctuary-content">
-    <article class="reading-spine">
+    <div class="reading-spine">
 
-      <!-- 1. 序言：文字随滚动聚焦显影 -->
+      <!-- 1. 序言：克制的人文科技信条 -->
       <section class="intro-section" id="intro">
         <div class="section-eyebrow">
-          <span>Sanctuary</span>
-          <span class="index">01 / Prologue</span>
+          <span>Prologue</span>
+          <span class="index">01 / Statement</span>
         </div>
-        <div class="intro-paragraph">
-          <span class="kinetic-text-line" data-line="1">在代码与界面的缝隙里，造一些有温度的工具。</span><br />
-          <span class="kinetic-text-line" data-line="2">探索智能体架构、自动化工作流与前沿大模型的交互边界。</span><br />
-          <span class="kinetic-text-line" data-line="3">不作喧闹的喧哗，唯愿秩序与克制长存。</span>
+        <div class="intro-quote">
+          <p class="quote-lead">在代码与界面的缝隙里，造一些有温度的工具。</p>
+          <p class="quote-body">探索自主智能体架构、自动化工作流与前沿大模型的交互边界。不作喧闹的喧哗，唯愿秩序与克制长存。</p>
         </div>
         <div class="intro-meta">
-          <span>Charlie Freeman</span>
-          <span>·</span>
-          <span>Shanghai</span>
-          <span>·</span>
-          <a href="https://github.com/cf3901646" target="_blank" rel="noopener">GitHub ↗</a>
-          <a href="mailto:cf3901646@gmail.com">Letter ↗</a>
+          <span class="author">Charlie Freeman</span>
+          <span class="dot">/</span>
+          <span class="location">Shanghai</span>
+          <span class="dot">/</span>
+          <a href="https://github.com/cf3901646" target="_blank" rel="noopener" class="meta-link">GitHub ↗</a>
+          <span class="dot">/</span>
+          <a href="mailto:cf3901646@gmail.com" class="meta-link">Letter ↗</a>
         </div>
       </section>
 
-      <div class="crease-divider" aria-hidden="true"></div>
-
-      <!-- 2. 代表作品 -->
+      <!-- 2. 代表作品 (Cursor 级卡片网格) -->
       <ProjectList projects={sortedProjects} />
 
-      <div class="crease-divider" aria-hidden="true"></div>
-
-      <!-- 3. 数字花园笔记 -->
+      <!-- 3. 数字花园笔记 (安静的书页流) -->
       <GardenList posts={publishedPosts} />
 
       <!-- 尾注 -->
       <Footer />
 
-    </article>
+    </div>
   </main>
 </Layout>
 
@@ -71,23 +67,21 @@ const publishedPosts = allPosts.filter(p => !p.data.draft);
     background-color: var(--paper-base);
     display: flex;
     justify-content: center;
-    padding: 6.5rem 1.75rem 11rem;
+    padding: 6rem 1.75rem 10rem;
+    z-index: 5;
   }
 
+  /* 黄金阅读跨度 (720px) */
   .reading-spine {
     width: 100%;
-    max-width: 680px;
+    max-width: 720px;
     display: flex;
     flex-direction: column;
-    gap: 6.5rem;
+    gap: 6rem;
   }
 
-  .crease-divider {
+  .intro-section {
     width: 100%;
-    height: 1px;
-    background: var(--paper-crease);
-    box-shadow: 0 1px 0 var(--paper-highlight);
-    margin: 1.5rem 0;
   }
 
   .section-eyebrow {
@@ -96,58 +90,67 @@ const publishedPosts = allPosts.filter(p => !p.data.draft);
     justify-content: space-between;
     margin-bottom: 2rem;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--ink-whisper);
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0.75rem;
   }
 
   .section-eyebrow .index {
     color: var(--amber-rim);
-    font-weight: 400;
+    font-weight: 500;
   }
 
-  .intro-paragraph {
+  .intro-quote {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .quote-lead {
     font-family: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
-    font-size: clamp(1.3rem, 2.2vw, 1.65rem);
-    font-weight: 400;
-    line-height: 1.95;
+    font-size: clamp(1.45rem, 2.5vw, 1.85rem);
+    font-weight: 500;
+    line-height: 1.5;
     color: var(--ink-deep);
-    letter-spacing: 0.015em;
+    letter-spacing: -0.01em;
+    margin: 0;
   }
 
-  .kinetic-text-line {
-    display: inline;
-    transition: color 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
-    opacity: 0.32;
-    color: var(--ink-whisper);
-  }
-
-  :global(.kinetic-text-line.is-active) {
-    opacity: 1 !important;
-    color: var(--ink-deep) !important;
+  .quote-body {
+    font-family: 'Noto Serif SC', Georgia, serif;
+    font-size: 1.02rem;
+    line-height: 1.95;
+    color: var(--ink-muted);
+    margin: 0;
   }
 
   .intro-meta {
-    margin-top: 2.25rem;
+    margin-top: 2rem;
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.85rem;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.78rem;
-    color: var(--ink-muted);
-    letter-spacing: 0.08em;
+    color: var(--ink-whisper);
   }
 
-  .intro-meta a {
+  .dot {
+    color: var(--border-focus);
+  }
+
+  .meta-link {
     color: var(--ink-muted);
     text-decoration: none;
-    border-bottom: 1px solid var(--paper-crease);
+    border-bottom: 1px solid var(--border-subtle);
     padding-bottom: 1px;
-    transition: color 0.25s ease, border-color 0.25s ease;
+    transition: color 0.2s ease, border-color 0.2s ease;
   }
 
-  .intro-meta a:hover {
+  .meta-link:hover {
     color: var(--amber-rim);
     border-bottom-color: var(--amber-rim);
   }
@@ -168,53 +171,26 @@ const publishedPosts = allPosts.filter(p => !p.data.draft);
 
   gsap.registerPlugin(ScrollTrigger);
 
-  // 1. 首屏斜阳与活字随滚动优雅淡出与微视差
-  const sunbeam = document.getElementById('sunbeam');
-  const gobo = document.getElementById('gobo');
+  // 首屏高保真光影与活字随滚动优雅视差淡出
+  const heroSection = document.getElementById('hero');
   const letterpressStage = document.getElementById('letterpress-stage');
+  const heroBgPhoto = document.getElementById('hero-bg-img');
 
-  if (sunbeam && gobo && letterpressStage) {
+  if (heroSection && letterpressStage) {
     ScrollTrigger.create({
-      trigger: "#hero",
+      trigger: heroSection,
       start: "top top",
       end: "bottom top",
       scrub: true,
       onUpdate: (self) => {
         const p = self.progress;
-        const heroOpacity = Math.max(0, 1 - p * 1.25);
-        sunbeam.style.opacity = String(heroOpacity);
-        gobo.style.opacity = String(heroOpacity * 0.74);
-        letterpressStage.style.opacity = String(Math.max(0, 1 - p * 1.6));
-        letterpressStage.style.transform = `translateY(${p * 220}px) scale(${1 - p * 0.05})`;
+        const opacity = Math.max(0, 1 - p * 1.35);
+        letterpressStage.style.opacity = String(opacity);
+        letterpressStage.style.transform = `translateY(${p * 180}px) scale(${1 - p * 0.04})`;
+        if (heroBgPhoto) {
+          heroBgPhoto.style.opacity = String(Math.max(0, 1 - p * 1.15));
+        }
       }
     });
   }
-
-  // 2. 序言文字：滚动到达时逐行由浅凝深（Kinetic Focus）
-  const kineticLines = document.querySelectorAll('.kinetic-text-line');
-  kineticLines.forEach((line) => {
-    ScrollTrigger.create({
-      trigger: line,
-      start: "top 78%",
-      end: "bottom 22%",
-      onEnter: () => line.classList.add('is-active'),
-      onLeave: () => line.classList.remove('is-active'),
-      onEnterBack: () => line.classList.add('is-active'),
-      onLeaveBack: () => line.classList.remove('is-active'),
-    });
-  });
-
-  // 3. 项目条目：滚至屏幕正中央黄金视口时自动展开抽屉详情
-  const projectItems = document.querySelectorAll('.project-item');
-  projectItems.forEach((item) => {
-    ScrollTrigger.create({
-      trigger: item,
-      start: "top 62%",
-      end: "bottom 38%",
-      onEnter: () => item.classList.add('is-unfolded'),
-      onLeave: () => item.classList.remove('is-unfolded'),
-      onEnterBack: () => item.classList.add('is-unfolded'),
-      onLeaveBack: () => item.classList.remove('is-unfolded'),
-    });
-  });
 </script>

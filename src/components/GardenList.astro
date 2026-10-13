@@ -1,5 +1,6 @@
 ---
 // src/components/GardenList.astro
+// Steph Ango / Cursor 风格数字花园极简目录
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
@@ -11,75 +12,123 @@ const { posts } = Astro.props;
 
 <section class="garden-section" id="garden">
   <div class="section-eyebrow">
-    <span>Digital Garden</span>
-    <span class="index">03 / Writing</span>
+    <span class="label">Digital Garden</span>
+    <span class="index">03 / Field Notes</span>
   </div>
 
-  <div class="garden-stream">
+  <div class="garden-list">
     {posts.map((post) => (
-      <a href={`/posts/${post.id}`} class="garden-row">
-        <span class="garden-title">{post.data.title}</span>
-        <span class="garden-date">{post.data.date}</span>
+      <a href={`/posts/${post.id}`} class="garden-item">
+        <div class="garden-meta-col">
+          <span class="garden-title">{post.data.title}</span>
+          {post.data.description && (
+            <span class="garden-desc">{post.data.description}</span>
+          )}
+        </div>
+        <div class="garden-aside">
+          <span class="garden-date">{post.data.date}</span>
+          <span class="arrow-indicator">→</span>
+        </div>
       </a>
     ))}
   </div>
 </section>
 
 <style>
+  .garden-section {
+    width: 100%;
+  }
+
   .section-eyebrow {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     margin-bottom: 2rem;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--ink-whisper);
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0.75rem;
   }
 
   .section-eyebrow .index {
     color: var(--amber-rim);
-    font-weight: 400;
+    font-weight: 500;
   }
 
-  .garden-stream {
+  .garden-list {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
   }
 
-  .garden-row {
+  .garden-item {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 1.5rem;
-    padding: 0.7rem 0;
-    border-bottom: 1px dashed rgba(158, 144, 122, 0.28);
+    padding: 1.25rem 0.5rem;
+    border-bottom: 1px solid var(--border-subtle);
     text-decoration: none;
-    transition: transform 0.25s ease;
+    transition: background 0.2s ease, padding-left 0.2s ease;
+    border-radius: 4px;
   }
 
-  .garden-row:hover {
-    transform: translateX(4px);
+  .garden-item:hover {
+    background: var(--paper-card);
+    padding-left: 0.85rem;
+  }
+
+  .garden-meta-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
   }
 
   .garden-title {
-    font-family: 'Noto Serif SC', 'Cormorant Garamond', serif;
+    font-family: 'Noto Serif SC', 'Cormorant Garamond', Georgia, serif;
     font-size: 1.05rem;
     color: var(--ink-deep);
-    font-weight: 400;
-    transition: color 0.3s ease;
+    font-weight: 500;
+    line-height: 1.5;
+    transition: color 0.2s ease;
   }
 
-  .garden-row:hover .garden-title {
+  .garden-item:hover .garden-title {
     color: var(--amber-rim);
+  }
+
+  .garden-desc {
+    font-family: 'Noto Serif SC', Georgia, serif;
+    font-size: 0.86rem;
+    color: var(--ink-muted);
+    line-height: 1.6;
+  }
+
+  .garden-aside {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    white-space: nowrap;
+    padding-left: 1rem;
   }
 
   .garden-date {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.75rem;
     color: var(--ink-whisper);
-    white-space: nowrap;
+  }
+
+  .arrow-indicator {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--ink-whisper);
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+
+  .garden-item:hover .arrow-indicator {
+    transform: translateX(3px);
+    color: var(--amber-rim);
   }
 </style>

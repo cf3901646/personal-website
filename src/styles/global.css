@@ -1,44 +1,46 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper-base: #e6dfd1;
-  --color-paper-warm: #efe8da;
-  --color-paper-shadow: #cfc6b4;
+  --color-paper-base: #f7f7f4;
+  --color-paper-card: #f2f1ed;
+  --color-paper-card-hover: #ebeae5;
 
-  --color-ink-deep: #221e19;
-  --color-ink-body: #3e362c;
-  --color-ink-muted: #756a59;
-  --color-ink-whisper: #a49784;
+  --color-ink-deep: #26251e;
+  --color-ink-body: #423f35;
+  --color-ink-muted: #787465;
+  --color-ink-whisper: #a8a495;
 
   --color-amber-rim: #c98e4d;
+  --color-amber-glow: #e8a04c;
 
   --font-serif: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
 :root {
-  --paper-base: #e6dfd1;
-  --paper-warm: #efe8da;
-  --paper-shadow: #cfc6b4;
-  --paper-crease: rgba(132, 118, 98, 0.22);
-  --paper-highlight: rgba(255, 251, 242, 0.82);
+  /* Cursor 官网级温暖白垩棉纸色阶 (OKLab 空间) */
+  --paper-base: #f7f7f4;
+  --paper-card: #f2f1ed;
+  --paper-card-hover: #ebeae5;
 
-  --ink-deep: #221e19;
-  --ink-body: #3e362c;
-  --ink-muted: #756a59;
-  --ink-whisper: #a49784;
+  /* 暖炭黑墨水层级 (高对比度、极致舒适的阅读感) */
+  --ink-deep: #26251e;
+  --ink-body: #423f35;
+  --ink-muted: #787465;
+  --ink-whisper: #a8a495;
 
-  --sun-core: rgba(255, 247, 224, 0.85);
-  --sun-glow: rgba(246, 221, 172, 0.45);
+  /* 0.5px / 1px 极细发丝边框系统 (OKLab 感知混合，绝不脏灰) */
+  --border-subtle: color-mix(in oklab, #26251e 7%, transparent);
+  --border-card: color-mix(in oklab, #26251e 10%, transparent);
+  --border-focus: color-mix(in oklab, #26251e 22%, transparent);
+
+  /* 琥珀金点缀色 */
   --amber-rim: #c98e4d;
-  --amber-glow: rgba(228, 168, 88, 0.38);
+  --amber-glow: rgba(232, 160, 76, 0.42);
 
-  --light-dir-x: -1.1px;
-  --light-dir-y: -1.5px;
-  --highlight-x: 1.4px;
-  --highlight-y: 2px;
-  --sun-shift-x: 0px;
-  --sun-shift-y: 0px;
+  /* 动态点光源坐标 */
+  --mouse-x: 400px;
+  --mouse-y: 200px;
 }
 
 * {
@@ -60,21 +62,12 @@ body {
   font-family: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  line-height: 1.85;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.8;
   position: relative;
 }
 
 ::selection {
-  background: rgba(201, 142, 77, 0.22);
+  background: rgba(201, 142, 77, 0.25);
   color: var(--ink-deep);
-}
-
-.paper-fiber-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 99;
-  opacity: 0.46;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperFibers'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04 0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.92 0 0 0 0.04  0 0.88 0 0 0.03  0 0 0.82 0 0.02  0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperFibers)'/%3E%3C/svg%3E");
 }

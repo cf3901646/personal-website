@@ -1,5 +1,6 @@
 ---
 // src/components/ProjectList.astro
+// Cursor.com 工业级极简发丝网格与模块化作品卡片
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
@@ -11,197 +12,213 @@ const { projects } = Astro.props;
 
 <section class="projects-section" id="projects">
   <div class="section-eyebrow">
-    <span>Craft & Code</span>
-    <span class="index">02 / Creations</span>
+    <span class="label">Craft & Code</span>
+    <span class="index">02 / Selected Works</span>
   </div>
 
-  <div class="projects-stream">
+  <div class="projects-grid">
     {projects.map((project) => (
-      <div class="project-item" data-project={project.data.index}>
-        <div class="project-header">
-          <div class="project-title-group">
-            <span class="project-index">{project.data.index}</span>
-            <h3 class="project-title">{project.data.title}</h3>
+      <article class="project-card" data-project={project.data.index}>
+        <div class="card-inner">
+          <header class="card-header">
+            <div class="title-wrap">
+              <span class="card-index">{project.data.index}</span>
+              <h3 class="card-title">{project.data.title}</h3>
+            </div>
+            <span class="card-year">{project.data.year}</span>
+          </header>
+
+          <p class="card-desc">{project.data.description}</p>
+
+          <div class="card-footer">
+            <div class="tag-row">
+              {project.data.tags.map((tag) => (
+                <span class="tag-chip">{tag}</span>
+              ))}
+            </div>
+
+            <div class="action-links">
+              {project.data.github && (
+                <a class="action-link" href={project.data.github} target="_blank" rel="noopener">
+                  <span>GitHub</span>
+                  <span class="arrow">↗</span>
+                </a>
+              )}
+              {project.data.demo && (
+                <a class="action-link" href={project.data.demo} target="_blank" rel="noopener">
+                  <span>Live</span>
+                  <span class="arrow">↗</span>
+                </a>
+              )}
+            </div>
           </div>
-          <span class="project-year">{project.data.year}</span>
         </div>
-        <p class="project-summary">{project.data.description}</p>
-        <div class="project-drawer">
-          <div class="project-tags">
-            {project.data.tags.map((tag) => (
-              <span class="tag-pill">{tag}</span>
-            ))}
-          </div>
-          <div class="project-links">
-            {project.data.github && (
-              <a class="project-link" href={project.data.github} target="_blank" rel="noopener">GitHub 仓库 ↗</a>
-            )}
-            {project.data.demo && (
-              <a class="project-link" href={project.data.demo} target="_blank" rel="noopener">在线体验 ↗</a>
-            )}
-            {project.data.articleUrl && (
-              <a class="project-link" href={project.data.articleUrl}>设计手记 →</a>
-            )}
-          </div>
-        </div>
-      </div>
+      </article>
     ))}
   </div>
 </section>
 
 <style>
+  .projects-section {
+    width: 100%;
+  }
+
+  /* 章节眉标 */
   .section-eyebrow {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    margin-bottom: 2rem;
+    margin-bottom: 2.25rem;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--ink-whisper);
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0.75rem;
   }
 
   .section-eyebrow .index {
     color: var(--amber-rim);
-    font-weight: 400;
+    font-weight: 500;
   }
 
-  .projects-stream {
+  .projects-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  /* Cursor 级模块化极简卡片 */
+  .project-card {
+    position: relative;
+    background: var(--paper-card);
+    border: 1px solid var(--border-card);
+    border-radius: 8px;
+    padding: 1.85rem 2rem;
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+  }
+
+  .project-card:hover {
+    background: var(--paper-card-hover);
+    border-color: var(--border-focus);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(38, 37, 30, 0.05), 0 2px 6px rgba(38, 37, 30, 0.02);
+  }
+
+  .card-inner {
     display: flex;
     flex-direction: column;
-    gap: 2.75rem;
+    gap: 1.15rem;
   }
 
-  .project-item {
-    position: relative;
-    padding-bottom: 2.5rem;
-    border-bottom: 1px solid var(--paper-crease);
-    box-shadow: 0 1px 0 var(--paper-highlight);
-  }
-
-  .project-header {
+  .card-header {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 1.5rem;
-    cursor: pointer;
+    gap: 1rem;
   }
 
-  .project-title-group {
+  .title-wrap {
     display: flex;
     align-items: baseline;
-    gap: 1.25rem;
+    gap: 1rem;
   }
 
-  .project-index {
+  .card-index {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--ink-whisper);
-    letter-spacing: 0.1em;
-    transition: color 0.3s ease;
+    letter-spacing: 0.05em;
   }
 
-  .project-title {
+  /* 核心标题：Cursor 风格负字距与克制字重 */
+  .card-title {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: clamp(1.5rem, 2.7vw, 2.15rem);
+    font-size: 1.65rem;
     font-weight: 500;
+    letter-spacing: -0.015em;
     color: var(--ink-deep);
-    letter-spacing: 0.01em;
-    transition: color 0.3s ease;
+    line-height: 1.2;
+    transition: color 0.25s ease;
   }
 
-  .project-year {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--ink-whisper);
-  }
-
-  .project-summary {
-    margin-top: 0.65rem;
-    margin-left: 2.25rem;
-    font-size: 0.98rem;
-    color: var(--ink-body);
-    line-height: 1.72;
-  }
-
-  .project-drawer {
-    margin-left: 2.25rem;
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    transform: translateY(-6px);
-    transition: max-height 0.65s cubic-bezier(0.16, 1, 0.3, 1),
-                opacity 0.5s ease,
-                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                margin-top 0.4s ease;
-  }
-
-  :global(.project-item.is-unfolded) .project-drawer,
-  .project-item:hover .project-drawer {
-    max-height: 190px;
-    opacity: 1;
-    transform: translateY(0);
-    margin-top: 1.25rem;
-  }
-
-  :global(.project-item.is-unfolded) .project-title,
-  .project-item:hover .project-title {
+  .project-card:hover .card-title {
     color: var(--amber-rim);
   }
 
-  :global(.project-item.is-unfolded) .project-index,
-  .project-item:hover .project-index {
-    color: var(--ink-muted);
-  }
-
-  .project-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-    margin-bottom: 1rem;
-  }
-
-  .tag-pill {
+  .card-year {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
-    color: var(--ink-muted);
-    padding: 0.15rem 0.65rem;
-    background: rgba(220, 211, 194, 0.45);
-    border: 1px solid var(--paper-crease);
-    box-shadow: 0 1px 0 var(--paper-highlight);
-    border-radius: 999px;
-    letter-spacing: 0.04em;
+    color: var(--ink-whisper);
   }
 
-  .project-links {
+  .card-desc {
+    font-family: 'Noto Serif SC', 'Cormorant Garamond', Georgia, serif;
+    font-size: 0.96rem;
+    color: var(--ink-body);
+    line-height: 1.78;
+    margin: 0;
+  }
+
+  .card-footer {
     display: flex;
     align-items: center;
-    gap: 1.75rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.78rem;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-subtle);
   }
 
-  .project-link {
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .tag-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-muted);
+    padding: 0.15rem 0.55rem;
+    background: rgba(38, 37, 30, 0.04);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  .action-links {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .action-link {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
     color: var(--ink-deep);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    border-bottom: 1px solid var(--paper-crease);
+    gap: 0.25rem;
     padding-bottom: 1px;
-    transition: color 0.3s ease, border-color 0.3s ease;
+    border-bottom: 1px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
   }
 
-  .project-link:hover {
+  .action-link:hover {
     color: var(--amber-rim);
     border-bottom-color: var(--amber-rim);
   }
 
-  @media (max-width: 640px) {
-    .project-summary,
-    .project-drawer {
-      margin-left: 0;
-    }
+  .action-link .arrow {
+    font-size: 0.85em;
+    transition: transform 0.2s ease;
+  }
+
+  .action-link:hover .arrow {
+    transform: translate(2px, -2px);
   }
 </style>
