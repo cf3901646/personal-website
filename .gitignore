@@ -26,7 +26,8 @@ jspm_packages/
 .next/
 out/
 
-# Production build artifacts
+# Astro & Production build artifacts
+.astro/
 dist/
 build/
 

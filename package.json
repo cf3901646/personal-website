@@ -1,0 +1,21 @@
+{
+  "name": "personal-website",
+  "version": "1.0.0",
+  "description": "> **暖棉信纸为底 · 午后斜阳为韵 · 活字压痕为骨**   > 域名 **`3901646.xyz`** 与邮箱 **`cf3901646@gmail.com`** 同源呼应的个人数字花园与工具作品集。",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^5.18.2",
+    "gsap": "^3.15.0",
+    "tailwindcss": "^4.3.3"
+  }
+}

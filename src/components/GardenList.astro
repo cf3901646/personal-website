@@ -1,0 +1,85 @@
+---
+// src/components/GardenList.astro
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  posts: CollectionEntry<'posts'>[];
+}
+
+const { posts } = Astro.props;
+---
+
+<section class="garden-section" id="garden">
+  <div class="section-eyebrow">
+    <span>Digital Garden</span>
+    <span class="index">03 / Writing</span>
+  </div>
+
+  <div class="garden-stream">
+    {posts.map((post) => (
+      <a href={`/posts/${post.id}`} class="garden-row">
+        <span class="garden-title">{post.data.title}</span>
+        <span class="garden-date">{post.data.date}</span>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .section-eyebrow {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-whisper);
+  }
+
+  .section-eyebrow .index {
+    color: var(--amber-rim);
+    font-weight: 400;
+  }
+
+  .garden-stream {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .garden-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px dashed rgba(158, 144, 122, 0.28);
+    text-decoration: none;
+    transition: transform 0.25s ease;
+  }
+
+  .garden-row:hover {
+    transform: translateX(4px);
+  }
+
+  .garden-title {
+    font-family: 'Noto Serif SC', 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
+    color: var(--ink-deep);
+    font-weight: 400;
+    transition: color 0.3s ease;
+  }
+
+  .garden-row:hover .garden-title {
+    color: var(--amber-rim);
+  }
+
+  .garden-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-whisper);
+    white-space: nowrap;
+  }
+</style>

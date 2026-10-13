@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper-base: #e6dfd1;
+  --color-paper-warm: #efe8da;
+  --color-paper-shadow: #cfc6b4;
+
+  --color-ink-deep: #221e19;
+  --color-ink-body: #3e362c;
+  --color-ink-muted: #756a59;
+  --color-ink-whisper: #a49784;
+
+  --color-amber-rim: #c98e4d;
+
+  --font-serif: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+:root {
+  --paper-base: #e6dfd1;
+  --paper-warm: #efe8da;
+  --paper-shadow: #cfc6b4;
+  --paper-crease: rgba(132, 118, 98, 0.22);
+  --paper-highlight: rgba(255, 251, 242, 0.82);
+
+  --ink-deep: #221e19;
+  --ink-body: #3e362c;
+  --ink-muted: #756a59;
+  --ink-whisper: #a49784;
+
+  --sun-core: rgba(255, 247, 224, 0.85);
+  --sun-glow: rgba(246, 221, 172, 0.45);
+  --amber-rim: #c98e4d;
+  --amber-glow: rgba(228, 168, 88, 0.38);
+
+  --light-dir-x: -1.1px;
+  --light-dir-y: -1.5px;
+  --highlight-x: 1.4px;
+  --highlight-y: 2px;
+  --sun-shift-x: 0px;
+  --sun-shift-y: 0px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--paper-base);
+}
+
+body {
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--paper-base);
+  color: var(--ink-body);
+  font-family: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.85;
+  position: relative;
+}
+
+::selection {
+  background: rgba(201, 142, 77, 0.22);
+  color: var(--ink-deep);
+}
+
+.paper-fiber-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99;
+  opacity: 0.46;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperFibers'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04 0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.92 0 0 0 0.04  0 0.88 0 0 0.03  0 0 0.82 0 0.02  0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperFibers)'/%3E%3C/svg%3E");
+}

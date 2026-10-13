@@ -1,0 +1,33 @@
+---
+// src/components/Footer.astro
+---
+
+<footer class="footer-colophon">
+  <span>3901646.xyz · 2026</span>
+  <a href="#hero">回到顶部 ↑</a>
+</footer>
+
+<style>
+  .footer-colophon {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--paper-crease);
+    box-shadow: 0 1px 0 var(--paper-highlight);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-whisper);
+  }
+
+  .footer-colophon a {
+    color: var(--ink-muted);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .footer-colophon a:hover {
+    color: var(--amber-rim);
+  }
+</style>

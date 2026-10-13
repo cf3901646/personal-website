@@ -40,15 +40,57 @@
 
 | 页面 / 幕次 | 路径与定位 | 视觉与交互延伸 |
 | :--- | :--- | :--- |
-| **第一页 · 序幕** | `/`（首屏留白） | 满屏暖棉纸 ＋ 斜阳树影微尘 ＋ 中央唯一活字压痕 `cf3901646@gmail.com`（已实现于 [`index.html`](./index.html)） |
-| **第二幕 · 造物展厅** | `/`（滚动展开）& `/projects` | 棉纸压痕卡片陈列代表项目与开源工具，配技术栈标签，点击直达 GitHub 仓库或站内深度复盘长文 |
-| **第三幕 · 数字花园** | `/`（思考流）& `/posts/[slug]` | 极致呼吸感的中英文衬线/无衬线混排阅读页，承载 AI / Agent 探索笔记与工程实战复盘 |
+| **第一页 · 序幕** | `/`（首屏留白） | 满屏暖棉纸 ＋ 斜阳树影微尘 ＋ 中央唯一活字压痕 `cf3901646@gmail.com`（`src/components/Hero.astro`） |
+| **第二幕 · 造物展厅** | `/`（滚动展开） | 棉纸发丝网格陈列代表项目（`src/content/projects/*.md`），滚动到达黄金视口自动展开详情与技术标签 |
+| **第三幕 · 数字花园** | `/` 列表 ＋ `/posts/[id]` 详情 | 极简书页排版，本地 Markdown 即写即发（`src/content/posts/*.md`），沉淀 Agent 探索与工程实战 |
 
 ---
 
-## 📁 仓库结构与文档索引
+## 🛠️ 本地开发与构建流水线
 
-- 🚀 [**`index.html`**](./index.html)：第一页「午后斜阳 · 活字压痕 `cf3901646@gmail.com`」可交互网页实现（含棉纸纤维噪点、斜阳树影微风动画、Canvas 浮尘粒子、鼠标光影联动凹印高光与一键复制）。
-- 📘 [**完整网站架构蓝图 (`docs/personal-website-blueprint.md`)**](./docs/personal-website-blueprint.md)：全站色彩 Token、活字压痕 CSS 光学公式、页面架构与 Astro + Markdown 静态工作流规范。
-- 🖼️ [**视觉设计原型解析 (`docs/design-prototypes.md`)**](./docs/design-prototypes.md)：首屏四版概念对比与全站视觉规范详解。
-- 💬 [**需求推演访谈纪要 (`docs/interview-transcript.md`)**](./docs/interview-transcript.md)：完整记录从 v1.0 到 v2.0（`3901646.xyz` 暖阳活字人文风）的决策演进。
+```bash
+# 安装依赖
+npm install
+
+# 启动本地开发服务器（http://localhost:4321）
+npm run dev
+
+# 静态生产构建（输出至 dist/）
+npm run build
+
+# 本地预览构建产物
+npm run preview
+```
+
+---
+
+## 📁 工程架构与目录组织
+
+```
+personal-website/
+├── astro.config.mjs          # Astro 5 配置（Tailwind CSS v4 Vite 插件）
+├── package.json              # 依赖与脚本（Astro 5 + Tailwind v4 + GSAP）
+├── tsconfig.json             # TypeScript 严格模式配置
+├── public/
+│   └── favicon.svg           # 活字火漆印章 Favicon
+├── src/
+│   ├── content.config.ts     # Content Collections 强类型校验定义
+│   ├── content/
+│   │   ├── projects/         # 项目集合（本地 Markdown）
+│   │   └── posts/            # 数字花园文章（本地 Markdown，即写即发）
+│   ├── layouts/
+│   │   └── Layout.astro      # 全站基底骨架 ＋ 物理级棉纸微纤维层
+│   ├── components/
+│   │   ├── Hero.astro        # 首屏（斜阳光影 ＋ 活字压痕 ＋ 浮尘粒子）
+│   │   ├── ProjectList.astro # 造物展厅列表组件（滚动展开抽屉）
+│   │   ├── GardenList.astro  # 数字花园文章目录组件
+│   │   └── Footer.astro      # 尾注组件
+│   ├── pages/
+│   │   ├── index.astro       # 首页（GSAP ScrollTrigger 光学联动）
+│   │   └── posts/
+│   │       └── [id].astro    # 文章独立详情页（动态路由静态生成）
+│   └── styles/
+│       └── global.css        # Tailwind v4 全局入口 ＋ Design Tokens 色盘
+├── docs/                     # 设计文档与访谈蓝图
+└── assets/designs/           # 视觉探索原图归档
+```

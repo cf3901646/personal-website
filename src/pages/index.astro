@@ -1,0 +1,220 @@
+---
+// src/pages/index.astro
+import Layout from '../layouts/Layout.astro';
+import Hero from '../components/Hero.astro';
+import ProjectList from '../components/ProjectList.astro';
+import GardenList from '../components/GardenList.astro';
+import Footer from '../components/Footer.astro';
+import { getCollection } from 'astro:content';
+
+const allProjects = await getCollection('projects');
+const sortedProjects = allProjects.sort((a, b) => (a.data.order ?? 0) - (b.data.order ?? 0));
+
+const allPosts = await getCollection('posts');
+const publishedPosts = allPosts.filter(p => !p.data.draft);
+---
+
+<Layout
+  title="3901646.xyz — cf3901646@gmail.com"
+  description="3901646.xyz · AI & Tools Digital Garden · cf3901646@gmail.com"
+>
+  <!-- 幕 I · 开场第一页：午后斜阳 · 活字压痕 -->
+  <Hero />
+
+  <!-- 幕 II · 极简正文画布：发丝网格 ＋ 滚动展开 -->
+  <main class="content-sanctuary" id="sanctuary-content">
+    <article class="reading-spine">
+
+      <!-- 1. 序言：文字随滚动聚焦显影 -->
+      <section class="intro-section" id="intro">
+        <div class="section-eyebrow">
+          <span>Sanctuary</span>
+          <span class="index">01 / Prologue</span>
+        </div>
+        <div class="intro-paragraph">
+          <span class="kinetic-text-line" data-line="1">在代码与界面的缝隙里，造一些有温度的工具。</span><br />
+          <span class="kinetic-text-line" data-line="2">探索智能体架构、自动化工作流与前沿大模型的交互边界。</span><br />
+          <span class="kinetic-text-line" data-line="3">不作喧闹的喧哗，唯愿秩序与克制长存。</span>
+        </div>
+        <div class="intro-meta">
+          <span>Charlie Freeman</span>
+          <span>·</span>
+          <span>Shanghai</span>
+          <span>·</span>
+          <a href="https://github.com/cf3901646" target="_blank" rel="noopener">GitHub ↗</a>
+          <a href="mailto:cf3901646@gmail.com">Letter ↗</a>
+        </div>
+      </section>
+
+      <div class="crease-divider" aria-hidden="true"></div>
+
+      <!-- 2. 代表作品 -->
+      <ProjectList projects={sortedProjects} />
+
+      <div class="crease-divider" aria-hidden="true"></div>
+
+      <!-- 3. 数字花园笔记 -->
+      <GardenList posts={publishedPosts} />
+
+      <!-- 尾注 -->
+      <Footer />
+
+    </article>
+  </main>
+</Layout>
+
+<style>
+  .content-sanctuary {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    background-color: var(--paper-base);
+    display: flex;
+    justify-content: center;
+    padding: 6.5rem 1.75rem 11rem;
+  }
+
+  .reading-spine {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    gap: 6.5rem;
+  }
+
+  .crease-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--paper-crease);
+    box-shadow: 0 1px 0 var(--paper-highlight);
+    margin: 1.5rem 0;
+  }
+
+  .section-eyebrow {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-whisper);
+  }
+
+  .section-eyebrow .index {
+    color: var(--amber-rim);
+    font-weight: 400;
+  }
+
+  .intro-paragraph {
+    font-family: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
+    font-size: clamp(1.3rem, 2.2vw, 1.65rem);
+    font-weight: 400;
+    line-height: 1.95;
+    color: var(--ink-deep);
+    letter-spacing: 0.015em;
+  }
+
+  .kinetic-text-line {
+    display: inline;
+    transition: color 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+    opacity: 0.32;
+    color: var(--ink-whisper);
+  }
+
+  :global(.kinetic-text-line.is-active) {
+    opacity: 1 !important;
+    color: var(--ink-deep) !important;
+  }
+
+  .intro-meta {
+    margin-top: 2.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .intro-meta a {
+    color: var(--ink-muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--paper-crease);
+    padding-bottom: 1px;
+    transition: color 0.25s ease, border-color 0.25s ease;
+  }
+
+  .intro-meta a:hover {
+    color: var(--amber-rim);
+    border-bottom-color: var(--amber-rim);
+  }
+
+  @media (max-width: 640px) {
+    .content-sanctuary {
+      padding: 4.5rem 1.25rem 7rem;
+    }
+    .reading-spine {
+      gap: 4.5rem;
+    }
+  }
+</style>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // 1. 首屏斜阳与活字随滚动优雅淡出与微视差
+  const sunbeam = document.getElementById('sunbeam');
+  const gobo = document.getElementById('gobo');
+  const letterpressStage = document.getElementById('letterpress-stage');
+
+  if (sunbeam && gobo && letterpressStage) {
+    ScrollTrigger.create({
+      trigger: "#hero",
+      start: "top top",
+      end: "bottom top",
+      scrub: true,
+      onUpdate: (self) => {
+        const p = self.progress;
+        const heroOpacity = Math.max(0, 1 - p * 1.25);
+        sunbeam.style.opacity = String(heroOpacity);
+        gobo.style.opacity = String(heroOpacity * 0.74);
+        letterpressStage.style.opacity = String(Math.max(0, 1 - p * 1.6));
+        letterpressStage.style.transform = `translateY(${p * 220}px) scale(${1 - p * 0.05})`;
+      }
+    });
+  }
+
+  // 2. 序言文字：滚动到达时逐行由浅凝深（Kinetic Focus）
+  const kineticLines = document.querySelectorAll('.kinetic-text-line');
+  kineticLines.forEach((line) => {
+    ScrollTrigger.create({
+      trigger: line,
+      start: "top 78%",
+      end: "bottom 22%",
+      onEnter: () => line.classList.add('is-active'),
+      onLeave: () => line.classList.remove('is-active'),
+      onEnterBack: () => line.classList.add('is-active'),
+      onLeaveBack: () => line.classList.remove('is-active'),
+    });
+  });
+
+  // 3. 项目条目：滚至屏幕正中央黄金视口时自动展开抽屉详情
+  const projectItems = document.querySelectorAll('.project-item');
+  projectItems.forEach((item) => {
+    ScrollTrigger.create({
+      trigger: item,
+      start: "top 62%",
+      end: "bottom 38%",
+      onEnter: () => item.classList.add('is-unfolded'),
+      onLeave: () => item.classList.remove('is-unfolded'),
+      onEnterBack: () => item.classList.add('is-unfolded'),
+      onLeaveBack: () => item.classList.remove('is-unfolded'),
+    });
+  });
+</script>
