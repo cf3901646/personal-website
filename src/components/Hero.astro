@@ -1,156 +1,61 @@
 ---
 // src/components/Hero.astro
-// 纯矢量级高保真视网膜架构：零拉伸、无损 4K 分辨率无关斜阳光影与活字压痕
-import fs from 'node:fs';
-import path from 'node:path';
-
-// 读取纯矢量枝叶与窗影路径
-const leavesPath = fs.readFileSync(path.resolve('./public/leaves_path.txt'), 'utf-8');
-const slatsPath = fs.readFileSync(path.resolve('./public/slats_path.txt'), 'utf-8');
+// 基于 3901646.xyz 专属数学流形程序化生成（纯代码 Canvas 纤维斜阳 ＋ SVG 凹印字槽）
 ---
 
 <section class="hero-sanctuary" id="hero">
-  <!-- 1. 视网膜级温润档案棉纸基底 -->
-  <div class="sunlit-paper-canvas" aria-hidden="true"></div>
+  <!-- 1. 纯代码 SVG 凹印微光学滤镜定义 -->
+  <svg class="filter-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <filter id="pressed-ink" x="-10%" y="-30%" width="120%" height="170%" color-interpolation-filters="sRGB">
+        <!-- 字槽下沿接光，内侧的上沿落下细小阴影 -->
+        <feGaussianBlur in="SourceAlpha" stdDeviation=".4" result="soft-alpha" />
+        <feOffset in="soft-alpha" dx=".35" dy="1.3" result="lower-edge" />
+        <feComposite in="lower-edge" in2="SourceAlpha" operator="out" result="rim" />
+        <feFlood flood-color="#fffae9" flood-opacity=".95" />
+        <feComposite in2="rim" operator="in" result="lit-rim" />
+        <feOffset in="SourceAlpha" dx=".6" dy="1.05" result="shifted" />
+        <feComposite in="SourceAlpha" in2="shifted" operator="out" result="inset-edge" />
+        <feGaussianBlur in="inset-edge" stdDeviation=".35" result="inset-soft" />
+        <feFlood flood-color="#6e553c" flood-opacity=".8" />
+        <feComposite in2="inset-soft" operator="in" result="inset-shadow" />
+        <feMerge>
+          <feMergeNode in="lit-rim" />
+          <feMergeNode in="SourceGraphic" />
+          <feMergeNode in="inset-shadow" />
+        </feMerge>
+      </filter>
+    </defs>
+  </svg>
 
-  <!-- 2. 纯数学斜阳光束漫反射层 (3200K 暖阳斜穿，无损矢量渐变) -->
-  <div class="sunbeam-cone" aria-hidden="true"></div>
+  <!-- 2. 日光与多尺度纸张纤维纯代码画布 -->
+  <div class="paper-stage">
+    <canvas id="surface" aria-hidden="true"></canvas>
 
-  <!-- 3. 纯矢量级树影与百叶窗影 Gobo 遮罩层 (100% 矢量路径 + 硬件级半影羽化，在 4K/8K 屏幕绝不模糊) -->
-  <div class="gobo-shadow-overlay" id="gobo-overlay" aria-hidden="true">
-    <svg
-      class="gobo-svg"
-      viewBox="0 0 1000 1000"
-      preserveAspectRatio="xMidYMid slice"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <!-- 真实漫反射半影软焦滤镜 (Penumbra Blur) -->
-        <filter id="gobo-penumbra" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="15" />
-        </filter>
-      </defs>
+    <!-- 3. 中央活字压印邮箱核心标题 -->
+    <div class="letterpress-wrap" id="letterpress-wrap">
+      <h1>
+        <button
+          type="button"
+          class="letterpress-btn"
+          id="email-btn"
+          aria-label="点击复制邮箱 cf3901646@gmail.com"
+          title="点击拓印复制 cf3901646@gmail.com"
+        >
+          cf3901646@gmail.com
+        </button>
+      </h1>
 
-      <!-- 摇曳植物枝叶群与百叶窗窗格矢量投影 -->
-      <g filter="url(#gobo-penumbra)" class="botanical-sway-group">
-        <!-- 百叶窗格阴影条纹 -->
-        <path d={slatsPath} class="gobo-slats" />
-        <!-- 52 片自然有机植物叶片与枝桠群 -->
-        <path d={leavesPath} class="gobo-leaves" />
-      </g>
-    </svg>
-  </div>
-
-  <!-- 4. 视网膜 Retina 高清悬浮金尘粒子画布 -->
-  <canvas id="dust-canvas" aria-hidden="true"></canvas>
-
-  <!-- 5. 核心：纯矢量 SVG 活字压痕 (Blind Letterpress Deboss with 3D Relighting) -->
-  <div class="letterpress-stage" id="letterpress-stage">
-    <button
-      type="button"
-      class="email-press-btn"
-      id="email-btn"
-      aria-label="复制邮箱 cf3901646@gmail.com"
-      title="点击拓印复制 cf3901646@gmail.com"
-    >
-      <svg
-        class="deboss-svg"
-        viewBox="0 0 960 200"
-        xmlns="http://www.w3.org/2000/svg"
-        id="deboss-svg"
-      >
-        <defs>
-          <!-- 工业级活字凹印光学法线滤镜 (负 surfaceScale 实现向内凹陷深坑) -->
-          <filter id="blind-deboss" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="linearRGB">
-            <!-- 1. 边缘斜坡坡度 (Bevel Heightmap) -->
-            <feGaussianBlur in="SourceAlpha" stdDeviation="1.6" result="blurredAlpha" />
-
-            <!-- 2. 漫反射下凹受光 (负 surfaceScale) -->
-            <feDiffuseLighting in="blurredAlpha" surfaceScale="-4.2" diffuseConstant="1.25" lighting-color="#ffffff" result="diffuseBump">
-              <fePointLight id="pl-deboss" x="480" y="100" z="65" />
-            </feDiffuseLighting>
-
-            <!-- 3. 镜面柔焦微高光 (Specular Rim Highlight) -->
-            <feSpecularLighting in="blurredAlpha" surfaceScale="-3.2" specularConstant="0.45" specularExponent="16" lighting-color="#fff8ea" result="specularBump">
-              <fePointLight id="pl-specular" x="480" y="100" z="65" />
-            </feSpecularLighting>
-
-            <!-- 4. 组合漫反射与文字 Alpha -->
-            <feComposite in="diffuseBump" in2="SourceAlpha" operator="in" result="litDeboss" />
-            <feBlend in="litDeboss" in2="specularBump" mode="screen" result="shadedDeboss" />
-
-            <!-- 5. 凹陷深处致密加深 (Cavity Compaction) -->
-            <feColorMatrix in="SourceAlpha" type="matrix"
-              values="0 0 0 0 0.22
-                      0 0 0 0 0.19
-                      0 0 0 0 0.15
-                      0 0 0 0 0.14 0" result="cavityTone" />
-
-            <feMerge>
-              <feMergeNode in="cavityTone" />
-              <feMergeNode in="shadedDeboss" />
-            </feMerge>
-          </filter>
-
-          <!-- 同源数字 3901646 琥珀金微光渐变 -->
-          <linearGradient id="amber-sunlit-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#dfa45c" />
-            <stop offset="50%" stop-color="#c98e4d" />
-            <stop offset="100%" stop-color="#b87b38" />
-          </linearGradient>
-        </defs>
-
-        <!-- 活字压印文字排版 (纯矢量文字，在 Retina / 4K 上极度锐利，永不模糊) -->
-        <g class="letterpress-group">
-          <!-- 前缀 cf -->
-          <text
-            x="95"
-            y="125"
-            font-family="'Cormorant Garamond', Georgia, serif"
-            font-size="68"
-            font-weight="400"
-            letter-spacing="2"
-            fill="#e2dacb"
-            filter="url(#blind-deboss)"
-          >cf</text>
-
-          <!-- 核心同源数字 3901646 -->
-          <text
-            x="162"
-            y="125"
-            font-family="'Cormorant Garamond', Georgia, serif"
-            font-size="68"
-            font-weight="500"
-            letter-spacing="3"
-            fill="url(#amber-sunlit-grad)"
-            filter="url(#blind-deboss)"
-            class="sunlit-digits"
-          >3901646</text>
-
-          <!-- 后缀 @gmail.com -->
-          <text
-            x="485"
-            y="125"
-            font-family="'Cormorant Garamond', Georgia, serif"
-            font-size="68"
-            font-weight="400"
-            letter-spacing="2"
-            fill="#e2dacb"
-            filter="url(#blind-deboss)"
-          >@gmail.com</text>
-        </g>
-      </svg>
-    </button>
-
-    <div class="copy-whisper" id="copy-whisper" role="status" aria-live="polite">
-      已拓印至剪贴板 · 3901646.xyz
+      <div class="copy-whisper" id="copy-whisper" role="status" aria-live="polite">
+        已拓印至剪贴板 · 3901646.xyz
+      </div>
     </div>
-  </div>
 
-  <!-- 底部呼吸导引线 -->
-  <a href="#sanctuary-content" class="scroll-whisper" aria-label="向下滚动阅读">
-    <span class="scroll-line"></span>
-  </a>
+    <!-- 4. 底部微弱呼吸导引 -->
+    <a href="#sanctuary-content" class="scroll-whisper" aria-label="向下滚动阅读">
+      <span class="scroll-line"></span>
+    </a>
+  </div>
 </section>
 
 <style>
@@ -158,173 +63,121 @@ const slatsPath = fs.readFileSync(path.resolve('./public/slats_path.txt'), 'utf-
     position: relative;
     width: 100vw;
     height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    min-height: 100svh;
     overflow: hidden;
-    background-color: #f7f4ec;
+    background: #ded7c6;
+    isolation: isolate;
   }
 
-  /* 1. 视网膜级温润白垩棉纸基底：数学径向渐变，零栅格噪点、无损高清 */
-  .sunlit-paper-canvas {
+  .filter-definitions {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(
-      ellipse 110% 95% at 70% 30%,
-      #fefcf6 0%,
-      #f8f4ec 40%,
-      #ede6d6 85%,
-      #e2d9c4 100%
-    );
-    z-index: 1;
-    pointer-events: none;
-  }
-
-  /* 2. 斜阳主光束层 (3200K 暖金入射，穿透窗棱) */
-  .sunbeam-cone {
-    position: absolute;
-    inset: -30%;
-    z-index: 2;
-    pointer-events: none;
-    transform: rotate(-32deg);
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 250, 235, 0.08) 18%,
-      rgba(255, 244, 212, 0.42) 38%,
-      rgba(255, 248, 225, 0.68) 50%,
-      rgba(255, 240, 205, 0.38) 62%,
-      rgba(255, 248, 230, 0.08) 82%,
-      transparent 100%
-    );
-    filter: blur(28px);
-    mix-blend-mode: soft-light;
-    animation: sunbeamBreeze 18s ease-in-out infinite alternate;
-  }
-
-  @keyframes sunbeamBreeze {
-    0%   { transform: rotate(-32deg) translateY(0) scale(1); }
-    100% { transform: rotate(-30.5deg) translateY(-12px) scale(1.02); }
-  }
-
-  /* 3. 矢量树影与窗格 Gobo 遮罩层 */
-  .gobo-shadow-overlay {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 3;
+    width: 0;
+    height: 0;
     overflow: hidden;
-    opacity: 0.72;
-    mix-blend-mode: multiply;
+    pointer-events: none;
   }
 
-  .gobo-svg {
+  .paper-stage {
+    position: relative;
+    display: grid;
+    place-items: center;
     width: 100%;
     height: 100%;
-    display: block;
+    min-height: 100svh;
+    isolation: isolate;
+    background:
+      radial-gradient(ellipse at 65% 30%, #fff7df99, transparent 60%),
+      linear-gradient(143deg, #d4cebf, #eee8d5 52%, #d9d1c0);
   }
 
-  /* 百叶窗格阴影 */
-  .gobo-slats {
-    fill: rgba(85, 72, 54, 0.32);
-  }
-
-  /* 有机植物枝叶阴影 */
-  .gobo-leaves {
-    fill: rgba(68, 56, 40, 0.48);
-  }
-
-  /* 微风吹拂植物枝叶摇曳 */
-  .botanical-sway-group {
-    transform-origin: 85% 15%;
-    animation: botanicalSway 14s ease-in-out infinite alternate;
-  }
-
-  @keyframes botanicalSway {
-    0% {
-      transform: rotate(0deg) translate(0, 0) scale(1);
-    }
-    50% {
-      transform: rotate(1.2deg) translate(-8px, 6px) scale(1.015);
-    }
-    100% {
-      transform: rotate(-0.8deg) translate(5px, -4px) scale(0.995);
-    }
-  }
-
-  /* 4. 浮尘粒子画布 */
-  #dust-canvas {
+  .paper-stage canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 4;
   }
 
-  /* 5. 活字压印交互舞台 */
-  .letterpress-stage {
+  .paper-stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 36%, #9a8b6d0b 100%);
+  }
+
+  .letterpress-wrap {
     position: relative;
     z-index: 10;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 1rem;
     user-select: none;
+    will-change: transform, opacity;
   }
 
-  .email-press-btn {
+  h1 {
+    margin: 0;
+    font-size: inherit;
+    font-weight: normal;
+  }
+
+  .letterpress-btn {
+    display: block;
     background: none;
     border: none;
-    padding: 0;
+    padding: 0.5rem 1rem;
     cursor: pointer;
+    font-family: "Times New Roman", "Baskerville", "Cormorant Garamond", serif;
+    font-size: clamp(26px, 4.8vw, 96px);
+    font-weight: 400;
+    font-kerning: normal;
+    line-height: 1.15;
+    letter-spacing: .006em;
+    white-space: nowrap;
+    text-decoration: none;
+    color: #b6a48b;
+    background: linear-gradient(102deg,
+      #c9bfaa 0%, #d9c5a4 12%, #e4c292 24%, #e4c69b 43%,
+      #cdbca0 54%, #d5c7af 75%, #cbbfa9 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: url(#pressed-ink);
+    transform: translateY(1px);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
     outline: none;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .email-press-btn:hover {
-    transform: translateY(-2px);
+  .letterpress-btn:hover {
+    transform: translateY(-1px);
+    filter: url(#pressed-ink) drop-shadow(0 0 12px rgba(228, 194, 146, 0.45));
   }
 
-  .email-press-btn:hover .sunlit-digits {
-    filter: drop-shadow(0 0 10px rgba(228, 160, 76, 0.65));
+  .letterpress-btn:active {
+    transform: translateY(2px) scale(0.995);
   }
 
-  .email-press-btn:active {
-    transform: translateY(1px) scale(0.995);
+  .letterpress-btn:focus-visible {
+    outline: 1px solid #8a795f;
+    outline-offset: 12px;
+    border-radius: 2px;
   }
 
-  .deboss-svg {
-    width: clamp(340px, 70vw, 920px);
-    height: auto;
-    display: block;
-    overflow: visible;
-  }
-
-  .sunlit-digits {
-    transition: filter 0.4s ease;
-  }
-
-  /* 拓印成功提示 */
   .copy-whisper {
-    margin-top: 1.25rem;
-    font-family: 'Noto Serif SC', 'Cormorant Garamond', Georgia, serif;
+    margin-top: 1rem;
+    font-family: 'Noto Serif SC', 'Times New Roman', serif;
     font-size: 0.82rem;
-    letter-spacing: 0.24em;
-    color: rgba(135, 108, 72, 0);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.22em;
+    color: rgba(135, 110, 78, 0);
+    text-shadow: 0 1px 0 rgba(255, 252, 245, 0.7);
     transition: color 0.5s ease, transform 0.5s ease;
     transform: translateY(6px);
     pointer-events: none;
   }
 
   :global(.copy-whisper.visible) {
-    color: rgba(135, 108, 72, 0.95) !important;
+    color: rgba(135, 110, 78, 0.95) !important;
     transform: translateY(0) !important;
   }
 
@@ -360,37 +213,25 @@ const slatsPath = fs.readFileSync(path.resolve('./public/slats_path.txt'), 'utf-
     0%, 100% { transform: scaleY(0.85); opacity: 0.45; }
     50% { transform: scaleY(1.15); opacity: 1; }
   }
+
+  @media (max-width: 600px) {
+    .letterpress-btn {
+      font-size: 7.3vw;
+      letter-spacing: -.035em;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .letterpress-btn {
+      background: none;
+      -webkit-text-fill-color: LinkText;
+      filter: none;
+    }
+  }
 </style>
 
 <script>
-  // 1. 光标三维点光源与 SVG 活字凹印滤镜联动 (Optical Relighting)
-  const svg = document.getElementById('deboss-svg');
-  const lightDiffuse = document.getElementById('pl-deboss');
-  const lightSpecular = document.getElementById('pl-specular');
-  const goboGroup = document.querySelector('.botanical-sway-group') as SVGGraphicsElement | null;
-
-  window.addEventListener('pointermove', (e) => {
-    if (!svg || !lightDiffuse || !lightSpecular) return;
-    const rect = svg.getBoundingClientRect();
-
-    // 映射到 SVG 960x200 视口坐标
-    const svgX = ((e.clientX - rect.left) / rect.width) * 960;
-    const svgY = ((e.clientY - rect.top) / rect.height) * 200;
-
-    lightDiffuse.setAttribute('x', svgX.toFixed(1));
-    lightDiffuse.setAttribute('y', svgY.toFixed(1));
-    lightSpecular.setAttribute('x', svgX.toFixed(1));
-    lightSpecular.setAttribute('y', svgY.toFixed(1));
-
-    // 树影微视差联动
-    if (goboGroup) {
-      const nx = (e.clientX / window.innerWidth) - 0.5;
-      const ny = (e.clientY / window.innerHeight) - 0.5;
-      goboGroup.style.transform = `translate(${(nx * -15).toFixed(1)}px, ${(ny * -10).toFixed(1)}px)`;
-    }
-  }, { passive: true });
-
-  // 2. 点击拓印复制邮箱
+  // 1. 点击拓印复制邮箱
   const emailBtn = document.getElementById('email-btn');
   const copyWhisper = document.getElementById('copy-whisper');
   let whisperTimer: number | undefined;
@@ -413,64 +254,181 @@ const slatsPath = fs.readFileSync(path.resolve('./public/slats_path.txt'), 'utf-
     }, 2400);
   });
 
-  // 3. Retina 级高清适配悬浮金尘粒子
-  const canvas = document.getElementById('dust-canvas') as HTMLCanvasElement | null;
-  if (canvas) {
-    const ctx = canvas.getContext('2d');
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // 2. 3901646 专属程序化高保真日光、纸张与树影引擎
+  (() => {
+    const settings = { grain: 1, shadow: .62 };
+    const W = 1376, H = 768;
+    const canvas = document.querySelector('#surface') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { alpha: false });
+    if (!ctx) return;
 
-    let cssWidth = window.innerWidth;
-    let cssHeight = window.innerHeight;
-
-    function resizeCanvas() {
-      if (!canvas || !ctx) return;
-      cssWidth = window.innerWidth;
-      cssHeight = window.innerHeight;
-      canvas.width = cssWidth * dpr;
-      canvas.height = cssHeight * dpr;
-      ctx.scale(dpr, dpr);
+    function random(seed: number) {
+      return () => {
+        seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+        let n = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        n = n + Math.imul(n ^ n >>> 7, 61 | n) ^ n;
+        return ((n ^ n >>> 14) >>> 0) / 4294967296;
+      };
     }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas, { passive: true });
 
-    const DUST_COUNT = 32;
-    const motes = Array.from({ length: DUST_COUNT }, () => ({
-      x: Math.random() * cssWidth,
-      y: Math.random() * cssHeight,
-      r: 0.65 + Math.random() * 1.35,
-      vx: 0.07 + Math.random() * 0.16,
-      vy: -0.05 - Math.random() * 0.13,
-      phase: Math.random() * Math.PI * 2,
-      speed: 0.007 + Math.random() * 0.014
-    }));
+    function layer(w = W, h = H) {
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      return c;
+    }
 
-    function renderDust() {
-      if (!ctx) return;
-      ctx.clearRect(0, 0, cssWidth, cssHeight);
-      for (const m of motes) {
-        m.x += m.vx;
-        m.y += m.vy;
-        m.phase += m.speed;
+    function noiseField(cell: number, rng: () => number) {
+      const columns = Math.ceil(W / cell) + 2;
+      const rows = Math.ceil(H / cell) + 2;
+      const values = Float32Array.from({ length: columns * rows }, () => rng() * 2 - 1);
+      return (x: number, y: number) => {
+        const gx = x / cell, gy = y / cell;
+        const ix = Math.floor(gx), iy = Math.floor(gy);
+        let u = gx - ix, v = gy - iy;
+        u = u * u * (3 - 2 * u); v = v * v * (3 - 2 * v);
+        const i = iy * columns + ix;
+        return (values[i] * (1 - u) + values[i + 1] * u) * (1 - v)
+          + (values[i + columns] * (1 - u) + values[i + columns + 1] * u) * v;
+      };
+    }
 
-        if (m.x > cssWidth + 10) m.x = -10;
-        if (m.y < -10) m.y = cssHeight + 10;
-
-        // 斜阳对角线光锥通道检测
-        const diagDist = Math.abs((m.x / cssWidth) + (m.y / cssHeight) - 1.02);
-        const sunFactor = Math.max(0.1, 1 - diagDist * 2.0);
-        const alpha = (0.22 + 0.52 * Math.sin(m.phase)) * sunFactor;
-
-        if (alpha > 0.05) {
-          ctx.beginPath();
-          ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 242, 210, ${alpha.toFixed(3)})`;
-          ctx.shadowColor = 'rgba(235, 175, 85, 0.55)';
-          ctx.shadowBlur = 5;
-          ctx.fill();
-        }
+    // 多尺度的随机纤维与色斑烘焙一次 (使用专属种子 3901646)
+    const paper = layer();
+    const p = paper.getContext('2d')!;
+    const pixels = p.createImageData(W, H);
+    const rng = random(3901646);
+    const cloud = noiseField(125, rng);
+    const pulp = noiseField(22, rng);
+    const fiber = noiseField(3, rng);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const cross = x * .56 + y * .83;
+        const beam = Math.exp(-Math.pow((cross - 650) / 230, 2));
+        const ribbons = Math.sin(cross / 21 + cloud(x, y) * .8 + x / 650)
+          * 5.5 + Math.sin(cross / 43 + x / 300) * 4;
+        const light = beam * (28 + ribbons);
+        const tooth = ((rng() + rng() - 1) * 5.5 + fiber(x, y) * 2.4
+          + pulp(x, y) * 1.6) * settings.grain;
+        const shade = cloud(x, y) * 3.5 + tooth;
+        const i = (y * W + x) * 4;
+        pixels.data[i] = 219 + light + shade;
+        pixels.data[i + 1] = 213 + light + shade;
+        pixels.data[i + 2] = 196 + light * .94 + shade;
+        pixels.data[i + 3] = 255;
       }
-      requestAnimationFrame(renderDust);
     }
-    renderDust();
-  }
+    p.putImageData(pixels, 0, 0);
+
+    // 稀疏、细碎的纸浆纤维
+    const fleckRng = random(160);
+    for (let i = 0; i < 15500; i++) {
+      const x = fleckRng() * W, y = fleckRng() * H;
+      const length = .3 + fleckRng() * 2.2;
+      p.strokeStyle = fleckRng() > .5 ? 'rgba(112,91,60,.055)' : 'rgba(255,253,228,.16)';
+      p.lineWidth = .3 + fleckRng() * .5;
+      p.beginPath(); p.moveTo(x, y);
+      p.lineTo(x + length, y - fleckRng() * 1.2); p.stroke();
+    }
+
+    const shade = layer();
+    const s = shade.getContext('2d')!;
+    const leavesRng = random(27);
+
+    function leaf(x: number, y: number, length: number, width: number, angle: number, opacity: number) {
+      s.save();
+      s.translate(x, y); s.rotate(angle);
+      s.fillStyle = `rgba(72,73,52,${opacity})`;
+      s.beginPath(); s.moveTo(0, 0);
+      s.bezierCurveTo(length * .28, -width * .7, length * .72, -width * .65, length, 0);
+      s.bezierCurveTo(length * .68, width * .42, length * .22, width * .7, 0, 0);
+      s.fill(); s.restore();
+    }
+
+    // 斜射光把枝叶的影子拉长
+    const branches = [
+      [1410, -80, 940, 510, 20],
+      [1230, -105, 810, 480, 20],
+      [1110, -120, 640, 480, 16],
+      [1520, 40, 1130, 490, 18],
+      [1310, -120, 980, 380, 19],
+      [1480, -60, 1070, 400, 18]
+    ];
+    for (const [x0, y0, x1, y1, count] of branches) {
+      s.beginPath(); s.moveTo(x0, y0);
+      s.quadraticCurveTo(x0 - 150, y1 * .56, x1, y1);
+      s.strokeStyle = 'rgba(68,69,51,.18)'; s.lineWidth = 9;
+      s.lineCap = 'round'; s.stroke();
+      for (let i = 0; i < count; i++) {
+        const t = (i + .3 + leavesRng() * .6) / count;
+        const q = 1 - t;
+        const x = q * q * x0 + 2 * q * t * (x0 - 150) + t * t * x1;
+        const y = q * q * y0 + 2 * q * t * (y1 * .56) + t * t * y1;
+        const side = i % 2 === 0 ? 1 : -1;
+        const angle = side > 0 ? -.92 + leavesRng() * .5 : 2.28 + leavesRng() * .45;
+        leaf(x + (leavesRng() - .5) * 40, y, 65 + leavesRng() * 150, 12 + leavesRng() * 26,
+          angle, (.14 + leavesRng() * .20) * (1 - t * .60));
+      }
+    }
+
+    const scene = layer();
+    const c = scene.getContext('2d')!;
+    c.drawImage(paper, 0, 0);
+    c.save();
+    c.filter = 'blur(7px)';
+    c.globalAlpha = settings.shadow;
+    c.drawImage(shade, 0, 0);
+    c.restore();
+
+    // 更远处的枝叶在左下形成宽而散的影子
+    c.save();
+    c.filter = 'blur(19px)';
+    c.lineCap = 'round';
+    const distant = [
+      [-90, 775, 370, 625, 790, 180, 28, .20],
+      [90, 860, 490, 555, 1010, 125, 30, .24],
+      [420, 875, 695, 615, 1240, 205, 36, .25],
+      [640, 900, 860, 610, 1300, 400, 25, .16],
+      [130, 785, 300, 670, 380, 580, 55, .11]
+    ];
+    for (const [x, y, cx, cy, ex, ey, width, alpha] of distant) {
+      c.strokeStyle = `rgba(92,88,64,${alpha * settings.shadow})`;
+      c.lineWidth = width;
+      c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(cx, cy, ex, ey); c.stroke();
+    }
+    c.restore();
+
+    // 日光中极少量的亮尘
+    const dust = random(18);
+    for (let i = 0; i < 26; i++) {
+      const x = 190 + dust() * 430, y = 120 + dust() * 520;
+      const r = .45 + dust() * 1.45;
+      c.beginPath();
+      c.fillStyle = `rgba(255,244,195,${.3 + dust() * .45})`;
+      c.shadowColor = '#fff5d0'; c.shadowBlur = 3;
+      c.ellipse(x, y, r, r * .72, -.5, 0, Math.PI * 2); c.fill();
+    }
+    c.shadowBlur = 0;
+
+    function render() {
+      if (!canvas || !ctx) return;
+      const width = window.innerWidth, height = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const scale = Math.max(width / W, height / H);
+      const left = (width - W * scale) / 2;
+      const top = (height - H * scale) / 2;
+      ctx.drawImage(scene, left, top, W * scale, H * scale);
+    }
+
+    let frame: number;
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(render);
+    }, { passive: true });
+    render();
+  })();
 </script>

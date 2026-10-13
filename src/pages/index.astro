@@ -173,10 +173,10 @@ const publishedPosts = allPosts.filter(p => !p.data.draft);
 
   // 首屏高保真光影与活字随滚动优雅视差淡出
   const heroSection = document.getElementById('hero');
-  const letterpressStage = document.getElementById('letterpress-stage');
-  const heroBgPhoto = document.getElementById('hero-bg-img');
+  const letterpressWrap = document.getElementById('letterpress-wrap');
+  const surfaceCanvas = document.getElementById('surface');
 
-  if (heroSection && letterpressStage) {
+  if (heroSection && letterpressWrap) {
     ScrollTrigger.create({
       trigger: heroSection,
       start: "top top",
@@ -185,10 +185,10 @@ const publishedPosts = allPosts.filter(p => !p.data.draft);
       onUpdate: (self) => {
         const p = self.progress;
         const opacity = Math.max(0, 1 - p * 1.35);
-        letterpressStage.style.opacity = String(opacity);
-        letterpressStage.style.transform = `translateY(${p * 180}px) scale(${1 - p * 0.04})`;
-        if (heroBgPhoto) {
-          heroBgPhoto.style.opacity = String(Math.max(0, 1 - p * 1.15));
+        letterpressWrap.style.opacity = String(opacity);
+        letterpressWrap.style.transform = `translateY(${p * 180}px) scale(${1 - p * 0.04})`;
+        if (surfaceCanvas) {
+          surfaceCanvas.style.opacity = String(Math.max(0, 1 - p * 1.15));
         }
       }
     });
