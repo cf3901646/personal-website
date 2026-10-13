@@ -7,18 +7,28 @@
   <meta name="description" content="3901646.xyz · AI & Tools Digital Garden · cf3901646@gmail.com" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+SC:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Noto+Serif+SC:wght@300;400;500&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet" />
   <style>
     :root {
+      /* 全站严格统一的暖棉纸色盘（与开场图 100% 相同底色，绝不跳色） */
       --paper-base: #e6dfd1;
       --paper-warm: #efe8da;
       --paper-shadow: #cfc6b4;
+      --paper-crease: rgba(140, 127, 106, 0.22);
+      --paper-highlight: rgba(255, 251, 242, 0.75);
+
+      /* 墨色层级（极致可读性） */
+      --ink-deep: #24201b;      /* 最深墨色：核心标题 */
+      --ink-body: #423b32;      /* 正文字墨：舒适可读 */
+      --ink-muted: #7d7262;     /* 次要说明与日期 */
+      --ink-whisper: #a89d8c;   /* 极淡注脚与虚化文字 */
+
+      /* 暖阳与压痕微光 */
       --sun-core: rgba(255, 247, 226, 0.78);
       --sun-glow: rgba(247, 223, 176, 0.42);
       --amber-rim: #c88d48;
-      --amber-bright: #e0a358;
-      --deboss-ink: #b8ae9c;
-      --deboss-deep: #8c7f6a;
+
+      /* 动态光影参数 */
       --light-angle-x: -1px;
       --light-angle-y: -1.5px;
       --highlight-x: 1.5px;
@@ -33,23 +43,42 @@
       padding: 0;
     }
 
-    html, body {
-      width: 100%;
-      height: 100%;
+    html {
+      scroll-behavior: smooth;
       background-color: var(--paper-base);
-      color: #5c5346;
+    }
+
+    body {
+      width: 100%;
+      min-height: 100%;
+      background-color: var(--paper-base);
+      color: var(--ink-body);
       font-family: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
-      selection-background-color: rgba(200, 141, 72, 0.2);
+      line-height: 1.8;
+      position: relative;
     }
 
     ::selection {
       background: rgba(200, 141, 72, 0.18);
-      color: #4a3f31;
+      color: var(--ink-deep);
     }
 
-    /* 第一幕：首屏留白序幕（午后斜阳 · 活字压痕） */
+    /* 全局纸张质感底噪（贯穿首屏与后续页面，材质一体） */
+    .paper-grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0.38;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.9 0 0 0 0.05  0 0.86 0 0 0.04  0 0 0.8 0 0.02  0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
+    }
+
+    /* ============================================================
+       幕 I · 开场序幕（首屏：午后斜阳 · 活字压痕 cf3901646@gmail.com）
+       ============================================================ */
     .hero-sanctuary {
       position: relative;
       width: 100vw;
@@ -58,51 +87,36 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      background:
-        radial-gradient(ellipse 90% 80% at 62% 38%, var(--paper-warm) 0%, var(--paper-base) 58%, #dcd3c2 100%);
-      cursor: default;
+      background: radial-gradient(ellipse 90% 80% at 62% 38%, var(--paper-warm) 0%, var(--paper-base) 62%, #dcd3c2 100%);
+      will-change: opacity, transform;
     }
 
-    /* 亚麻棉纸纤维噪点层 */
-    .paper-grain {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 2;
-      opacity: 0.42;
-      mix-blend-mode: multiply;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0.9 0 0 0 0.05  0 0.86 0 0 0.04  0 0 0.8 0 0.02  0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
-    }
-
-    /* 斜阳丁达尔主光束与树叶百叶窗斑驳树影 (Gobo Light) */
     .sunbeam-layer {
       position: absolute;
       inset: -15%;
       pointer-events: none;
-      z-index: 3;
+      z-index: 2;
       transform: translate3d(var(--sun-shift-x), var(--sun-shift-y), 0) rotate(-32deg);
       transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-      background:
-        linear-gradient(
-          90deg,
-          transparent 0%,
-          rgba(214, 203, 185, 0.15) 28%,
-          var(--sun-glow) 41%,
-          var(--sun-core) 49%,
-          var(--sun-glow) 58%,
-          transparent 74%
-        );
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(214, 203, 185, 0.15) 28%,
+        var(--sun-glow) 41%,
+        var(--sun-core) 49%,
+        var(--sun-glow) 58%,
+        transparent 74%
+      );
       filter: blur(18px);
       mix-blend-mode: soft-light;
       animation: breezeSway 14s ease-in-out infinite alternate;
     }
 
-    /* 窗外枝叶与百叶窗投射的斑驳光影 */
     .gobo-dapple {
       position: absolute;
       inset: -10%;
       pointer-events: none;
-      z-index: 4;
+      z-index: 3;
       transform: translate3d(calc(var(--sun-shift-x) * 1.4), calc(var(--sun-shift-y) * 1.4), 0);
       transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
       opacity: 0.72;
@@ -129,17 +143,15 @@
       100% { transform: translate3d(calc(var(--sun-shift-x) * 1.4 - 18px), calc(var(--sun-shift-y) * 1.4 + 10px), 0) scale(1.04); }
     }
 
-    /* 阳光浮尘粒子画布 */
     #dust-canvas {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       pointer-events: none;
-      z-index: 5;
+      z-index: 4;
     }
 
-    /* 中央唯一的视觉核心：活字凹印邮箱 */
     .letterpress-stage {
       position: relative;
       z-index: 10;
@@ -162,24 +174,9 @@
       border: none;
       cursor: pointer;
       padding: 0.4em 0.6em;
-      transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease;
-      animation: imprintReveal 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @keyframes imprintReveal {
-      0% {
-        opacity: 0;
-        transform: scale(0.985);
-        filter: blur(3px);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1);
-        filter: blur(0);
-      }
-    }
-
-    /* 外围淡淡凹印的 cf 与 @gmail.com */
     .email-imprint .part-muted {
       color: rgba(182, 171, 153, 0.72);
       text-shadow:
@@ -189,7 +186,6 @@
       transition: color 0.5s ease, text-shadow 0.5s ease;
     }
 
-    /* 核心同源数字 3901646：被斜阳点亮的琥珀暖金压痕边缘 */
     .email-imprint .part-sunlit {
       position: relative;
       color: rgba(206, 158, 98, 0.88);
@@ -200,16 +196,11 @@
       transition: color 0.5s ease, text-shadow 0.5s ease;
     }
 
-    .email-imprint:hover {
-      transform: translateY(-1px);
-    }
-
     .email-imprint:hover .part-muted {
       color: rgba(166, 148, 124, 0.88);
       text-shadow:
         var(--light-angle-x) var(--light-angle-y) 1.8px rgba(98, 84, 64, 0.58),
-        var(--highlight-x) var(--highlight-y) 2.2px rgba(255, 252, 245, 0.95),
-        0 0 8px rgba(218, 176, 120, 0.18);
+        var(--highlight-x) var(--highlight-y) 2.2px rgba(255, 252, 245, 0.95);
     }
 
     .email-imprint:hover .part-sunlit {
@@ -220,11 +211,6 @@
         0 0 22px rgba(236, 176, 92, 0.45);
     }
 
-    .email-imprint:active {
-      transform: translateY(0.5px) scale(0.997);
-    }
-
-    /* 极淡的拓印反馈提示（仅在点击复制后浮现） */
     .copy-whisper {
       margin-top: 0.75rem;
       font-family: 'Noto Serif SC', 'Cormorant Garamond', serif;
@@ -242,7 +228,6 @@
       transform: translateY(0);
     }
 
-    /* 底部极简向下呼吸游丝 */
     .scroll-whisper {
       position: absolute;
       bottom: 2.2rem;
@@ -260,7 +245,7 @@
     }
 
     .scroll-whisper:hover {
-      opacity: 0.72;
+      opacity: 0.75;
     }
 
     .scroll-line {
@@ -275,17 +260,328 @@
       0%, 100% { transform: scaleY(0.85); opacity: 0.45; }
       50% { transform: scaleY(1.1); opacity: 0.9; }
     }
+
+    /* ============================================================
+       幕 II · 极简正文画布（无边框、无多余色块、极致排版与呼吸感）
+       ============================================================ */
+    .content-sanctuary {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      background-color: var(--paper-base);
+      display: flex;
+      justify-content: center;
+      padding: 6rem 1.75rem 10rem;
+    }
+
+    /* 居中黄金阅读书页（最大宽 720px） */
+    .reading-spine {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 6.5rem;
+    }
+
+    /* 极简纸张压槽分割线 */
+    .crease-divider {
+      width: 100%;
+      height: 1px;
+      background: var(--paper-crease);
+      box-shadow: 0 1px 0 var(--paper-highlight);
+      margin: 1.5rem 0;
+    }
+
+    /* 章节极简压痕眉标 */
+    .section-eyebrow {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--ink-whisper);
+    }
+
+    .section-eyebrow .index {
+      color: var(--amber-rim);
+      font-weight: 400;
+    }
+
+    /* ------------------------------------------------------------
+       1. 序言段落：滚动触发文字动态由淡凝深（Kinetic Focus）
+       ------------------------------------------------------------ */
+    .intro-section {
+      position: relative;
+    }
+
+    .intro-paragraph {
+      font-family: 'Cormorant Garamond', 'Noto Serif SC', serif;
+      font-size: clamp(1.28rem, 2.3vw, 1.68rem);
+      font-weight: 400;
+      line-height: 1.95;
+      color: var(--ink-deep);
+      letter-spacing: 0.015em;
+    }
+
+    /* 随滚动从虚化到凝结的文字片段 */
+    .kinetic-text-line {
+      display: inline;
+      transition: color 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+      opacity: 0.35;
+      color: var(--ink-whisper);
+    }
+
+    .kinetic-text-line.is-active {
+      opacity: 1;
+      color: var(--ink-deep);
+    }
+
+    .intro-meta {
+      margin-top: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+      letter-spacing: 0.08em;
+    }
+
+    .intro-meta a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      border-bottom: 1px solid var(--paper-crease);
+      padding-bottom: 1px;
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .intro-meta a:hover {
+      color: var(--amber-rim);
+      border-bottom-color: var(--amber-rim);
+    }
+
+    /* ------------------------------------------------------------
+       2. 代表作品流：无厚重卡片框！向下滚动才排版展开详情
+       ------------------------------------------------------------ */
+    .projects-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 2.75rem;
+    }
+
+    .project-item {
+      position: relative;
+      padding-bottom: 2.5rem;
+      border-bottom: 1px solid var(--paper-crease);
+      box-shadow: 0 1px 0 var(--paper-highlight);
+      transition: transform 0.4s ease;
+    }
+
+    /* 顶部常驻：大号清隽标题 + 序号 + 一句话 */
+    .project-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1.5rem;
+      cursor: pointer;
+    }
+
+    .project-title-group {
+      display: flex;
+      align-items: baseline;
+      gap: 1.25rem;
+    }
+
+    .project-index {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--ink-whisper);
+      letter-spacing: 0.1em;
+      transition: color 0.3s ease;
+    }
+
+    .project-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.5rem, 2.8vw, 2.15rem);
+      font-weight: 500;
+      color: var(--ink-deep);
+      letter-spacing: 0.01em;
+      transition: color 0.3s ease;
+    }
+
+    .project-year {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--ink-whisper);
+    }
+
+    .project-summary {
+      margin-top: 0.6rem;
+      margin-left: 2.25rem;
+      font-size: 0.98rem;
+      color: var(--ink-body);
+      line-height: 1.7;
+    }
+
+    /* 滚动到达焦点（或鼠标悬停）时才优雅舒展开的详情暗格 (Unfolding Details) */
+    .project-drawer {
+      margin-left: 2.25rem;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(-6px);
+      transition: max-height 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                  opacity 0.5s ease,
+                  transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                  margin-top 0.4s ease;
+    }
+
+    /* 展开状态 */
+    .project-item.is-unfolded .project-drawer,
+    .project-item:hover .project-drawer {
+      max-height: 180px;
+      opacity: 1;
+      transform: translateY(0);
+      margin-top: 1.25rem;
+    }
+
+    .project-item.is-unfolded .project-title,
+    .project-item:hover .project-title {
+      color: var(--amber-rim);
+    }
+
+    .project-item.is-unfolded .project-index,
+    .project-item:hover .project-index {
+      color: var(--ink-muted);
+    }
+
+    .project-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .tag-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--ink-muted);
+      padding: 0.15rem 0.65rem;
+      background: rgba(220, 211, 194, 0.45);
+      border: 1px solid var(--paper-crease);
+      box-shadow: 0 1px 0 var(--paper-highlight);
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+    }
+
+    .project-links {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+    }
+
+    .project-link {
+      color: var(--ink-deep);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border-bottom: 1px solid var(--paper-crease);
+      padding-bottom: 1px;
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .project-link:hover {
+      color: var(--amber-rim);
+      border-bottom-color: var(--amber-rim);
+    }
+
+    /* ------------------------------------------------------------
+       3. 思考花园（Writing / Notes）：极简时间与标题书单
+       ------------------------------------------------------------ */
+    .garden-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .garden-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1.5rem;
+      padding: 0.65rem 0;
+      border-bottom: 1px dashed rgba(160, 146, 125, 0.28);
+      text-decoration: none;
+      transition: transform 0.25s ease;
+    }
+
+    .garden-row:hover {
+      transform: translateX(4px);
+    }
+
+    .garden-title {
+      font-family: 'Noto Serif SC', 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      color: var(--ink-deep);
+      font-weight: 400;
+      transition: color 0.3s ease;
+    }
+
+    .garden-row:hover .garden-title {
+      color: var(--amber-rim);
+    }
+
+    .garden-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--ink-whisper);
+      white-space: nowrap;
+    }
+
+    /* 底部收束落款 */
+    .footer-colophon {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--paper-crease);
+      box-shadow: 0 1px 0 var(--paper-highlight);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--ink-whisper);
+    }
+
+    .footer-colophon a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer-colophon a:hover {
+      color: var(--amber-rim);
+    }
   </style>
 </head>
 <body>
-  <!-- 第一页：午后斜阳 · 活字压痕序幕 -->
-  <main class="hero-sanctuary" id="top">
-    <div class="paper-grain" aria-hidden="true"></div>
-    <div class="sunbeam-layer" aria-hidden="true"></div>
-    <div class="gobo-dapple" aria-hidden="true"></div>
+  <!-- 纸张质感层（全站统一材质） -->
+  <div class="paper-grain" aria-hidden="true"></div>
+
+  <!-- ============================================================
+       幕 I · 开场序幕（首屏：午后斜阳 · 活字压痕 cf3901646@gmail.com）
+       ============================================================ -->
+  <section class="hero-sanctuary" id="hero">
+    <div class="sunbeam-layer" id="sunbeam" aria-hidden="true"></div>
+    <div class="gobo-dapple" id="gobo" aria-hidden="true"></div>
     <canvas id="dust-canvas" aria-hidden="true"></canvas>
 
-    <div class="letterpress-stage">
+    <div class="letterpress-stage" id="letterpress-stage">
       <button
         type="button"
         class="email-imprint"
@@ -298,19 +594,195 @@
       </div>
     </div>
 
-    <a href="#sanctuary-next" class="scroll-whisper" aria-label="向下滚动">
+    <a href="#sanctuary-content" class="scroll-whisper" aria-label="向下滚动阅读">
       <span class="scroll-line"></span>
     </a>
+  </section>
+
+  <!-- ============================================================
+       幕 II · 极简正文画布（零冗余框线，纯粹书页排版与视差呼吸动效）
+       ============================================================ -->
+  <main class="content-sanctuary" id="sanctuary-content">
+    <article class="reading-spine">
+
+      <!-- 1. 序言：文字随滚动聚拢显影 -->
+      <section class="intro-section" id="intro">
+        <div class="section-eyebrow">
+          <span>Sanctuary</span>
+          <span class="index">01 / Prologue</span>
+        </div>
+        <div class="intro-paragraph">
+          <span class="kinetic-text-line" data-line="1">在代码与界面的缝隙里，造一些有温度的工具。</span><br />
+          <span class="kinetic-text-line" data-line="2">探索智能体架构、自动化工作流与前沿大模型的交互边界。</span><br />
+          <span class="kinetic-text-line" data-line="3">不作喧闹的喧哗，唯愿秩序与克制长存。</span>
+        </div>
+        <div class="intro-meta">
+          <span>Charlie Freeman</span>
+          <span>·</span>
+          <span>Shanghai</span>
+          <span>·</span>
+          <a href="https://github.com/cf3901646" target="_blank" rel="noopener">GitHub ↗</a>
+          <a href="mailto:cf3901646@gmail.com">Letter ↗</a>
+        </div>
+      </section>
+
+      <div class="crease-divider" aria-hidden="true"></div>
+
+      <!-- 2. 代表作品：无多余大框，滚动到达自动舒展详情 -->
+      <section class="projects-section" id="projects">
+        <div class="section-eyebrow">
+          <span>Craft & Code</span>
+          <span class="index">02 / Creations</span>
+        </div>
+
+        <div class="projects-stream">
+
+          <!-- 项目 1 -->
+          <div class="project-item" data-project="1">
+            <div class="project-header">
+              <div class="project-title-group">
+                <span class="project-index">01</span>
+                <h3 class="project-title">EasyCV</h3>
+              </div>
+              <span class="project-year">2026</span>
+            </div>
+            <p class="project-summary">极简纯粹、开箱即用的本地 Markdown 与可视化简历编辑器，零构建依赖，支持实时排版与高清 PDF 导出。</p>
+            <div class="project-drawer">
+              <div class="project-tags">
+                <span class="tag-pill">Vue 3</span>
+                <span class="tag-pill">Tailwind CSS</span>
+                <span class="tag-pill">Markdown</span>
+                <span class="tag-pill">Canvas PDF</span>
+              </div>
+              <div class="project-links">
+                <a class="project-link" href="https://github.com/cf3901646/EasyCV" target="_blank" rel="noopener">GitHub 仓库 ↗</a>
+                <a class="project-link" href="#">设计复盘手记 →</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 项目 2 -->
+          <div class="project-item" data-project="2">
+            <div class="project-header">
+              <div class="project-title-group">
+                <span class="project-index">02</span>
+                <h3 class="project-title">AI Coding Arena</h3>
+              </div>
+              <span class="project-year">2026</span>
+            </div>
+            <p class="project-summary">四大 AI 辅助编程智能体（Antigravity / Codex / Kiro / Copilot）全场景同题基准盲测竞技场与评价体系。</p>
+            <div class="project-drawer">
+              <div class="project-tags">
+                <span class="tag-pill">Benchmark</span>
+                <span class="tag-pill">Evaluation</span>
+                <span class="tag-pill">LLM Agents</span>
+                <span class="tag-pill">Python</span>
+              </div>
+              <div class="project-links">
+                <a class="project-link" href="https://github.com/cf3901646/ai-coding-arena" target="_blank" rel="noopener">GitHub 仓库 ↗</a>
+                <a class="project-link" href="#">评测方法论 ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 项目 3 -->
+          <div class="project-item" data-project="3">
+            <div class="project-header">
+              <div class="project-title-group">
+                <span class="project-index">03</span>
+                <h3 class="project-title">Cognitive Assessment</h3>
+              </div>
+              <span class="project-year">2026</span>
+            </div>
+            <p class="project-summary">基于 ACE-III 与 MoCA 临床神经心理学范式构建的老年人日常认知健康深度自测与阿尔茨海默病初筛系统。</p>
+            <div class="project-drawer">
+              <div class="project-tags">
+                <span class="tag-pill">Neuropsychology</span>
+                <span class="tag-pill">Interactive Test</span>
+                <span class="tag-pill">Clinical UX</span>
+              </div>
+              <div class="project-links">
+                <a class="project-link" href="https://github.com/cf3901646/cognitive-assessment" target="_blank" rel="noopener">GitHub 仓库 ↗</a>
+                <a class="project-link" href="#">临床范式思考 →</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 项目 4 -->
+          <div class="project-item" data-project="4">
+            <div class="project-header">
+              <div class="project-title-group">
+                <span class="project-index">04</span>
+                <h3 class="project-title">Antigravity Agent Rules</h3>
+              </div>
+              <span class="project-year">2026</span>
+            </div>
+            <p class="project-summary">智能体工程纪律守则（两击即停红线）与多智能体对抗整风协议，规范自主代码助手的边界与协作信条。</p>
+            <div class="project-drawer">
+              <div class="project-tags">
+                <span class="tag-pill">Agent Discipline</span>
+                <span class="tag-pill">Prompt Protocol</span>
+                <span class="tag-pill">Multi-Agent</span>
+              </div>
+              <div class="project-links">
+                <a class="project-link" href="https://github.com/cf3901646/antigravity-agent-rules" target="_blank" rel="noopener">GitHub 仓库 ↗</a>
+                <a class="project-link" href="#">守则全文 ↗</a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <div class="crease-divider" aria-hidden="true"></div>
+
+      <!-- 3. 数字花园：思考与折腾笔记（极简安静的时间线） -->
+      <section class="garden-section" id="garden">
+        <div class="section-eyebrow">
+          <span>Digital Garden</span>
+          <span class="index">03 / Writing</span>
+        </div>
+
+        <div class="garden-stream">
+          <a href="#" class="garden-row">
+            <span class="garden-title">为什么我用「午后斜阳与活字压痕」搭建这方数字花园</span>
+            <span class="garden-date">2026.10</span>
+          </a>
+          <a href="#" class="garden-row">
+            <span class="garden-title">Agent 工程纪律：论自主智能体为什么需要严格的“两击即停”</span>
+            <span class="garden-date">2026.10</span>
+          </a>
+          <a href="#" class="garden-row">
+            <span class="garden-title">从零手搓 Markdown 简历编辑器时的排版与分页痛点复盘</span>
+            <span class="garden-date">2026.09</span>
+          </a>
+          <a href="#" class="garden-row">
+            <span class="garden-title">临床神经心理学量表的数字化交互移植笔记</span>
+            <span class="garden-date">2026.09</span>
+          </a>
+          <a href="#" class="garden-row">
+            <span class="garden-title">万物互联时代的克制美学：少即是多，慢即是快</span>
+            <span class="garden-date">2026.08</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 尾注 -->
+      <footer class="footer-colophon">
+        <span>3901646.xyz · 2026</span>
+        <a href="#hero">回到顶部 ↑</a>
+      </footer>
+
+    </article>
   </main>
 
   <script>
-    // 1. 鼠标移动时，阳光角度与活字压痕的凹印高光细腻联动
+    // 1. 光标移动与首屏斜阳活字压痕联动
     const root = document.documentElement;
     window.addEventListener('pointermove', (e) => {
       const nx = (e.clientX / window.innerWidth) - 0.5;
       const ny = (e.clientY / window.innerHeight) - 0.5;
 
-      // 活字凹印阴影与高光微偏移
       const shadowX = (-1.1 - nx * 1.2).toFixed(2) + 'px';
       const shadowY = (-1.4 - ny * 1.2).toFixed(2) + 'px';
       const hiX = (1.4 + nx * 1.4).toFixed(2) + 'px';
@@ -321,12 +793,11 @@
       root.style.setProperty('--highlight-x', hiX);
       root.style.setProperty('--highlight-y', hiY);
 
-      // 树影与斜阳轻微视差
       root.style.setProperty('--sun-shift-x', (nx * -22).toFixed(1) + 'px');
       root.style.setProperty('--sun-shift-y', (ny * -16).toFixed(1) + 'px');
     });
 
-    // 2. 点击邮箱一键拓印（复制）
+    // 2. 点击邮箱一键复制
     const emailBtn = document.getElementById('email-btn');
     const copyWhisper = document.getElementById('copy-whisper');
     let whisperTimer = null;
@@ -349,7 +820,7 @@
       }, 2400);
     });
 
-    // 3. 午后斜阳中的金色微尘粒子 (Floating Golden Dust Motes)
+    // 3. 金色微尘 Canvas 粒子
     const canvas = document.getElementById('dust-canvas');
     const ctx = canvas.getContext('2d');
     let width = (canvas.width = window.innerWidth);
@@ -360,13 +831,12 @@
       height = canvas.height = window.innerHeight;
     });
 
-    const MOTES_COUNT = 28;
-    const motes = Array.from({ length: MOTES_COUNT }, () => ({
+    const motes = Array.from({ length: 26 }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      r: 0.7 + Math.random() * 1.5,
-      vx: 0.08 + Math.random() * 0.18,
-      vy: -0.06 - Math.random() * 0.14,
+      r: 0.7 + Math.random() * 1.4,
+      vx: 0.08 + Math.random() * 0.16,
+      vy: -0.06 - Math.random() * 0.12,
       phase: Math.random() * Math.PI * 2,
       speed: 0.008 + Math.random() * 0.015
     }));
@@ -381,16 +851,15 @@
         if (m.x > width + 10) m.x = -10;
         if (m.y < -10) m.y = height + 10;
 
-        // 仅在斜阳光束经过的对角线区域更明亮
         const diagDist = Math.abs((m.x / width) + (m.y / height) - 1.02);
         const sunFactor = Math.max(0.12, 1 - diagDist * 1.9);
-        const alpha = (0.25 + 0.45 * Math.sin(m.phase)) * sunFactor;
+        const alpha = (0.22 + 0.45 * Math.sin(m.phase)) * sunFactor;
 
         if (alpha > 0.05) {
           ctx.beginPath();
           ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(255, 236, 190, ${alpha.toFixed(3)})`;
-          ctx.shadowColor = 'rgba(232, 178, 98, 0.55)';
+          ctx.shadowColor = 'rgba(232, 178, 98, 0.5)';
           ctx.shadowBlur = 6;
           ctx.fill();
         }
@@ -398,6 +867,53 @@
       requestAnimationFrame(renderDust);
     }
     renderDust();
+
+    // 4. 关键：向下滚动视差与动态排版监听（Scroll-Driven Parallax & Progressive Reveal）
+    const heroSec = document.getElementById('hero');
+    const sunbeam = document.getElementById('sunbeam');
+    const gobo = document.getElementById('gobo');
+    const letterpressStage = document.getElementById('letterpress-stage');
+    const kineticLines = document.querySelectorAll('.kinetic-text-line');
+    const projectItems = document.querySelectorAll('.project-item');
+
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      const vh = window.innerHeight;
+
+      // 首屏光影与文字向下滑动平滑淡出，背景始终保持同一张暖棉纸色
+      if (scrollY <= vh) {
+        const progress = scrollY / vh;
+        const heroOpacity = Math.max(0, 1 - progress * 1.25);
+        sunbeam.style.opacity = heroOpacity;
+        gobo.style.opacity = heroOpacity * 0.72;
+        letterpressStage.style.opacity = Math.max(0, 1 - progress * 1.6);
+        letterpressStage.style.transform = `translateY(${scrollY * 0.3}px) scale(${1 - progress * 0.05})`;
+      }
+
+      // 序言文字：随滚动位置逐行由浅凝深（Kinetic Focus）
+      kineticLines.forEach((line) => {
+        const rect = line.getBoundingClientRect();
+        // 当该行文字位于屏幕中间 70% 范围内时激活为 100% 墨水深色
+        if (rect.top < vh * 0.72 && rect.bottom > vh * 0.15) {
+          line.classList.add('is-active');
+        } else {
+          line.classList.remove('is-active');
+        }
+      });
+
+      // 项目条目：当滚动至屏幕正中央黄金视口时，才自动优雅舒展开技术标签与链接（Unfold Details）
+      projectItems.forEach((item) => {
+        const rect = item.getBoundingClientRect();
+        const itemCenter = rect.top + rect.height / 2;
+        const screenCenter = vh / 2;
+        // 在屏幕中心 ±140px 黄金阅读带内自动舒展
+        if (Math.abs(itemCenter - screenCenter) < 160) {
+          item.classList.add('is-unfolded');
+        } else {
+          item.classList.remove('is-unfolded');
+        }
+      });
+    }, { passive: true });
   </script>
 </body>
 </html>
