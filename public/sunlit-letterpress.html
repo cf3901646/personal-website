@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f0e7">
+  <meta name="description" content="关于设计、日常观察与小工具的个人手册。">
+  <link rel="icon" href="data:,">
+  <title>cf. · 日光里的个人手册</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root { --page: #f3f0e7; --ink: #393d33; --muted: #77796b; --rule: #d9d9cb; --accent: #777e58; }
+    html, body { width: 100%; margin: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: 110px; }
+    body { background: var(--page); color: var(--ink); font: 15px/1.8 "Segoe UI", "Microsoft YaHei", sans-serif; }
+    a { color: inherit; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+    ::selection { background: #d9dcc5; color: #363d30; }
+    .opening { height: 100svh; position: relative; }
+    .js .opening { height: 300svh; }
+
+    .paper {
+      position: sticky;
+      top: 0;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100svh;
+      min-height: 100svh;
+      isolation: isolate;
+      overflow: hidden;
+      background: var(--page);
+    }
+    .paper canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transform-origin: 50% 50%; }
+    .paper::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 50% 50%, transparent 36%, #9a8b6d0b 100%);
+      opacity: var(--scene-opacity, 1);
+      z-index: 1;
+    }
+    h1 { position: relative; z-index: 3; margin: 0; font-size: inherit; font-weight: normal; }
+    .letterpress {
+      display: block;
+      /* 原图 1376 × 768，字宽约 594px。无网络字体依赖。 */
+      font-family: "Times New Roman", "Baskerville", serif;
+      font-size: clamp(22px, 4.51vw, 100px);
+      font-weight: 400;
+      font-kerning: normal;
+      line-height: 1.15;
+      letter-spacing: .006em;
+      white-space: nowrap;
+      text-decoration: none;
+      color: #b6a48b;
+      background: linear-gradient(102deg,
+        #c9bfaa 0%, #d9c5a4 12%, #e4c292 24%, #e4c69b 43%,
+        #cdbca0 54%, #d5c7af 75%, #cbbfa9 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: url(#pressed-ink);
+      transform: translateY(1px);
+    }
+    .letterpress:focus-visible {
+      outline: 1px solid #8a795f;
+      outline-offset: 12px;
+      border-radius: 2px;
+    }
+    .filter-definitions { position: absolute; width: 0; height: 0; overflow: hidden; }
+    @media (max-width: 600px) {
+      .letterpress { font-size: 7.3vw; letter-spacing: -.035em; }
+    }
+    @media (forced-colors: active) {
+      .letterpress { background: none; -webkit-text-fill-color: LinkText; filter: none; }
+    }
+
+    /* 同一片底色贯穿整个滚动区，纸面与正文之间没有容器接缝。 */
+    #surface { opacity: var(--scene-opacity, 1); transform: translate3d(0,var(--paper-y,0px),0) scale(var(--paper-scale,1)); }
+    #shadows { opacity: var(--shadow-opacity,1); transform: translate3d(var(--shadow-x,0px),var(--shadow-y,0px),0) scale(var(--shadow-scale,1)); }
+    #motes { opacity: var(--dust-opacity,1); transform: translate3d(0,var(--dust-y,0px),0); }
+    .hero-title { opacity: var(--title-opacity,1); transform: translate3d(0,var(--title-y,0px),0); filter: blur(var(--title-blur,0px)); }
+    .paper-to-color { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: var(--page); mask-image: linear-gradient(to bottom,transparent calc(var(--wash-front,160%) - 40%),#000 calc(var(--wash-front,160%) + 15%)); }
+    .light-bloom { position: absolute; inset: -25%; z-index: 2; pointer-events: none; background: radial-gradient(ellipse at 48% 65%,#fffcedb3,transparent 55%); opacity: var(--bloom-opacity,0); transform: translate3d(0,var(--bloom-y,80px),0); }
+    .scroll-invitation { position: absolute; z-index: 4; bottom: 35px; left: 50%; transform: translateX(-50%); display: grid; justify-items: center; gap: 13px; opacity: var(--hint-opacity,1); text-decoration: none; color: #7d725e; font-size: 11px; letter-spacing: .2em; }
+    .scroll-invitation::after { content: ""; display: block; width: 1px; height: 36px; background: linear-gradient(#a8997b,transparent); }
+    .threshold { position: absolute; z-index: 4; inset: 0; display: flex; align-items: center; pointer-events: none; opacity: var(--chapter-opacity,0); transform: translate3d(0,var(--chapter-y,70px),0); }
+    .threshold-inner { width: min(1040px,80%); margin: 0 auto; }
+    .eyebrow { font-size: 11px; font-weight: 400; line-height: 1.6; letter-spacing: .18em; color: var(--muted); text-transform: uppercase; }
+    .threshold .eyebrow { margin: 0 0 32px; }
+    .threshold h2 { margin: 0; font: 400 clamp(38px,5.2vw,76px)/1.5 "Songti SC",SimSun,serif; letter-spacing: .05em; }
+    .threshold h2 span { color: var(--accent); }
+    .threshold .aside { margin: 34px 0 0; color: var(--muted); font-size: 14px; letter-spacing: .15em; }
+    .threshold .chapter-line { width: 46px; height: 1px; margin: 34px 0 0; background: #a9ac92; transform-origin: left; transform: scaleX(var(--chapter-line,0)); }
+    .site-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; padding: 23px max(6vw,24px); background: #f3f0e7e8; backdrop-filter: blur(16px); opacity: 0; transform: translateY(-12px); pointer-events: none; transition: opacity .4s,transform .4s; }
+    .site-nav.is-visible, .site-nav:focus-within { opacity: 1; transform: none; pointer-events: auto; }
+    .wordmark { font: 26px/1 Georgia,serif; text-decoration: none; }
+    .nav-links { display: flex; gap: 30px; }
+    .nav-links a { font-size: 12px; text-decoration: none; }
+    .nav-links a:hover { color: var(--accent); }
+    .wrap { width: min(1040px,80%); margin-inline: auto; }
+    .content { position: relative; z-index: 5; background: var(--page); }
+    .manifesto { padding: 0 0 130px; }
+    .manifesto-intro { display: grid; grid-template-columns: 1fr 2fr; gap: 70px; align-items: start; }
+    .manifesto-intro p { margin: 0; }
+    .manifesto-copy { max-width: 650px; font-size: clamp(18px,2vw,25px); line-height: 2; font-weight: 400; }
+    .manifesto-copy em { font-style: normal; color: var(--accent); }
+    .principles { display: grid; grid-template-columns: repeat(3,1fr); gap: 48px; margin-top: 80px; }
+    .principle { border-top: 1px solid var(--rule); padding-top: 25px; }
+    .principle .number { color: #949882; font: italic 16px/1 Georgia,serif; }
+    .principle h3 { font: 400 23px/1.5 "Songti SC",SimSun,serif; margin: 25px 0 14px; }
+    .principle p { margin: 0; color: var(--muted); font-size: 14px; }
+    .reveal { opacity: 1; transform: none; }
+    .js .reveal { opacity: 0; transform: translate3d(0,28px,0); transition: opacity .85s ease var(--delay,0ms),transform 1s cubic-bezier(.2,.7,.2,1) var(--delay,0ms); }
+    .js .reveal.is-visible { opacity: 1; transform: none; }
+    .works { padding: 110px 0 130px; border-top: 1px solid var(--rule); }
+    .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 30px; margin-bottom: 64px; }
+    .section-heading h2 { font: 400 clamp(30px,3.2vw,46px)/1.5 "Songti SC",SimSun,serif; margin: 20px 0 0; }
+    .section-heading > p { color: var(--muted); font-size: 12px; }
+    .work-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+    .work:last-child { margin-top: 110px; }
+    .work-visual { position: relative; display: grid; place-items: center; aspect-ratio: 1.22; overflow: hidden; background: #e3e4d7; }
+    .work-visual.spacing { background: #e7e0d3; }
+    .art-object { width: 76%; transform: translate3d(0,var(--object-y,0px),0) rotate(-3deg); }
+    .palette-paper { padding: 28px 24px 24px; background: #f8f6ee; box-shadow: 9px 18px 26px #3f45251a; }
+    .palette-paper .eyebrow { font-size: 9px; }
+    .color-strip { display: grid; grid-template-columns: repeat(5,1fr); gap: 5px; height: 118px; margin: 28px 0 20px; }
+    .color-strip i { background: var(--swatch); border-radius: 40px 40px 0 0; transition: background .6s ease; }
+    .palette-caption { display: flex; justify-content: space-between; color: #77796b; font-size: 10px; }
+    .type-paper { background: #f9f5ea; padding: 30px; box-shadow: 9px 18px 26px #4d3f291a; transform: translate3d(0,var(--object-y,0px),0) rotate(4deg); }
+    .type-sample { font: 38px/1.25 Georgia,serif; color: #646349; margin: 28px 0; letter-spacing: var(--type-space,0); transition: letter-spacing .6s; overflow-wrap: anywhere; }
+    .type-rule { height: 2px; width: 65%; margin-top: var(--line-gap,12px); background: #c9c4b1; transition: margin .6s; }
+    .type-rule.short { width: 44%; }
+    .work-meta { display: flex; justify-content: space-between; gap: 20px; align-items: baseline; margin-top: 27px; }
+    .work-meta h3 { margin: 0; font-size: 22px; font-weight: 400; }
+    .work-meta span { font-size: 10px; color: var(--muted); letter-spacing: .12em; }
+    .work > p { margin: 12px 0 20px; color: var(--muted); font-size: 14px; }
+    .text-button { padding: 8px 0; min-height: 44px; color: var(--accent); font-size: 12px; border: 0; border-bottom: 1px solid #b6baa3; background: transparent; }
+    .contact { border-top: 1px solid var(--rule); padding: 110px 0 60px; }
+    .contact h2 { font: 400 clamp(30px,4.3vw,58px)/1.6 "Songti SC",SimSun,serif; margin: 30px 0; }
+    .contact-link { display: inline-block; font: clamp(20px,3vw,38px)/1.5 "Times New Roman",serif; color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 10px; }
+    .colophon { margin-top: 100px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 18px; color: var(--muted); font-size: 11px; }
+    .colophon a { text-decoration: none; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width:700px) {
+      html { scroll-padding-top: 85px; }
+      .wrap, .threshold-inner { width: 84%; }
+      .js .opening { height: 270svh; }
+      .threshold h2 { font-size: clamp(35px,8.6vw,54px); }
+      .threshold .eyebrow { margin-bottom: 26px; }
+      .threshold .aside { font-size: 11px; letter-spacing: .1em; }
+      .scroll-invitation { bottom: 24px; font-size: 10px; }
+      .site-nav { padding: 20px 8%; }
+      .nav-links { gap: 22px; }
+      .manifesto { padding-bottom: 80px; }
+      .manifesto-intro { grid-template-columns: 1fr; gap: 28px; }
+      .principles { grid-template-columns: 1fr; gap: 32px; margin-top: 48px; }
+      .principle h3 { margin-top: 14px; }
+      .works { padding: 70px 0 85px; }
+      .section-heading { display: block; margin-bottom: 38px; }
+      .section-heading > p { margin-top: 18px; }
+      .work-grid { grid-template-columns: 1fr; gap: 46px; }
+      .work:last-child { margin-top: 0; }
+      .art-object { width: 73%; }
+      .palette-paper { padding: 20px; }
+      .color-strip { height: 80px; margin: 19px 0 14px; }
+      .type-paper { padding: 23px; }
+      .type-sample { font-size: 31px; margin: 20px 0; }
+      .contact { padding-top: 75px; }
+      .colophon { margin-top: 65px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .js .opening { height: 150svh; }
+      #surface, #shadows, #motes, .hero-title, .threshold, .art-object { transform: none !important; filter: none; }
+      .js .reveal { opacity: 1; transform: none; transition: none; }
+      .site-nav, .color-strip i, .type-sample, .type-rule { transition: none; }
+      .light-bloom { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 全部为内联代码；没有图片、字体文件、第三方库或外部请求。 -->
+  <svg class="filter-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <filter id="pressed-ink" x="-10%" y="-30%" width="120%" height="170%" color-interpolation-filters="sRGB">
+        <!-- 字槽下沿接光，内侧的上沿落下细小阴影。 -->
+        <feGaussianBlur in="SourceAlpha" stdDeviation=".4" result="soft-alpha"/>
+        <feOffset in="soft-alpha" dx=".35" dy="1.3" result="lower-edge"/>
+        <feComposite in="lower-edge" in2="SourceAlpha" operator="out" result="rim"/>
+        <feFlood flood-color="#fffae9" flood-opacity=".95"/>
+        <feComposite in2="rim" operator="in" result="lit-rim"/>
+        <feOffset in="SourceAlpha" dx=".6" dy="1.05" result="shifted"/>
+        <feComposite in="SourceAlpha" in2="shifted" operator="out" result="inset-edge"/>
+        <feGaussianBlur in="inset-edge" stdDeviation=".35" result="inset-soft"/>
+        <feFlood flood-color="#6e553c" flood-opacity=".8"/>
+        <feComposite in2="inset-soft" operator="in" result="inset-shadow"/>
+        <feMerge>
+          <feMergeNode in="lit-rim"/>
+          <feMergeNode in="SourceGraphic"/>
+          <feMergeNode in="inset-shadow"/>
+        </feMerge>
+      </filter>
+    </defs>
+  </svg>
+
+  <nav class="site-nav" aria-label="网站导航" inert>
+    <a class="wordmark" href="#top" aria-label="回到首页">cf.</a>
+    <div class="nav-links"><a href="#philosophy">理念</a><a href="#works">工具</a><a href="#contact">联系</a></div>
+  </nav>
+  <main id="top">
+    <section class="opening" aria-label="日光下的凹印纸面">
+      <div class="paper">
+        <canvas id="surface" aria-hidden="true"></canvas>
+        <canvas id="shadows" aria-hidden="true"></canvas>
+        <canvas id="motes" aria-hidden="true"></canvas>
+        <div class="light-bloom" aria-hidden="true"></div>
+        <div class="paper-to-color" aria-hidden="true"></div>
+        <h1 class="hero-title"><a class="letterpress" href="mailto:cf3901646@gmail.com">cf3901646@gmail.com</a></h1>
+        <a class="scroll-invitation" href="#philosophy">向下，慢慢展开</a>
+        <div class="threshold" aria-hidden="true">
+          <div class="threshold-inner">
+            <p class="eyebrow">01 / A way of seeing</p>
+            <h2>让工具顺手，<br><span>让体验从容。</span></h2>
+            <div class="chapter-line"></div>
+            <p class="aside">从日常的观察，到恰到好处的设计。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="content">
+      <section class="manifesto wrap" id="philosophy" aria-labelledby="philosophy-title">
+        <h2 id="philosophy-title" class="sr-only">设计理念：让工具顺手，让体验从容</h2>
+        <div class="manifesto-intro reveal">
+          <p class="eyebrow">Design as a daily practice<br>关于设计的日常练习</p>
+          <p class="manifesto-copy">我关注日常里那些微小的阻力。<br>通过设计和工具，试着让复杂的事情变得清楚，让每一次使用<em>少一点负担。</em></p>
+        </div>
+        <div class="principles">
+          <article class="principle reveal"><span class="number">01</span><h3>从具体问题出发</h3><p>先理解一件事为什么令人困扰，<br>再决定它应该如何被改变。</p></article>
+          <article class="principle reveal" style="--delay:100ms"><span class="number">02</span><h3>少做一个决定</h3><p>把思考放进设计过程，<br>把清楚的选择留给使用者。</p></article>
+          <article class="principle reveal" style="--delay:200ms"><span class="number">03</span><h3>留一点温度</h3><p>在理性的秩序之外，<br>也为直觉、触感和呼吸留下位置。</p></article>
+        </div>
+      </section>
+
+      <section class="works wrap" id="works" aria-labelledby="works-title">
+        <header class="section-heading reveal"><div><p class="eyebrow">02 / Small things, made with care</p><h2 id="works-title">想法，在这里成为工具。</h2></div><p>两个可体验的演示 · 待换为真实作品</p></header>
+        <div class="work-grid">
+          <article class="work reveal">
+            <div class="work-visual">
+              <div class="art-object palette-paper" data-parallax="-24">
+                <div class="eyebrow">A small collection of daylight</div>
+                <div class="color-strip" role="img" aria-label="晨光配色" id="palette-strip"><i style="--swatch:#c6b596"></i><i style="--swatch:#e7d6b2"></i><i style="--swatch:#f5eccf"></i><i style="--swatch:#929b79"></i><i style="--swatch:#4c584b"></i></div>
+                <div class="palette-caption"><span id="palette-name" aria-live="polite">Morning light</span><span>五种颜色，一段日常</span></div>
+              </div>
+            </div>
+            <div class="work-meta"><h3>拾色</h3><span>COLOR / 演示</span></div>
+            <p>把自然里的片刻，整理成可以使用的配色。</p>
+            <button class="text-button" id="change-palette" type="button" aria-controls="palette-strip">换一种光线 ↗</button>
+          </article>
+          <article class="work reveal" style="--delay:120ms">
+            <div class="work-visual spacing">
+              <div class="art-object type-paper" data-parallax="28">
+                <div class="eyebrow">A study in breathing room</div>
+                <div class="type-sample">Less,<br>but enough.</div>
+                <div class="type-rule"></div><div class="type-rule short"></div>
+              </div>
+            </div>
+            <div class="work-meta"><h3>留白</h3><span>TYPE / 演示</span></div>
+            <p>给文字一点空间，观察阅读的节奏如何改变。</p>
+            <button class="text-button" id="change-spacing" type="button" aria-pressed="false">让它舒展一点 ↗</button>
+          </article>
+        </div>
+      </section>
+
+      <footer class="contact wrap" id="contact">
+        <div class="reveal"><p class="eyebrow">03 / A conversation starts here</p><h2>有一个值得<br>一起做的想法？</h2><a class="contact-link" href="mailto:cf3901646@gmail.com">cf3901646@gmail.com</a></div>
+        <div class="colophon"><span>cf. / A personal notebook</span><span>理念文案与作品为设计草稿</span><a href="#top">回到日光里 ↑</a></div>
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+      // 修改这两个参数即可调整整幅画面的颗粒感与叶影深浅。
+      const settings = { grain: 1, shadow: .62 };
+      const W = 1376, H = 768;
+      const canvas = document.querySelector('#surface');
+      const ctx = canvas.getContext('2d', { alpha: false });
+      const shadowCanvas = document.querySelector('#shadows');
+      const shadowContext = shadowCanvas.getContext('2d');
+      const dustCanvas = document.querySelector('#motes');
+      const dustContext = dustCanvas.getContext('2d');
+      if (!ctx) return;
+
+      function random(seed) {
+        return () => {
+          seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+          let n = Math.imul(seed ^ seed >>> 15, 1 | seed);
+          n = n + Math.imul(n ^ n >>> 7, 61 | n) ^ n;
+          return ((n ^ n >>> 14) >>> 0) / 4294967296;
+        };
+      }
+
+      function layer(w = W, h = H) {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        return c;
+      }
+
+      function noiseField(cell, rng) {
+        const columns = Math.ceil(W / cell) + 2;
+        const rows = Math.ceil(H / cell) + 2;
+        const values = Float32Array.from({ length: columns * rows }, () => rng() * 2 - 1);
+        return (x, y) => {
+          const gx = x / cell, gy = y / cell;
+          const ix = Math.floor(gx), iy = Math.floor(gy);
+          let u = gx - ix, v = gy - iy;
+          u = u * u * (3 - 2 * u); v = v * v * (3 - 2 * v);
+          const i = iy * columns + ix;
+          return (values[i] * (1 - u) + values[i + 1] * u) * (1 - v)
+            + (values[i + columns] * (1 - u) + values[i + columns + 1] * u) * v;
+        };
+      }
+
+      // 纸面以双倍分辨率烘焙：细纤维只改变表面质感，日光与底色保持原值。
+      const paperScale = 2;
+      const paper = layer(W * paperScale, H * paperScale);
+      const p = paper.getContext('2d');
+      const pixels = p.createImageData(paper.width, paper.height);
+      const rng = random(3901646);
+      // 保留原有光线噪声的随机种子与采样顺序。
+      const cloud = noiseField(125, rng);
+      const pulp = noiseField(22, rng);
+      const fiber = noiseField(3, rng);
+      const fineGrain = noiseField(1.2, random(802));
+      const surfaceRng = random(9046);
+      for (let py = 0; py < paper.height; py++) {
+        const y = py / paperScale;
+        for (let px = 0; px < paper.width; px++) {
+          const x = px / paperScale;
+          const cross = x * .56 + y * .83;
+          const beam = Math.exp(-Math.pow((cross - 650) / 230, 2));
+          const ribbons = Math.sin(cross / 21 + cloud(x, y) * .8 + x / 650)
+            * 5.5 + Math.sin(cross / 43 + x / 300) * 4;
+          const light = beam * (28 + ribbons);
+          // 相邻采样的细小亮暗差模拟纸浆起伏，不再使用大片灰斑或深色颗粒。
+          const relief = (fiber(x,y) - fiber(x+.45,y+.35)) * 4.8
+            + (fineGrain(x,y) - fineGrain(x+.24,y+.18)) * 4.2;
+          const tooth = (surfaceRng() + surfaceRng() + surfaceRng() - 1.5) * 2.2;
+          const shade = (relief + tooth + pulp(x,y) * .7) * settings.grain;
+          const i = (py * paper.width + px) * 4;
+          pixels.data[i] = 219 + light + shade;
+          pixels.data[i + 1] = 213 + light + shade;
+          pixels.data[i + 2] = 196 + light * .94 + shade;
+          pixels.data[i + 3] = 255;
+        }
+      }
+      p.putImageData(pixels, 0, 0);
+
+      // 低对比短纤维带一条微弱的受光边，像细棉纸；不画黑色划痕。
+      p.setTransform(paperScale,0,0,paperScale,0,0);
+      p.lineCap = 'round';
+      const fleckRng = random(160);
+      for (let i = 0; i < 42000; i++) {
+        const x = fleckRng() * W, y = fleckRng() * H;
+        const length = .45 + fleckRng() * 1.7;
+        const angle = (fleckRng() - .5) * Math.PI;
+        const dx = Math.cos(angle) * length, dy = Math.sin(angle) * length;
+        const bend = (fleckRng() - .5) * .35;
+        p.lineWidth = .16 + fleckRng() * .2;
+        p.strokeStyle = 'rgba(164,149,119,.028)';
+        p.beginPath(); p.moveTo(x, y);
+        p.quadraticCurveTo(x+dx*.5,y+dy*.5+bend,x+dx,y+dy); p.stroke();
+        p.strokeStyle = 'rgba(255,253,239,.17)';
+        p.beginPath(); p.moveTo(x,y-.22);
+        p.quadraticCurveTo(x+dx*.5,y+dy*.5+bend-.22,x+dx,y+dy-.22); p.stroke();
+      }
+
+      const shade = layer();
+      const s = shade.getContext('2d');
+      const leavesRng = random(27);
+
+      function leaf(x, y, length, width, angle, opacity) {
+        s.save();
+        s.translate(x, y); s.rotate(angle);
+        s.fillStyle = `rgba(72,73,52,${opacity})`;
+        s.beginPath(); s.moveTo(0, 0);
+        s.bezierCurveTo(length * .28, -width * .7, length * .72, -width * .65, length, 0);
+        s.bezierCurveTo(length * .68, width * .42, length * .22, width * .7, 0, 0);
+        s.fill(); s.restore();
+      }
+
+      // 斜射光把枝叶的影子拉长；每根小枝都稍微偏离规则排列。
+      const branches = [
+        [1410, -80, 940, 510, 20],
+        [1230, -105, 810, 480, 20],
+        [1110, -120, 640, 480, 16],
+        [1520, 40, 1130, 490, 18],
+        [1310, -120, 980, 380, 19],
+        [1480, -60, 1070, 400, 18]
+      ];
+      for (const [x0, y0, x1, y1, count] of branches) {
+        s.beginPath(); s.moveTo(x0, y0);
+        s.quadraticCurveTo(x0 - 150, y1 * .56, x1, y1);
+        s.strokeStyle = 'rgba(68,69,51,.18)'; s.lineWidth = 9;
+        s.lineCap = 'round'; s.stroke();
+        for (let i = 0; i < count; i++) {
+          const t = (i + .3 + leavesRng() * .6) / count;
+          const q = 1 - t;
+          const x = q * q * x0 + 2 * q * t * (x0 - 150) + t * t * x1;
+          const y = q * q * y0 + 2 * q * t * (y1 * .56) + t * t * y1;
+          const side = i % 2 === 0 ? 1 : -1;
+          const angle = side > 0 ? -.92 + leavesRng() * .5 : 2.28 + leavesRng() * .45;
+          leaf(x + (leavesRng() - .5) * 40, y, 65 + leavesRng() * 150, 12 + leavesRng() * 26,
+            angle, (.14 + leavesRng() * .20) * (1 - t * .60));
+        }
+      }
+
+      const scene = layer();
+      const c = scene.getContext('2d');
+      c.save();
+      c.filter = 'blur(7px)';
+      c.globalAlpha = settings.shadow;
+      c.drawImage(shade, 0, 0);
+      c.restore();
+
+      // 更远处的枝叶在左下形成宽而散的影子。
+      c.save();
+      c.filter = 'blur(19px)';
+      c.lineCap = 'round';
+      const distant = [
+        [-90, 775, 370, 625, 790, 180, 28, .20],
+        [90, 860, 490, 555, 1010, 125, 30, .24],
+        [420, 875, 695, 615, 1240, 205, 36, .25],
+        [640, 900, 860, 610, 1300, 400, 25, .16],
+        [130, 785, 300, 670, 380, 580, 55, .11]
+      ];
+      for (const [x, y, cx, cy, ex, ey, width, alpha] of distant) {
+        c.strokeStyle = `rgba(92,88,64,${alpha * settings.shadow})`;
+        c.lineWidth = width;
+        c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(cx, cy, ex, ey); c.stroke();
+      }
+      c.restore();
+
+      // 独立的亮尘图层，以便在滚动时产生比纸面更近的视差。
+      const dustLayer = layer();
+      const d = dustLayer.getContext('2d');
+      const dust = random(18);
+      for (let i = 0; i < 26; i++) {
+        const x = 190 + dust() * 430, y = 120 + dust() * 520;
+        const r = .45 + dust() * 1.45;
+        d.beginPath();
+        d.fillStyle = `rgba(255,244,195,${.3 + dust() * .45})`;
+        d.shadowColor = '#fff5d0'; d.shadowBlur = 3;
+        d.ellipse(x, y, r, r * .72, -.5, 0, Math.PI * 2); d.fill();
+      }
+      c.shadowBlur = 0;
+
+      function render() {
+        const bounds = document.querySelector('.paper').getBoundingClientRect();
+        const width = bounds.width, height = bounds.height;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        // 小屏幕采用居中裁切，不拉伸树影与纸纹。
+        const scale = Math.max(width / W, height / H);
+        const left = (width - W * scale) / 2;
+        const top = (height - H * scale) / 2;
+        [[canvas,ctx,paper],[shadowCanvas,shadowContext,scene],[dustCanvas,dustContext,dustLayer]].forEach(([target,context,source]) => {
+          target.width = Math.round(width * dpr);
+          target.height = Math.round(height * dpr);
+          context.setTransform(dpr, 0, 0, dpr, 0, 0);
+          context.drawImage(source, left, top, W * scale, H * scale);
+        });
+      }
+      let frame;
+      window.addEventListener('resize', () => {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(render);
+      }, { passive: true });
+      render();
+    })();
+  </script>
+  <script>
+    (() => {
+      'use strict';
+      const root = document.documentElement;
+      const opening = document.querySelector('.opening');
+      const stage = document.querySelector('.paper');
+      const title = document.querySelector('.hero-title');
+      const invitation = document.querySelector('.scroll-invitation');
+      const navigation = document.querySelector('.site-nav');
+      const motion = matchMedia('(prefers-reduced-motion: reduce)');
+      const objects = [...document.querySelectorAll('[data-parallax]')];
+      let objectMetrics = [];
+      let travel = 1;
+      let viewport = innerHeight;
+      let stageHeight = innerHeight;
+      let frame = 0;
+      let lastProgress = -1;
+      let navigationVisible = false;
+      const clamp = value => Math.max(0,Math.min(1,value));
+      const smooth = (start,end,value) => { const t = clamp((value-start)/(end-start)); return t*t*(3-2*t); };
+      const set = (name,value) => stage.style.setProperty(name,value);
+
+      function measure() {
+        viewport = innerHeight;
+        stageHeight = stage.offsetHeight;
+        travel = Math.max(1, opening.offsetHeight - stageHeight);
+        objectMetrics = objects.map(element => {
+          const bounds = element.parentElement.getBoundingClientRect();
+          return {element,center:bounds.top+scrollY+bounds.height/2,strength:Number(element.dataset.parallax)};
+        });
+        lastProgress = -1;
+        requestUpdate();
+      }
+
+      function update() {
+        frame = 0;
+        const y = Math.max(0,scrollY);
+        const progress = clamp(y/travel);
+        const depth = motion.matches ? 0 : progress;
+        if (progress !== lastProgress) {
+          set('--scene-opacity',1-smooth(.12,.97,progress));
+          set('--shadow-opacity',1-smooth(.04,.77,progress));
+          set('--dust-opacity',1-smooth(.03,.49,progress));
+          set('--paper-y',`${depth*stageHeight*.018}px`);
+          set('--paper-scale',1+depth*.075);
+          set('--shadow-x',`${depth*-30}px`);
+          set('--shadow-y',`${depth*-105}px`);
+          set('--shadow-scale',1+depth*.17);
+          set('--dust-y',`${depth*-175}px`);
+          set('--title-y',`${depth*-135}px`);
+          set('--title-opacity',1-smooth(.06,.48,progress));
+          set('--title-blur',`${motion.matches?0:smooth(.16,.50,progress)*5}px`);
+          set('--hint-opacity',1-smooth(0,.14,progress));
+          set('--wash-front',`${160-smooth(.10,.99,progress)*215}%`);
+          set('--bloom-opacity',Math.sin(progress*Math.PI)*.6);
+          set('--bloom-y',`${(1-progress)*80}px`);
+          set('--chapter-opacity',smooth(.34,.82,progress));
+          set('--chapter-y',`${(1-smooth(.30,.95,progress))*70}px`);
+          set('--chapter-line',smooth(.65,1,progress));
+          title.inert = progress > .47;
+          invitation.inert = progress > .13;
+          title.setAttribute('aria-hidden',String(progress>.47));
+          invitation.setAttribute('aria-hidden',String(progress>.13));
+          lastProgress = progress;
+        }
+        const showNav = progress > .76;
+        if (showNav !== navigationVisible) {
+          navigationVisible = showNav;
+          navigation.classList.toggle('is-visible',showNav);
+          navigation.inert = !showNav;
+        }
+        objectMetrics.forEach(({element,center,strength}) => {
+          const relative = (y + viewport/2 - center)/viewport;
+          if (Math.abs(relative)<1.3 || motion.matches) {
+            element.style.setProperty('--object-y',`${motion.matches?0:Math.max(-1,Math.min(1,relative))*strength}px`);
+          }
+        });
+      }
+
+      function requestUpdate() { if (!frame) frame = requestAnimationFrame(update); }
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); }
+          });
+        }, {threshold:.12});
+        document.querySelectorAll('.reveal').forEach(element => observer.observe(element));
+      } else {
+        document.querySelectorAll('.reveal').forEach(element => element.classList.add('is-visible'));
+      }
+      root.classList.add('js');
+      addEventListener('scroll',requestUpdate,{passive:true});
+      addEventListener('resize',measure,{passive:true});
+      addEventListener('pageshow',measure);
+      motion.addEventListener('change',measure);
+      measure();
+
+      const palettes = [
+        {name:'Morning light',label:'晨光配色',colors:['#c6b596','#e7d6b2','#f5eccf','#929b79','#4c584b']},
+        {name:'After the rain',label:'雨后配色',colors:['#8b9d96','#bac5bb','#e1e3d8','#a9a38a','#505f57']},
+        {name:'An autumn walk',label:'秋日配色',colors:['#b48a65','#d3b18b','#eee0c4','#a5a080','#665e49']}
+      ];
+      let paletteIndex = 0;
+      document.querySelector('#change-palette').addEventListener('click',() => {
+        const palette = palettes[++paletteIndex%palettes.length];
+        const strip = document.querySelector('#palette-strip');
+        [...strip.children].forEach((swatch,index) => swatch.style.setProperty('--swatch',palette.colors[index]));
+        strip.setAttribute('aria-label',palette.label);
+        document.querySelector('#palette-name').textContent = palette.name;
+      });
+      document.querySelector('#change-spacing').addEventListener('click',event => {
+        const button = event.currentTarget;
+        const expanded = button.getAttribute('aria-pressed') !== 'true';
+        button.setAttribute('aria-pressed',String(expanded));
+        button.textContent = expanded?'把间距收拢一点 ↗':'让它舒展一点 ↗';
+        const sheet = document.querySelector('.type-paper');
+        sheet.style.setProperty('--type-space',expanded?'.09em':'0');
+        sheet.style.setProperty('--line-gap',expanded?'19px':'12px');
+      });
+    })();
+  </script>
+</body>
+</html>
