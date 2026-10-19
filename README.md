@@ -36,11 +36,13 @@
 
 ---
 
-## 📄 最新交互式原生单页实现 (`sunlit-letterpress.html`)
+## 📄 主站核心设计实现 (`https://3901646.xyz`)
 
-为便于在任何设备或浏览器中零环境直接预览该最新设计，仓库收录了完整自包含的交互式原生页面：
-- **仓库源码文件**：[`./sunlit-letterpress.html`](./sunlit-letterpress.html)
-- **在线静态路由**：`/sunlit-letterpress.html`（存放于 [`public/sunlit-letterpress.html`](./public/sunlit-letterpress.html)）
+主站首页（`/`）已全面采用最新自包含纯粹原生设计，完全替换淘汰了老版多组件拼接结构：
+- **线上正式访问**：[https://3901646.xyz](https://3901646.xyz)
+- **主站源码入口**：[`src/pages/index.astro`](./src/pages/index.astro)
+- **独立单页备份**：[`./sunlit-letterpress.html`](./sunlit-letterpress.html)（零环境双击即览）
+- **静态镜像路由**：`/sunlit-letterpress`（存放于 [`public/sunlit-letterpress.html`](./public/sunlit-letterpress.html)）
 
 **核心特性**：
 1. **纯原生自包含**：零网络字体与第三方库依赖，单文件仅 56KB，随时随地双击即览。
