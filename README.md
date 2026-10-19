@@ -53,6 +53,14 @@
 
 ---
 
+## 🛠️ 纯前端集成工具（国内免梯极速直连）
+
+为彻底解决海外 Vercel 域名在国内访问受限的问题，全套前端工具已完全统一内嵌至主站：
+- **EasyCV 简历工作台**：[https://3901646.xyz/cv/](https://3901646.xyz/cv/)（源码位于 `public/cv/`，纯前端本地渲染、排版调节与 PDF 导出）
+- **AITextRestorer 文字修复系统**：[https://3901646.xyz/restore/](https://3901646.xyz/restore/)（源码位于 `public/restore/`，纯前端 Canvas / OpenCV 图像文字自适应修复）
+
+---
+
 ## 📐 全站页面规划（统一暖阳活字纸感）
 
 | 页面 / 幕次 | 路径与定位 | 视觉与交互延伸 |

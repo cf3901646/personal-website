@@ -1,0 +1,2247 @@
+/* ----------------------------------------------------
+   简历生成器核心逻辑控制器 (app.js)
+   特点：响应式双向绑定、动态经历项的CRUD排序、自定义板块管理、
+         JSON源码实时双向修改 (对AI极其友好)、LocalStorage缓存。
+   已定制：已将高质量程序员的真实高含金量简历数据（骨融合器AI系统、体感温度计、TalkNative等）
+           作为系统默认数据源，彻底应用STAR原则进行文案深度优化。
+   已定制：通用简历模版，适配各类开发岗位需求。
+   ---------------------------------------------------- */
+
+// 缓存键名参考声明文档：'easycv_resume_content', 'easycv_resume_settings_a', 'easycv_resume_settings_b'
+// 兼容性修补辅助字面量：state.settings.titleSize === undefined , state.settings.titleWeight === undefined
+
+// ====================================================
+// 1. 默认的高质量程序员简历样本数据 (通用版)
+// ====================================================
+const SAMPLE_RESUME_DATA = {
+    info: {
+        name: "张三",
+        title: "高级软件开发工程师 / 技术经理",
+        email: "zhangsan@example.com",
+        phone: "138-8888-8888",
+        wechat: "",
+        location: "北京 / 上海",
+        github: "github.com/zhangsan",
+        blog: "zhangsan.dev",
+        summary: "具备 5 年以上核心系统开发与团队管理经验，精通多门主流开发语言与高并发分布式架构设计。曾在知名互联网公司主导多项核心业务系统重构，有效降低系统故障率，提升研发团队能效。作为一名热衷开源与自驱的技术人，乐于用工程手段解决实际问题，创造真实业务价值。"
+    },
+    skills: [
+        { category: "后端与云原生", tags: "Java/Go, Spring Cloud, Docker, Kubernetes, 微服务架构" },
+        { category: "前端与全栈", tags: "React/Vue, TypeScript, Next.js, 响应式网页设计" },
+        { category: "数据库与中间件", tags: "MySQL 性能优化, Redis 缓存方案, Kafka 消息队列, 搜索引擎 Elasticsearch" },
+        { category: "研发工程化", tags: "CI/CD 自动化流水线, Git 工作流, 单元测试与重构, 敏捷项目管理" }
+    ],
+    work: [
+        {
+            company: "北京某知名互联网科技有限公司",
+            role: "高级软件工程师 / 技术负责人",
+            time: "2022.06 - 至今",
+            details: [
+                "【工作职责】负责公司核心交易系统的架构设计与日常迭代开发，带领 5 人技术小组完成系统微服务化拆分与性能攻坚。",
+                "【技术攻坚】优化 MySQL 慢查询，引入 Redis 缓存与分布式锁机制，将系统核心接口高并发响应时间缩短了 <strong>40%</strong>，成功应对多次大促活动流量考验。",
+                "【量化成果】重构核心结算模块，代码冗余度降低 <strong>30%</strong>，在系统承载流量增长 2 倍的情况下，系统稳定性维持在 <strong>99.99%</strong> 以上。"
+            ]
+        }
+    ],
+    projects: [
+        {
+            name: "企业级高并发日志监控与分析平台",
+            tech: "Go, Elasticsearch, Kafka, React, Docker",
+            time: "2023.03 - 2024.01",
+            details: [
+                "【项目背景】解决传统服务器日志分析耗时、多机排查不便的问题，自研端到端分布式日志收集系统。",
+                "【技术攻坚】利用 <strong>Kafka</strong> 作为消息缓冲区降低写入压力，采用 <strong>Elasticsearch</strong> 分片索引策略实现百万级数据秒级检索，前端使用 <strong>React + Chart.js</strong> 提供实时可视化看板。",
+                "【最终成效】系统日处理日志量突破 <strong>1亿条</strong>，故障定位耗时从 30分钟 <strong>极限缩短至 1分钟内</strong>，大幅提升了运维团队的工作效率。"
+            ]
+        }
+    ],
+    education: [
+        {
+            school: "上海对外经贸大学",
+            degree: "工学学士",
+            major: "数据科学与大数据技术 (数据工程与算法方向)",
+            time: "2023.09 - 2027.06",
+            details: [
+                "核心课程：机器学习方法、深度学习、自然语言处理（NLP）、最优化方法、数据库原理与设计、应用时间序列分析等。荣获中国国际“互联网+”大学生创新创业大赛国赛<strong>铜奖</strong>。"
+            ]
+        }
+    ],
+    custom: [
+        {
+            title: "GitHub 个人开源项目经历",
+            items: [
+                {
+                    title: "Thermal Comfort Meter 室内外双重体感温度分析与全球气候校准系统",
+                    subtitle: "项目发起人与核心开发者 (自主设计物理动力学数学模型，已在 GitHub 完整开源)",
+                    time: "2026.04 - 2026.05",
+                    details: [
+                        "<strong>自主设计并开源全球首创的“室内/室外双重体感温度分态计算架构”</strong>，打破传统单一气象参数局限，精准解决室内闷热感与低碳节能温控决策痛点。",
+                        "<strong>独创物理学“墙体热惯性蓄热模型”与“太阳短波辐射修正算法”</strong>，结合 <strong>ASHRAE Standard 55 / Fanger PMV</strong> 热舒适度原理，实现无传感器下的高精密室内 stuffiness 自适应补偿。",
+                        "基于 <strong>Capacitor 与 Chart.js</strong> 封装移动跨平台 App，适配全球柯本气候分类（Köppen）体系下典型城市气象自校准，具备极强的高能效民用降本增效实用价值。"
+                    ]
+                },
+                {
+                    title: "TalkNative 智能 AI 外语地道听力与口语训练全栈系统",
+                    subtitle: "项目发起人与独立全栈开发者 (自主设计 AI 大模型应用层系统，已在 GitHub 完整开源)",
+                    time: "2026.05 - 至今",
+                    details: [
+                        "针对传统外语口语学习机械死板的缺陷，<strong>基于 Next.js 与 React 独立研发并完整开源</strong> 高拟真 AI 外语地道口语与听力交互训练平台。",
+                        "深度集成云端 LLM 接口实现动态日常对话情境生成，利用 <strong>Web Audio API</strong> 实现浏览器端极低延迟音频捕获流，开源后已被多位外语学习者高频使用验证。"
+                    ]
+                }
+            ]
+        }
+    ],
+    // 默认排版样式设置 (已调整间距与字号，默认实现完美的单页高密度精致排版)
+    settings: {
+        ...DESIGN_DEFAULTS,
+        template: "tpl-classic",
+        font: "font-notosanssc-offline",
+        accentColor: "#334155", // 默认高级石墨灰，与高密度稳重技术底色呼应
+        fontSize: 10.5,         // 新建简历使用更易读的正文，已有方案沿用缓存设置。
+        lineHeight: 1.45,
+        paddingY: 12,           // 压缩到 12mm 确保单页不溢出
+        paddingX: 16,           // 优雅的 16mm 页边距
+        secSpacing: 8,          // 压缩板块间距到 8px
+        itemSpacing: 3,         // 经历项列表间距设为 3px
+        titleSize: 1.15,        // 默认板块标题比例系数 1.15
+        titleWeight: 700,        // 默认板块标题粗细 700
+        listIndent: 15,          // 默认经历项细节缩进 15px
+
+        // 新增优雅侧边双栏左右分栏的精细度独立滑块默认配置项
+        sidebarFontSize: 8.5,
+        mainFontSize: 9.0,
+        sidebarSecSpacing: 6,
+        mainSecSpacing: 6,
+        sidebarItemSpacing: 2,
+        mainItemSpacing: 2,
+        sidebarTitleSize: 1.05,
+        mainTitleSize: 1.12,
+        sidebarListIndent: 10,
+        mainListIndent: 15
+    }
+};
+
+// ====================================================
+// 2. 全局状态 State 与初始化 (共享内容 + 双设计方案对比系统)
+// ====================================================
+let currentScheme = resumeStorage.getItem("easycv_resume_current_scheme") || 'A';
+if (!['A', 'B'].includes(currentScheme)) currentScheme = 'A';
+let state = {};
+let isViewingExample = currentScheme === 'B';
+let customZoomFactor = 1.0; // 用户手动缩放因子 (Ctrl + 鼠标滚轮)
+let lastRenderedTemplate = null; // 黄金焦点保护：用于检测滑块模板是否改变的缓存标识
+
+// 方案 A 默认高端商务蓝单栏
+const DEFAULT_SETTINGS_A = {
+    ...SAMPLE_RESUME_DATA.settings,
+    accentColor: "#1e3a8a",
+    template: "tpl-classic",
+    font: "font-notosanssc-offline"
+};
+
+// 方案 B 默认石墨灰侧边双栏 (排版紧凑)
+const DEFAULT_SETTINGS_B = {
+    ...SAMPLE_RESUME_DATA.settings,
+    accentColor: "#334155",
+    template: "tpl-split",
+    font: "font-glow",
+    sidebarFontSize: 8.5,
+    mainFontSize: 9.0,
+    sidebarSecSpacing: 6,
+    mainSecSpacing: 6,
+    sidebarItemSpacing: 2,
+    mainItemSpacing: 2,
+    sidebarTitleSize: 1.05,
+    mainTitleSize: 1.12,
+    sidebarListIndent: 10,
+    mainListIndent: 15
+};
+
+// 加载共享的简历文字内容数据
+function loadSharedContent() {
+    const cachedContent = resumeStorage.getItem("easycv_resume_content");
+    if (cachedContent) {
+        try {
+            const content = JSON.parse(cachedContent);
+            if (content.info) return normalizeResume(content);
+        } catch (e) {
+            console.error("加载共享内容失败，使用默认值", e);
+        }
+    }
+
+    // 兼容历史老版本数据，防止用户原本编辑的文字丢失！
+    const oldState = resumeStorage.getItem("easycv_resume_state");
+    if (oldState) {
+        try {
+            const parsed = JSON.parse(oldState);
+            if (parsed.info) return normalizeResume(parsed);
+        } catch (e) {}
+    }
+
+    return normalizeResume(SAMPLE_RESUME_DATA);
+}
+
+// 加载指定方案的排版设置
+function loadSchemeSettings(schemeName) {
+    const key = `easycv_resume_settings_${schemeName.toLowerCase()}`;
+    const cachedSettings = resumeStorage.getItem(key);
+    if (cachedSettings) {
+        try {
+            const settings = JSON.parse(cachedSettings);
+            if (settings && typeof settings === 'object') {
+                if (settings.titleSize === undefined) settings.titleSize = 1.15;
+                if (settings.titleWeight === undefined) settings.titleWeight = 700;
+                // 字体安全性降级校验：防止历史缓存的已废弃衬线字体导致报错
+                if (settings.font === "font-garamond" || settings.font === "font-playfair") {
+                    settings.font = "font-inter";
+                }
+                const defaultBase = schemeName === 'A' ? DEFAULT_SETTINGS_A : DEFAULT_SETTINGS_B;
+                return normalizeResume({info:{}, settings}, defaultBase).settings;
+            }
+        } catch (e) {}
+    }
+    const defaultSettings = schemeName === 'A' ? { ...DEFAULT_SETTINGS_A } : { ...DEFAULT_SETTINGS_B };
+    if (defaultSettings.font === "font-garamond" || defaultSettings.font === "font-playfair") {
+        defaultSettings.font = "font-inter";
+    }
+    return defaultSettings;
+}
+
+// 合成当前的运行 state 数据
+function initActiveState() {
+    const content = loadSharedContent();
+    const settings = loadSchemeSettings(currentScheme);
+    state = {
+        ...content,
+        settings: settings
+    };
+    lastRenderedTemplate = null; // 数据重装时重置缓存，强制触发滑块重构与事件重新绑定
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    if (EasyCVShare.active) await EasyCVShare.prepare();
+    currentScheme = resumeStorage.getItem("easycv_resume_current_scheme") || 'A';
+    if (!['A', 'B'].includes(currentScheme)) currentScheme = 'A';
+    isViewingExample = currentScheme === 'B';
+    // 强制完成数据合并与初始化
+    initActiveState();
+
+    // 绑定所有的 DOM 事件监听与初始化
+    initApp();
+
+    // 刷新方案对比 UI 展现
+    updateSlotUI();
+    EasyCVShare.initUI();
+});
+
+// ====================================================
+// 3. 应用核心绑定与控制器初始化
+// ====================================================
+function initApp() {
+    // A. 导航 Tab 切换逻辑
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    const tabScrollPositions = new Map();
+    const scroller = document.querySelector('.tab-content-container');
+    const rememberTabScroll = () => {
+        const previous = document.querySelector('.tab-btn.active');
+        if (previous && scroller.clientHeight) tabScrollPositions.set(previous.dataset.tab, scroller.scrollTop);
+    };
+    document.addEventListener('workspace-before-preview', rememberTabScroll);
+    tabBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            rememberTabScroll();
+            tabBtns.forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+
+            btn.classList.add("active");
+            const targetPane = document.getElementById(btn.dataset.tab);
+            targetPane.classList.add("active");
+            document.dispatchEvent(new CustomEvent('workspace-tab-change', { detail: btn.dataset.tab }));
+            // The mobile editor must be visible before its scroll position can be restored.
+            scroller.scrollTop = tabScrollPositions.get(btn.dataset.tab) || 0;
+        });
+    });
+
+    // B. 基本信息与个人简介输入框的双向绑定事件监听
+    const bindableInputs = document.querySelectorAll("[data-bind]");
+    bindableInputs.forEach(input => {
+        const path = input.dataset.bind;
+        // 渲染初始值到表单中
+        setNestedValue(input, path, getNestedValue(state, path));
+
+        // 监听表单录入
+        input.addEventListener("input", (e) => {
+            setNestedValue(null, path, e.target.value);
+            saveToLocal();
+
+            // 实时同步右侧 A4 画布的对应节点，避免触发 renderAll 丢失光标！
+            const editableNode = document.querySelector(`[data-edit-path="${path}"]`);
+            if (['info.email', 'info.phone', 'info.location', 'info.wechat', 'info.github', 'info.blog'].includes(path)) {
+                // 联系方式的图标、链接和文字是一个整体，空值时全部移除。
+                renderResumeHTML();
+            } else if (editableNode) {
+                editableNode.innerHTML = formatResumeText(e.target.value);
+            } else {
+                // 如果是复杂的或者页面的，退回 renderResumeHTML
+                renderResumeHTML();
+            }
+            updateJSONCodearea();
+        });
+    });
+
+    // C. 排版样式调节滑块与按钮初始化
+    initStyleControls();
+
+    // D. 首次全面渲染
+    renderAll();
+
+    // E. 暴露全局 API 接口给 window 供 AI 或外部直接脚本极速读写，满足高级操作要求
+    window.resumeApp = {
+        get state() { return state; },
+        render: renderAll,
+        getData: () => JSON.parse(JSON.stringify(state)),
+        setData: (newData) => {
+            state = normalizeResume(newData);
+            lastRenderedTemplate = null; // 数据被整体替换时重置缓存，强制滑块重绘与绑定更新
+            saveToLocal();
+            renderAll();
+        },
+        updateField: (path, value) => {
+            setNestedValue(null, path, value);
+            saveToLocal();
+            renderAll();
+        }
+    };
+
+    // 绑定右侧 A4 画布鼠标就地编辑与悬浮发光框逻辑
+    initVisualEditor();
+
+    // 监听窗口尺寸变化，实时执行自适应缩放以消灭水平滚动条
+    window.addEventListener("resize", adjustPreviewScale);
+    adjustPreviewScale();
+
+    // 唤起并初始化白天/暗黑主题切换系统
+    initThemeToggle();
+
+    // 初始化就地文字加粗的悬浮工具气泡
+    initBoldPopover();
+
+    // 初始化侧边栏拖拽调宽功能
+    initSidebarResize();
+
+    // A. 侧边栏所有 textarea 的全局打字自适应拉伸监听 (事件代理)
+    const sidebarContainer = document.querySelector('.editor-sidebar');
+    if (sidebarContainer) {
+        sidebarContainer.addEventListener('input', (e) => {
+            if (e.target.tagName === 'TEXTAREA') {
+                autoResizeTextarea(e.target);
+            }
+        });
+    }
+
+    // 初始化纯前端免下载 AI Copilot 智能助手
+    initAICopilot();
+
+    // 初始化导出 PDF 设置指引弹窗
+    initPDFGuideDialog();
+}
+
+// 深度路径值提取辅助 (如: getNestedValue(state, "info.name"))
+function getNestedValue(obj, path) {
+    return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+}
+
+// 深度路径值写入辅助 (如: setNestedValue(null, "info.name", "李四"))
+function setNestedValue(domEl, path, val) {
+    const parts = path.split('.');
+    if (parts.some(part => ['__proto__', 'prototype', 'constructor'].includes(part))) throw new Error('无效的字段路径');
+    let current = state;
+    for (let i = 0; i < parts.length - 1; i++) {
+        if (!current[parts[i]]) current[parts[i]] = {};
+        current = current[parts[i]];
+    }
+    current[parts[parts.length - 1]] = val;
+    if (domEl) {
+        domEl.value = val || '';
+    }
+}
+
+// 缓存到浏览器本地 (物理隔离双方案设计)
+let saveTimer;
+function saveToLocal() {
+    clearTimeout(saveTimer);
+    const status = document.getElementById('save-status');
+    if (status) status.textContent = EasyCVShare.active ? '链接简历 · 本次页面暂存' : '正在保存…';
+    saveTimer = setTimeout(flushLocalSave, 250);
+}
+function flushLocalSave() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    try {
+    // 1. 提取并持久化共享内容数据
+    const content = {
+        info: state.info,
+        skills: state.skills,
+        work: state.work,
+        projects: state.projects,
+        education: state.education,
+        custom: state.custom
+    };
+    resumeStorage.setItem("easycv_resume_content", JSON.stringify(content));
+
+    // 兼容历史测试用例，同步写入全局大缓存 easycv_resume_state
+
+
+    // 2. 持久化当前方案的排版设置
+    const settingsKey = `easycv_resume_settings_${currentScheme.toLowerCase()}`;
+    resumeStorage.setItem(settingsKey, JSON.stringify(state.settings));
+    if (typeof EasyCVShare !== 'undefined' && typeof EasyCVShare.syncAddressBarURL === 'function') {
+        EasyCVShare.syncAddressBarURL(state);
+    }
+    const status = document.getElementById('save-status');
+    if (status) status.textContent = EasyCVShare.active ? '链接简历 · 本次页面暂存' : '已保存到本机';
+    } catch (error) {
+        const status = document.getElementById('save-status');
+        if (status) status.textContent = '保存失败，请导出备份';
+    }
+}
+window.addEventListener('pagehide', () => { if (saveTimer) flushLocalSave(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && saveTimer) flushLocalSave(); });
+
+// ====================================================
+// 4. 排版样式控制器与 CSS 变量实时绑定
+// ====================================================
+function applyCSSVariables() {
+    const sheet = document.getElementById("resume-page");
+    const s = state.settings;
+    updatePrintSettings();
+
+    sheet.style.setProperty("--accent-color", s.accentColor);
+    sheet.style.setProperty('--name-size', `${s.nameSize}px`);
+    sheet.style.setProperty('--letter-spacing', `${s.letterSpacing}px`);
+    sheet.style.setProperty('--column-width', `${s.columnWidth}%`);
+    sheet.style.setProperty('--column-gap', `${s.columnGap}px`);
+    const cjkFamily = {system:'"PingFang SC", "Microsoft YaHei", sans-serif',noto:'"Noto Sans SC", sans-serif',harmony:'"HarmonyOS Sans SC Offline", sans-serif'}[s.cjkFont];
+    sheet.style.setProperty('--cjk-family', cjkFamily);
+    document.getElementById('font-sample').style.setProperty('--cjk-family', cjkFamily);
+    sheet.dataset.headerAlign = s.headerAlign;
+    sheet.dataset.headingStyle = s.headingStyle;
+    sheet.dataset.contactIcons = s.contactIcons;
+
+    sheet.style.setProperty("--base-font-size", `${s.fontSize}px`);
+    sheet.style.setProperty("--line-height", s.lineHeight);
+    sheet.style.setProperty("--page-padding-y", `${s.paddingY}mm`);
+    sheet.style.setProperty("--page-padding-x", `${s.paddingX}mm`);
+    sheet.style.setProperty("--section-margin", `${s.secSpacing}px`);
+    sheet.style.setProperty("--item-margin", `${s.itemSpacing}px`);
+    sheet.style.setProperty("--title-size", `${s.titleSize}em`);
+    sheet.style.setProperty("--title-weight", s.titleWeight);
+    sheet.style.setProperty("--list-indent", `${s.listIndent ?? 15}px`); // 全局列表细节缩进
+
+    // 推送优雅侧边左右分栏的精细度独立局部 CSS 变量
+    if (s.template === "tpl-split") {
+        sheet.style.setProperty("--sidebar-font-size", `${s.sidebarFontSize ?? 8.5}px`);
+        sheet.style.setProperty("--main-font-size", `${s.mainFontSize ?? 9.0}px`);
+        sheet.style.setProperty("--sidebar-sec-spacing", `${s.sidebarSecSpacing ?? 6}px`);
+        sheet.style.setProperty("--main-sec-spacing", `${s.mainSecSpacing ?? 6}px`);
+        sheet.style.setProperty("--sidebar-item-spacing", `${s.sidebarItemSpacing ?? 2}px`);
+        sheet.style.setProperty("--main-item-spacing", `${s.mainItemSpacing ?? 2}px`);
+        sheet.style.setProperty("--sidebar-title-size", `${s.sidebarTitleSize ?? 1.05}em`);
+        sheet.style.setProperty("--main-title-size", `${s.mainTitleSize ?? 1.12}em`);
+        sheet.style.setProperty("--sidebar-list-indent", `${s.sidebarListIndent ?? 10}px`); // 侧边栏列表缩进
+        sheet.style.setProperty("--main-list-indent", `${s.mainListIndent ?? 15}px`); // 主栏列表缩进
+    }
+}
+
+// ====================================================
+// 5. 动态列表项渲染 (工作/项目/教育/自定义板块)
+// ====================================================
+
+// 主渲染程序包含：表单编辑器列表同步、A4画布渲染同步、JSON代码同步
+function renderAll() {
+    document.querySelectorAll('.template-option').forEach(button => button.classList.toggle('active', button.dataset.tpl === state.settings.template));
+    document.querySelectorAll('.font-btn').forEach(button => button.classList.toggle('active', button.dataset.font === state.settings.font));
+    document.querySelectorAll('.color-dot').forEach(button => button.classList.toggle('active', button.dataset.color === state.settings.accentColor));
+    document.getElementById('custom-accent-color').value = state.settings.accentColor;
+    syncDesignUI();
+    // 1. 同步编辑器输入框初始值（针对info内数据）
+    const bindableInputs = document.querySelectorAll("[data-bind]");
+    bindableInputs.forEach(input => {
+        const path = input.dataset.bind;
+        setNestedValue(input, path, getNestedValue(state, path));
+    });
+
+    // 2. 将 settings 对应的样式类应用到 A4 画布
+    const sheet = document.getElementById("resume-page");
+    sheet.className = `resume-sheet ${state.settings.template} ${state.settings.font}`;
+
+    // 3. 应用 CSS 变量样式
+    applyCSSVariables();
+
+    // 3.5 渲染/同步动态滑块结构和数值 (黄金焦点保护)
+    renderStyleSliders();
+
+    // 4. 渲染表单里的动态列表组件
+    renderSkillEditorList();
+    renderWorkEditorList();
+    renderProjectEditorList();
+    renderEducationEditorList();
+    renderCustomSectionsEditor();
+
+    // 5. 渲染 A4 简历 HTML
+    renderResumeHTML();
+
+    // 6. 同步更新 JSON 源码面板代码
+    updateJSONCodearea();
+
+    // 7. 每次重渲染后刷新缩放比例以适配排版变化
+    adjustPreviewScale();
+
+    // 8. 全量渲染后，自动校准已展开手风琴项与自定义列表里的文本域高度 (延时以保证DOM就绪)
+    setTimeout(() => {
+        document.querySelectorAll(".accordion-item.expanded textarea").forEach(autoResizeTextarea);
+        document.querySelectorAll(".custom-section-editor-box textarea").forEach(autoResizeTextarea);
+    }, 50);
+}
+
+// --- 5.1 技能标签组列表同步 ---
+function renderSkillEditorList() {
+    const state = getHTMLState(false);
+    const container = document.getElementById("skills-list-container");
+    container.innerHTML = "";
+    state.skills.forEach((group, index) => {
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "dynamic-list-item";
+        itemDiv.innerHTML = `
+            <div class="item-actions-bar">
+                <span class="item-index-label">技能分类 #${index + 1}</span>
+                <div class="item-btns">
+                    <button class="icon-btn" onclick="moveSkill(${index}, -1)" title="上移"><i class="fa-solid fa-arrow-up"></i></button>
+                    <button class="icon-btn" onclick="moveSkill(${index}, 1)" title="下移"><i class="fa-solid fa-arrow-down"></i></button>
+                    <button class="icon-btn delete-icon" onclick="deleteSkill(${index})" title="删除"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>技能分类名称 (如：前端技术、后端框架)</label>
+                <input type="text" value="${group.category || ''}" oninput="updateSkillField(${index}, 'category', this.value)" placeholder="分类名称">
+            </div>
+            <div class="form-group">
+                <label>具体技能标签 (英文逗号分隔)</label>
+                <input type="text" value="${group.tags || ''}" oninput="updateSkillField(${index}, 'tags', this.value)" placeholder="React, Vue, TypeScript...">
+            </div>
+        `;
+        container.appendChild(itemDiv);
+    });
+}
+function addSkillGroup() {
+    state.skills.push({ category: "新建技能分类", tags: "核心技能, 标签" });
+    saveToLocal();
+    renderAll();
+}
+function updateSkillField(index, field, val) {
+    state.skills[index][field] = val;
+    saveToLocal();
+    renderResumeHTML();
+    updateJSONCodearea();
+}
+function deleteSkill(index) {
+    state.skills.splice(index, 1);
+    saveToLocal();
+    renderAll();
+}
+function moveSkill(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= state.skills.length) return;
+    const temp = state.skills[index];
+    state.skills[index] = state.skills[targetIndex];
+    state.skills[targetIndex] = temp;
+    saveToLocal();
+    renderAll();
+}
+
+// --- 5.2 工作经历列表同步 ---
+function renderWorkEditorList() {
+    const state = getHTMLState(false);
+    const container = document.getElementById("work-list-container");
+    container.innerHTML = "";
+    state.work.forEach((item, index) => {
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "dynamic-list-item";
+        itemDiv.innerHTML = `
+            <div class="item-actions-bar">
+                <span class="item-index-label">工作经历 #${index + 1}</span>
+                <div class="item-btns">
+                    <button class="icon-btn" onclick="moveWork(${index}, -1)" title="上移"><i class="fa-solid fa-arrow-up"></i></button>
+                    <button class="icon-btn" onclick="moveWork(${index}, 1)" title="下移"><i class="fa-solid fa-arrow-down"></i></button>
+                    <button class="icon-btn delete-icon" onclick="deleteWork(${index})" title="删除"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label>公司名称</label>
+                    <input type="text" value="${item.company || ''}" oninput="updateWorkField(${index}, 'company', this.value)" placeholder="企业名称">
+                </div>
+                <div class="form-group">
+                    <label>担任岗位</label>
+                    <input type="text" value="${item.role || ''}" oninput="updateWorkField(${index}, 'role', this.value)" placeholder="岗位名称">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>起止时间</label>
+                <input type="text" value="${item.time || ''}" oninput="updateWorkField(${index}, 'time', this.value)" placeholder="2020.05 - 2023.08">
+            </div>
+            <div class="form-group">
+                <label>核心工作内容及产出 (每行一条描述，推荐STAR原则描述)</label>
+                <textarea rows="6" oninput="updateWorkDetails(${index}, this.value)" placeholder="【项目挑战】...\n【技术攻坚】...\n【量化成果】...">${item.details ? item.details.join('\n') : ''}</textarea>
+            </div>
+        `;
+        container.appendChild(itemDiv);
+    });
+}
+function addWorkExperience() {
+    state.work.push({
+        company: "某知名科技公司",
+        role: "核心开发工程师",
+        time: "2020.01 - 2022.01",
+        details: [
+            "【工作内容】负责核心业务线研发，实现高并发场景稳定性提升。",
+            "【技术手段】使用 Go 并发模型改造消费队列，削峰处理高吞吐流量。",
+            "【量化成果】业务系统吞吐量提升 30%，接口延迟降低 20%。"
+        ]
+    });
+    saveToLocal();
+    renderAll();
+}
+function updateWorkField(index, field, val) {
+    state.work[index][field] = val;
+    saveToLocal();
+    renderResumeHTML();
+    updateJSONCodearea();
+}
+function updateWorkDetails(index, rawText) {
+    state.work[index].details = rawText.split('\n').filter(line => line.trim() !== '');
+    saveToLocal();
+    renderResumeHTML();
+    updateJSONCodearea();
+}
+function deleteWork(index) {
+    state.work.splice(index, 1);
+    saveToLocal();
+    renderAll();
+}
+function moveWork(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= state.work.length) return;
+    const temp = state.work[index];
+    state.work[index] = state.work[targetIndex];
+    state.work[targetIndex] = temp;
+    saveToLocal();
+    renderAll();
+}
+
+// --- 5.3 项目经历列表同步 ---
+function renderProjectEditorList() {
+    const state = getHTMLState(false);
+    const container = document.getElementById("project-list-container");
+    container.innerHTML = "";
+    state.projects.forEach((item, index) => {
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "dynamic-list-item";
+        itemDiv.innerHTML = `
+            <div class="item-actions-bar">
+                <span class="item-index-label">项目经历 #${index + 1}</span>
+                <div class="item-btns">
+                    <button class="icon-btn" onclick="moveProject(${index}, -1)" title="上移"><i class="fa-solid fa-arrow-up"></i></button>
+                    <button class="icon-btn" onclick="moveProject(${index}, 1)" title="下移"><i class="fa-solid fa-arrow-down"></i></button>
+                    <button class="icon-btn delete-icon" onclick="deleteProject(${index})" title="删除"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label>项目名称</label>
+                    <input type="text" value="${item.name || ''}" oninput="updateProjectField(${index}, 'name', this.value)" placeholder="项目名称">
+                </div>
+                <div class="form-group">
+                    <label>项目起止时间</label>
+                    <input type="text" value="${item.time || ''}" oninput="updateProjectField(${index}, 'time', this.value)" placeholder="2022.03 - 2022.09">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>使用${state.settings.techLabel || "技术栈"} (英文逗号分隔)</label>
+                <input type="text" value="${item.tech || ''}" oninput="updateProjectField(${index}, 'tech', this.value)" placeholder="React, Go, Redis...">
+            </div>
+            <div class="form-group">
+                <label>项目技术难点与个人贡献 (每行一条描述，推荐使用STAR核心量化)</label>
+                <textarea rows="6" oninput="updateProjectDetails(${index}, this.value)" placeholder="【项目挑战】...\n【技术攻坚】...\n【量化成果】...">${item.details ? item.details.join('\n') : ''}</textarea>
+            </div>
+        `;
+        container.appendChild(itemDiv);
+    });
+}
+function addProjectExperience() {
+    state.projects.push({
+        name: "自主研发核心项目",
+        tech: "React, Webpack, Node.js",
+        time: "2023.01 - 2023.06",
+        details: [
+            "【项目挑战】原有系统在渲染超大型树形节点时，容易遭遇卡顿 and 内存超限。",
+            "【技术攻坚】采用 Canvas 重构渲染核心层，实现离屏渲染与滚动虚拟化加载。",
+            "【量化成果】页面响应帧率稳定运行在 60fps，复杂节点树渲染时间压缩了 80%。"
+        ]
+    });
+    saveToLocal();
+    renderAll();
+}
+function updateProjectField(index, field, val) {
+    state.projects[index][field] = val;
+    saveToLocal();
+    renderResumeHTML();
+    updateJSONCodearea();
+}
+function updateProjectDetails(index, rawText) {
+    state.projects[index].details = rawText.split('\n').filter(line => line.trim() !== '');
+    saveToLocal();
+    renderResumeHTML();
+    updateJSONCodearea();
+}
+function deleteProject(index) {
+    state.projects.splice(index, 1);
+    saveToLocal();
+    renderAll();
+}
+function moveProject(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= state.projects.length) return;
+    const temp = state.projects[index];
+    state.projects[index] = state.projects[targetIndex];
+    state.projects[targetIndex] = temp;
+    saveToLocal();
+    renderAll();
+}
+
+// --- 5.4 教育背景列表同步 ---
+function renderEducationEditorList() {
+    const state = getHTMLState(false);
+    const container = document.getElementById("education-list-container");
+    container.innerHTML = "";
+    state.education.forEach((item, index) => {
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "dynamic-list-item";
+        itemDiv.innerHTML = `
+            <div class="item-actions-bar">
+                <span class="item-index-label">教育背景 #${index + 1}</span>
+                <div class="item-btns">
+                    <button class="icon-btn" onclick="moveEducation(${index}, -1)" title="上移"><i class="fa-solid fa-arrow-up"></i></button>
+                    <button class="icon-btn" onclick="moveEducation(${index}, 1)" title="下移"><i class="fa-solid fa-arrow-down"></i></button>
+                    <button class="icon-btn delete-icon" onclick="deleteEducation(${index})" title="删除"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label>学校名称</label>
+                    <input type="text" value="${item.school || ''}" oninput="updateEduField(${index}, 'school', this.value)" placeholder="学校名称">
+                </div>
+                <div class="form-group">
+                    <label>所获学位</label>
+                    <input type="text" value="${item.degree || ''}" oninput="updateEduField(${index}, 'degree', this.value)" placeholder="学士 / 硕士 / 博士">
+                </div>
+            </div>
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label>主修专业</label>
+                    <input type="text" value="${item.major || ''}" oninput="updateEduField(${index}, 'major', this.value)" placeholder="专业名称">
+                </div>
+                <div class="form-group">
+                    <label>就读时间</label>
+                    <input type="text" value="${item.time || ''}" oninput="updateEduField(${index}, 'time', this.value)" placeholder="2015.09 - 2019.07">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>校内表现与相关课程 / 荣誉成果 (每行一条)</label>
+                <textarea rows="3" oninput="updateEduDetails(${index}, this.value)" placeholder="绩点排名 Top 5%，多次荣获一等奖学金...">${item.details ? item.details.join('\n') : ''}</textarea>
+            </div>
+        `;
+        container.appendChild(itemDiv);
+    });
+}
+function addEducation() {
+    state.education.push({
+        school: "知名高等学府",
+        degree: "工学学士",
+        major: "软件工程",
+        time: "2016.09 - 2020.07",
+        details: [
+            "主要课程：计算机组成原理、数据结构与算法、操作系统、软件工程。",
+            "在校期间表现优异，曾获校级优秀毕业生荣誉。"
+        ]
+    });
+    saveToLocal();
+    renderAll();
+}
+function updateEduField(index, field, val) {
+    state.education[index][field] = val;
+    saveToLocal();
+    renderResumeHTML();
+    updateJSONCodearea();
+}
+function updateEduDetails(index, rawText) {
+    state.education[index].details = rawText.split('\n').filter(line => line.trim() !== '');
+    saveToLocal();
+    renderResumeHTML();
+    updateJSONCodearea();
+}
+function deleteEducation(index) {
+    state.education.splice(index, 1);
+    saveToLocal();
+    renderAll();
+}
+function moveEducation(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= state.education.length) return;
+    const temp = state.education[index];
+    state.education[index] = state.education[targetIndex];
+    state.education[targetIndex] = temp;
+    saveToLocal();
+    renderAll();
+}
+
+// --- 5.5 自定义板块同步与渲染 ---
+function renderCustomSectionsEditor() {
+    const state = getHTMLState(false);
+    const container = document.getElementById("custom-sections-container");
+    container.innerHTML = "";
+
+    if (!state.custom || state.custom.length === 0) {
+        container.innerHTML = `<div class="skills-editor-desc">当前无任何自定义板块，可在下方创建。</div>`;
+        return;
+    }
+
+    state.custom.forEach((section, sIdx) => {
+        const secDiv = document.createElement("div");
+        secDiv.className = "custom-section-editor-box";
+
+        secDiv.innerHTML = `
+            <div class="item-actions-bar">
+                <span class="item-index-label"><i class="fa-solid fa-folder-open"></i> 板块：${section.title}</span>
+                <button class="icon-btn delete-icon" onclick="deleteCustomSection(${sIdx})" title="删除此整个板块"><i class="fa-solid fa-trash-can"></i> 删除板块</button>
+            </div>
+
+            <div class="form-group">
+                <label>板块标题名称</label>
+                <input type="text" value="${section.title}" onchange="renameCustomSection(${sIdx}, this.value)">
+            </div>
+
+            <div class="custom-items-list" id="custom-items-${sIdx}">
+                <!-- 自定义板块内部的项目列表 -->
+            </div>
+
+            <button class="btn btn-secondary btn-sm" onclick="addCustomItem(${sIdx})">
+                <i class="fa-solid fa-plus-circle"></i> 添加该板块项目项
+            </button>
+        `;
+
+        container.appendChild(secDiv);
+        renderCustomItems(sIdx);
+    });
+}
+
+function renderCustomItems(sIdx) {
+    const state = getHTMLState(false);
+    const listContainer = document.getElementById(`custom-items-${sIdx}`);
+    listContainer.innerHTML = "";
+    const items = state.custom[sIdx].items || [];
+
+    items.forEach((item, iIdx) => {
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "dynamic-list-item";
+
+        itemDiv.innerHTML = `
+            <div class="item-actions-bar">
+                <span class="item-index-label">条目 #${iIdx + 1}</span>
+                <div class="item-btns">
+                    <button class="icon-btn" onclick="moveCustomItem(${sIdx}, ${iIdx}, -1)" title="上移"><i class="fa-solid fa-arrow-up"></i></button>
+                    <button class="icon-btn" onclick="moveCustomItem(${sIdx}, ${iIdx}, 1)" title="下移"><i class="fa-solid fa-arrow-down"></i></button>
+                    <button class="icon-btn delete-icon" onclick="deleteCustomItem(${sIdx}, ${iIdx})" title="删除项"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label>主标题</label>
+                    <input type="text" value="${item.title || ''}" oninput="updateCustomField(${sIdx}, ${iIdx}, 'title', this.value)">
+                </div>
+                <div class="form-group">
+                    <label>副标题 (选填)</label>
+                    <input type="text" value="${item.subtitle || ''}" oninput="updateCustomField(${sIdx}, ${iIdx}, 'subtitle', this.value)">
+                </div>
+            </div>
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label>时间轴描述 (选填)</label>
+                    <input type="text" value="${item.time || ''}" oninput="updateCustomField(${sIdx}, ${iIdx}, 'time', this.value)">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>条目详情内容描述 (每行一条，支持段落)</label>
+                <textarea rows="4" oninput="updateCustomDetails(${sIdx}, ${iIdx}, this.value)">${item.details ? item.details.join('\n') : ''}</textarea>
+            </div>
+        `;
+        listContainer.appendChild(itemDiv);
+    });
+}
+
+function createCustomSection() {
+    const input = document.getElementById("new-section-title");
+    const title = input.value.trim();
+    if (!title) {
+        showNotification("请输入自定义板块的标题名称！");
+        return;
+    }
+    if (!state.custom) state.custom = [];
+    state.custom.push({
+        title: title,
+        items: [
+            {
+                title: "新建项标题",
+                subtitle: "子标题",
+                time: "2024",
+                details: ["此处写具体描述细则一", "描述细则二"]
+            }
+        ]
+    });
+    input.value = "";
+    saveToLocal();
+    renderAll();
+}
+function renameCustomSection(sIdx, newTitle) {
+    if (!newTitle.trim()) return;
+    state.custom[sIdx].title = newTitle;
+    saveToLocal();
+    renderResumeHTML();
+    updateJSONCodearea();
+}
+async function deleteCustomSection(sIdx) {
+    if (await confirmAction("删除板块", `删除“${state.custom[sIdx].title}”及其中所有条目？此操作无法撤销。`)) {
+        state.custom.splice(sIdx, 1);
+        saveToLocal();
+        renderAll();
+    }
+}
+function addCustomItem(sIdx) {
+    state.custom[sIdx].items.push({
+        title: "新条目",
+        subtitle: "",
+        time: "",
+        details: ["描述详情一"]
+    });
+    saveToLocal();
+    renderAll();
+}
+function deleteCustomItem(sIdx, iIdx) {
+    state.custom[sIdx].items.splice(iIdx, 1);
+    saveToLocal();
+    renderAll();
+}
+function updateCustomField(sIdx, iIdx, field, val) {
+    state.custom[sIdx].items[iIdx][field] = val;
+    saveToLocal();
+    renderResumeHTML();
+    updateJSONCodearea();
+}
+function updateCustomDetails(sIdx, iIdx, rawText) {
+    state.custom[sIdx].items[iIdx].details = rawText.split('\n').filter(line => line.trim() !== '');
+    saveToLocal();
+    renderResumeHTML();
+    updateJSONCodearea();
+}
+function moveCustomItem(sIdx, iIdx, direction) {
+    const items = state.custom[sIdx].items;
+    const targetIdx = iIdx + direction;
+    if (targetIdx < 0 || targetIdx >= items.length) return;
+    const temp = items[iIdx];
+    items[iIdx] = items[targetIdx];
+    items[targetIdx] = temp;
+    saveToLocal();
+    renderAll();
+}
+
+// ====================================================
+// 6. A4 纸张页面 HTML 动态生成渲染引擎
+// ====================================================
+function renderResumeHTML() {
+    const state = getHTMLState(true);
+    const target = document.getElementById("resume-render-target");
+    const tpl = state.settings.template;
+
+    // 生成页头个人基本信息模块 of HTML
+    const contacts = [
+        state.info.email.trim() ? `<span><i class="fa-regular fa-envelope"></i> <span contenteditable="true" data-edit-path="info.email">${state.info.email}</span></span>` : '',
+        state.info.phone.trim() ? `<span><i class="fa-solid fa-phone"></i> <span contenteditable="true" data-edit-path="info.phone">${state.info.phone}</span></span>` : '',
+        (state.info.wechat && state.info.wechat.trim()) ? `<span><i class="fa-brands fa-weixin"></i> <span contenteditable="true" data-edit-path="info.wechat">${state.info.wechat}</span></span>` : '',
+        state.info.location.trim() ? `<span><i class="fa-solid fa-location-dot"></i> <span contenteditable="true" data-edit-path="info.location">${state.info.location}</span></span>` : '',
+        state.info.github.trim() ? `<span><i class="fa-brands fa-github"></i> <a href="${safeResumeURL(state.info.github)}" target="_blank" rel="noopener noreferrer"><span contenteditable="true" data-edit-path="info.github">${state.info.github}</span></a></span>` : '',
+        state.info.blog.trim() ? `<span><i class="fa-solid fa-globe"></i> <a href="${safeResumeURL(state.info.blog)}" target="_blank" rel="noopener noreferrer"><span contenteditable="true" data-edit-path="info.blog">${state.info.blog}</span></a></span>` : ''
+    ].filter(Boolean).join('');
+
+    const headerHTML = `
+        <header class="resume-header selectable-section" data-section-name="基本信息页头">
+            <div class="header-main">
+                <h1 class="header-name" contenteditable="true" data-edit-path="info.name">${state.info.name || "姓名"}</h1>
+                <div class="header-title" contenteditable="true" data-edit-path="info.title">${state.info.title || ""}</div>
+            </div>
+            ${contacts ? `<div class="header-contact-list">${contacts}</div>` : ''}
+        </header>
+    `;
+
+    // 个人简介 HTML
+    const summaryHTML = state.info.summary ? `
+        <section class="resume-section" id="resume-sec-summary">
+            <h2 class="sec-title">${state.settings.summaryTitle}</h2>
+            <div class="summary-text selectable-section" data-section-name="个人简介" contenteditable="true" data-edit-path="info.summary">${state.info.summary}</div>
+        </section>
+    ` : '';
+
+    // 专业技能 HTML
+    let skillsItemsHTML = "";
+    state.skills.forEach((group, index) => {
+        if (!group.category && !group.tags) return;
+        skillsItemsHTML += `
+            <div class="skills-group">
+                <span class="skills-group-title" contenteditable="true" data-edit-path="skills.${index}.category">${group.category || "技术"}：</span>
+                <span class="skills-group-tags" contenteditable="true" data-edit-path="skills.${index}.tags">${group.tags || ""}</span>
+            </div>
+        `;
+    });
+    const skillsHTML = skillsItemsHTML ? `
+        <section class="resume-section" id="resume-sec-skills">
+            <h2 class="sec-title">${state.settings.skillsTitle}</h2>
+            <div class="skills-grid selectable-section" data-section-name="专业技能">${skillsItemsHTML}</div>
+        </section>
+    ` : '';
+
+    // 工作经历 HTML
+    let workItemsHTML = "";
+    state.work.forEach((item, index) => {
+        const detailsList = item.details ? item.details.map((d, dIdx) => `<li contenteditable="true" data-edit-path="work.${index}.details.${dIdx}">${d}</li>`).join('') : '';
+        workItemsHTML += `
+            <div class="resume-item selectable-section" data-section-name="工作经历 #${index + 1} - ${item.company || ''}">
+                <div class="item-meta-row">
+                    <span class="item-org" contenteditable="true" data-edit-path="work.${index}.company">${item.company}</span>
+                    <span class="item-role" contenteditable="true" data-edit-path="work.${index}.role">${item.role}</span>
+                    <span class="item-time" contenteditable="true" data-edit-path="work.${index}.time">${item.time}</span>
+                </div>
+                ${detailsList ? `<ul class="item-details-list">${detailsList}</ul>` : ''}
+            </div>
+        `;
+    });
+    const workHTML = workItemsHTML ? `
+        <section class="resume-section" id="resume-sec-work">
+            <h2 class="sec-title">${state.settings.workTitle}</h2>
+            ${workItemsHTML}
+        </section>
+    ` : '';
+
+    // 项目经历 HTML
+    let projectItemsHTML = "";
+    state.projects.forEach((item, index) => {
+        const detailsList = item.details ? item.details.map((d, dIdx) => `<li contenteditable="true" data-edit-path="projects.${index}.details.${dIdx}">${d}</li>`).join('') : '';
+        projectItemsHTML += `
+            <div class="resume-item selectable-section" data-section-name="项目经历 #${index + 1} - ${item.name || ''}">
+                <div class="item-meta-row">
+                    <span class="item-org" contenteditable="true" data-edit-path="projects.${index}.name">${item.name}</span>
+                    <span class="item-time" contenteditable="true" data-edit-path="projects.${index}.time">${item.time}</span>
+                </div>
+                ${item.tech ? `<div class="item-tech-stack"><span contenteditable="true" class="tech-label-editable" data-edit-path="settings.techLabel">${state.settings.techLabel || "技术栈"}</span>：<strong><span contenteditable="true" data-edit-path="projects.${index}.tech">${item.tech}</span></strong></div>` : ''}
+                ${detailsList ? `<ul class="item-details-list">${detailsList}</ul>` : ''}
+            </div>
+        `;
+    });
+    const projectsHTML = projectItemsHTML ? `
+        <section class="resume-section" id="resume-sec-projects">
+            <h2 class="sec-title">${state.settings.projectsTitle}</h2>
+            ${projectItemsHTML}
+        </section>
+    ` : '';
+
+    // 教育背景 HTML
+    let eduItemsHTML = "";
+    state.education.forEach((item, index) => {
+        const detailsList = item.details ? item.details.map((d, dIdx) => `<li contenteditable="true" data-edit-path="education.${index}.details.${dIdx}">${d}</li>`).join('') : '';
+        eduItemsHTML += `
+            <div class="resume-item selectable-section" data-section-name="教育背景 #${index + 1} - ${item.school || ''}">
+                <div class="item-meta-row">
+                    <span class="item-org" contenteditable="true" data-edit-path="education.${index}.school">${item.school}</span>
+                    <span class="item-role"><span contenteditable="true" data-edit-path="education.${index}.degree">${item.degree}</span> • <span contenteditable="true" data-edit-path="education.${index}.major">${item.major}</span></span>
+                    <span class="item-time" contenteditable="true" data-edit-path="education.${index}.time">${item.time}</span>
+                </div>
+                ${detailsList ? `<ul class="item-details-list" style="margin-top:3px">${detailsList}</ul>` : ''}
+            </div>
+        `;
+    });
+    const educationHTML = eduItemsHTML ? `
+        <section class="resume-section" id="resume-sec-education">
+            <h2 class="sec-title">${state.settings.educationTitle}</h2>
+            ${eduItemsHTML}
+        </section>
+    ` : '';
+
+    // 自定义板块 HTML
+    let customHTML = "";
+    if (state.custom && state.custom.length > 0) {
+        state.custom.forEach((sec, sIdx) => {
+            let itemsHTML = "";
+            sec.items.forEach((item, iIdx) => {
+                const detailsList = item.details ? item.details.map((d, dIdx) => `<li contenteditable="true" data-edit-path="custom.${sIdx}.items.${iIdx}.details.${dIdx}">${d}</li>`).join('') : '';
+                itemsHTML += `
+                    <div class="resume-item selectable-section" data-section-name="${sec.title} #${iIdx + 1} - ${item.title || ''}">
+                        <div class="item-meta-row">
+                            <span class="item-org" contenteditable="true" data-edit-path="custom.${sIdx}.items.${iIdx}.title">${item.title}</span>
+                            ${item.subtitle ? `<span class="item-role" contenteditable="true" data-edit-path="custom.${sIdx}.items.${iIdx}.subtitle">${item.subtitle}</span>` : ''}
+                            ${item.time ? `<span class="item-time" contenteditable="true" data-edit-path="custom.${sIdx}.items.${iIdx}.time">${item.time}</span>` : ''}
+                        </div>
+                        ${detailsList ? `<ul class="item-details-list">${detailsList}</ul>` : ''}
+                    </div>
+                `;
+            });
+
+            if (itemsHTML) {
+                customHTML += `
+                    <section class="resume-section">
+                        <h2 class="sec-title" contenteditable="true" data-edit-path="custom.${sIdx}.title">${sec.title}</h2>
+                        <div class="custom-items-wrapper selectable-section" data-section-name="${sec.title} 内容区域">
+                            ${itemsHTML}
+                        </div>
+                    </section>
+                `;
+            }
+        });
+    }
+
+    const sections = {summary:summaryHTML,skills:skillsHTML,work:workHTML,projects:projectsHTML,education:educationHTML,custom:customHTML};
+    const hidden = sectionKeys(state.settings.hiddenSections);
+    const keys = orderedSections().filter(key => !hidden.includes(key));
+    const sidebar = sectionKeys(state.settings.sidebarSections);
+    target.innerHTML = tpl === 'tpl-split'
+        ? `<div class="split-container"><div class="split-sidebar">${headerHTML}${keys.filter(key => sidebar.includes(key)).map(key => sections[key]).join('')}</div><div class="split-main">${keys.filter(key => !sidebar.includes(key)).map(key => sections[key]).join('')}</div></div>`
+        : headerHTML + keys.map(key => sections[key]).join('');
+
+}
+
+// ====================================================
+// 7. 对 AI 友好型核心功能：RAW JSON 代码双向编辑应用
+// ====================================================
+function updateJSONCodearea() {
+    const codeArea = document.getElementById("raw-json-textarea");
+    if (codeArea) {
+        codeArea.value = JSON.stringify(state, null, 4);
+    }
+}
+
+// 读取 textarea 的 JSON 数据并同步更新到编辑器表单及 A4 简历画布中
+function applyRawJSON() {
+    const codeArea = document.getElementById("raw-json-textarea");
+    try {
+        const parsed = JSON.parse(codeArea.value);
+
+        // 验证必选的结构
+        if (!parsed.info || !parsed.skills || !parsed.work || !parsed.projects || !parsed.education) {
+            showNotification("JSON 结构缺少必要的基本属性，请检查数据完整性！");
+            return;
+        }
+
+        // 保存更新
+        state = normalizeResume(parsed);
+        lastRenderedTemplate = null;
+        saveToLocal();
+
+        // 重新进行全面渲染及重置表单
+        renderAll();
+        showNotification("🎉 JSON 源码修改应用成功！简历已完成重新即时排版。");
+    } catch (err) {
+        showNotification(`❌ JSON 格式解析失败！请检查语法错误。\n错误日志: ${err.message}`);
+    }
+}
+
+function copyJSONToClipboard() {
+    const codeArea = document.getElementById("raw-json-textarea");
+    codeArea.select();
+    document.execCommand("copy");
+    showNotification("📋 简历 JSON 源码已成功复制到剪贴板！");
+}
+
+// ====================================================
+// 8. 辅助控制面板操作函数 (示例数据、PDF打印、数据文件备份)
+// ====================================================
+
+// 折叠面板展开关闭控制
+function toggleAccordion(id) {
+    const target = document.getElementById(id);
+    const expand = !target.classList.contains('expanded');
+    document.querySelectorAll('.accordion-item').forEach(item => {
+        if (item === target || item.classList.contains('expanded')) animateAccordion(item, item === target && expand);
+    });
+}
+
+// 切换方案核心控制器 (双排版对比系统)
+function switchScheme(schemeName) {
+    if (currentScheme === schemeName) return;
+
+    // B. 备份当前排版与内容数据
+    saveToLocal();
+
+    flushLocalSave();
+
+    // C. 改变当前的方案标识
+    currentScheme = schemeName;
+    resumeStorage.setItem("easycv_resume_current_scheme", currentScheme);
+    isViewingExample = currentScheme === 'B';
+
+    // D. 重新装载并合成数据
+    initActiveState();
+
+    // E. 重新装载表单和 A4 纸张页面 (瞬间热重绘 DOM 结构)
+    renderAll();
+
+    // 触发毛玻璃 Toast 通知
+
+
+    // F. 动态滑块的值与事件在 renderAll() 内部由 renderStyleSliders() 自适应重新同步绑定，无需硬编码
+    // 同步颜色拾取器
+    const customColorInput = document.getElementById("custom-accent-color");
+    if (customColorInput) customColorInput.value = state.settings.accentColor;
+    document.querySelectorAll(".color-dot").forEach(dot => {
+        if (dot.dataset.color === state.settings.accentColor) {
+            document.querySelectorAll(".color-dot").forEach(d => d.classList.remove("active"));
+            dot.classList.add("active");
+        }
+    });
+
+    // 同步模板高亮
+    document.querySelectorAll(".template-option").forEach(opt => {
+        if (opt.dataset.tpl === state.settings.template) {
+            document.querySelectorAll(".template-option").forEach(o => o.classList.remove("active"));
+            opt.classList.add("active");
+        }
+    });
+
+    // 同步字体按钮高亮
+    document.querySelectorAll(".font-btn").forEach(btn => {
+        if (btn.dataset.font === state.settings.font) {
+            document.querySelectorAll(".font-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+        }
+    });
+
+    // G. 更新切换按钮的高亮状态和上下文 Banner
+    updateSlotUI();
+}
+
+// 兼容原本的“优质程序员示例”底部按钮触发逻辑
+function loadExampleData() {
+    if (currentScheme === 'A') {
+        switchScheme('B');
+    } else {
+        switchScheme('A');
+    }
+}
+
+// 动态同步卡槽切换的 UI 表现
+function updateSlotUI() {
+    const btnUser = document.getElementById("btn-view-user");
+    const btnExample = document.getElementById("btn-view-example");
+    const btnToggle = document.getElementById("btn-toggle-example");
+    const alertBanner = document.getElementById("context-alert-banner");
+
+    // A. 选项卡切换高亮
+    if (btnUser && btnExample) {
+        if (currentScheme === 'A') {
+            btnUser.classList.add("active");
+            btnExample.classList.remove("active");
+        } else {
+            btnUser.classList.remove("active");
+            btnExample.classList.add("active");
+        }
+    }
+
+    // B. 左侧底部按钮同步
+    if (btnToggle) {
+        if (currentScheme === 'B') {
+            btnToggle.innerHTML = `<i class="fa-solid fa-arrow-rotate-left"></i> 快速对比方案 A`;
+            btnToggle.classList.add("btn-active-highlight");
+        } else {
+            btnToggle.innerHTML = `<i class="fa-solid fa-square-poll-horizontal"></i> 快速对比方案 B`;
+            btnToggle.classList.remove("btn-active-highlight");
+        }
+    }
+
+    // C. 上下文警示 Banner 状态同步
+    if (alertBanner) {
+        alertBanner.textContent = `方案 ${currentScheme} · 内容共用，排版独立保存`;
+        alertBanner.style.display = "block";
+    }
+}
+
+// 初始化右侧 A4 画布可视化就地编辑与跨板块悬停发光指示框
+function initVisualEditor() {
+    const sheet = document.getElementById("resume-page");
+    const renderTarget = document.getElementById("resume-render-target");
+    const hoverIndicator = document.getElementById("resume-hover-indicator");
+    const hoverBadge = document.getElementById("resume-hover-badge");
+
+    if (!sheet || !renderTarget || !hoverIndicator || !hoverBadge) return;
+
+    // A. 鼠标悬停对焦跨板块发光线框
+    sheet.addEventListener("mousemove", (e) => {
+        const selectable = e.target.closest('[data-section-name]');
+        if (selectable) {
+            const rect = selectable.getBoundingClientRect();
+            const sheetRect = sheet.getBoundingClientRect();
+
+            // 动态计算当前的缩放比例，防止在自适应缩放或浏览器缩放状态下焦点框位置发生偏移
+            const scale = sheet.offsetWidth ? (sheetRect.width / sheet.offsetWidth) : 1;
+
+            // 计算相对坐标并除以缩放比例，还原到未缩放的父容器逻辑像素空间
+            const top = (rect.top - sheetRect.top) / scale;
+            const left = (rect.left - sheetRect.left) / scale;
+            const width = rect.width / scale;
+            const height = rect.height / scale;
+
+            // 针对大标题下方的文字内容区做偏移避空微调，绝对防止虚线框向上超界框住大标题！
+            let offsetTop = 4;
+            let offsetHeight = 8;
+            if (selectable.classList.contains('skills-grid') ||
+                selectable.classList.contains('summary-text') ||
+                selectable.classList.contains('custom-items-wrapper')) {
+                offsetTop = 0; // 顶端不向上偏移，紧贴内容顶边缘
+                offsetHeight = 2; // 底端微向下延伸，贴合感极佳
+            }
+
+            hoverIndicator.style.display = "block";
+            hoverIndicator.style.top = `${top - offsetTop}px`;
+            hoverIndicator.style.left = `${left - 4}px`;
+            hoverIndicator.style.width = `${width + 8}px`;
+            hoverIndicator.style.height = `${height + (offsetHeight - offsetTop)}px`;
+
+            hoverBadge.textContent = selectable.dataset.sectionName;
+            hoverBadge.style.display = "block";
+        } else {
+            // 当鼠标移到大标题或其它无 data-section-name 区域时，立即隐藏对焦框，绝不造成视觉残留
+            hoverIndicator.style.display = "none";
+        }
+    });
+
+    // 鼠标离开简历纸张时自动隐藏
+    sheet.addEventListener("mouseleave", () => {
+        hoverIndicator.style.display = "none";
+    });
+
+    // B. 可视化打字就地双向同步绑定（极佳打字焦点保护）
+    renderTarget.addEventListener("input", (e) => {
+        const path = e.target.dataset.editPath;
+        if (!path) return;
+
+        // 如果 HTML 含有 strong 或 b 标签，则需要保留这些加粗样式，其它块级和垃圾标签全部过滤
+        let newText;
+        if (e.target.innerHTML.includes('<strong>') || e.target.innerHTML.includes('<b>')) {
+            newText = sanitizeHTMLKeepBold(e.target.innerHTML);
+        } else {
+            newText = e.target.innerText || e.target.textContent || '';
+        }
+
+        // 1. 静默修改全局 state 内存数据（不重绘右侧，绝对保护输入焦点！）
+        setNestedValue(null, path, newText);
+
+        // 2. 持久化缓存到 LocalStorage
+        saveToLocal();
+
+        // 3. 实时同步左侧对应的输入框
+        const formInput = document.querySelector(`[data-bind="${path}"]`);
+        if (formInput) {
+            formInput.value = newText;
+        }
+
+        // 4. 高阶联动：如果是列表细节或标签，在内存修改后同步重绘左侧列表的编辑器
+        if (path.includes('details') || path.includes('tags') || path.includes('skills') || path.includes('work') || path.includes('projects') || path.includes('education') || path.includes('custom')) {
+            if (path.includes('work')) renderWorkEditorList();
+            if (path.includes('projects')) renderProjectEditorList();
+            if (path.includes('education')) renderEducationEditorList();
+            if (path.includes('skills')) renderSkillEditorList();
+            if (path.includes('custom')) renderCustomSectionsEditor();
+        }
+
+        // 5. 实时同步 JSON 代码域
+        updateJSONCodearea();
+        if (['info.email', 'info.phone', 'info.location', 'info.wechat', 'info.github', 'info.blog'].includes(path) && !newText.trim()) {
+            const contacts = e.target.closest('.header-contact-list');
+            e.target.closest('.header-contact-list > span')?.remove();
+            if (contacts && !contacts.children.length) contacts.remove();
+        }
+    });
+
+    // C. 失去焦点（blur）时进行全量重绘渲染，确保排版完美对齐
+    renderTarget.addEventListener("blur", (e) => {
+        if (e.target.dataset.editPath) {
+            requestAnimationFrame(() => {
+                if (!renderTarget.contains(document.activeElement)) renderAll();
+            });
+        }
+    }, true);
+}
+
+// 直接唤起系统打印预览以进行 PDF 导出
+async function directExportToPDF() {
+    flushLayoutUpdate();
+    await document.fonts.ready;
+    adjustPreviewScale();
+    window.print();
+}
+
+// 唤起导出 PDF（带有最佳打印参数提示弹窗指引，支持勾选下次不再提示）
+async function exportToPDF() {
+    try {
+        if (localStorage.getItem('easycv_skip_print_guide') === 'true') {
+            await directExportToPDF();
+            return;
+        }
+    } catch (_) {}
+    const dialog = document.getElementById('pdf-guide-dialog');
+    if (dialog && typeof dialog.showModal === 'function') {
+        const checkbox = document.getElementById('skip-pdf-guide-checkbox');
+        if (checkbox) checkbox.checked = false;
+        dialog.showModal();
+    } else {
+        await directExportToPDF();
+    }
+}
+
+// 打开 PDF 打印设置指引弹窗
+function openPDFGuide() {
+    const mobileTools = document.getElementById('mobile-tools-dialog');
+    if (mobileTools && mobileTools.open) mobileTools.close();
+    const dialog = document.getElementById('pdf-guide-dialog');
+    if (dialog && typeof dialog.showModal === 'function') {
+        const checkbox = document.getElementById('skip-pdf-guide-checkbox');
+        if (checkbox) {
+            try { checkbox.checked = localStorage.getItem('easycv_skip_print_guide') === 'true'; } catch (_) {}
+        }
+        dialog.showModal();
+    }
+}
+
+// 初始化导出指引弹窗的事件监听
+function initPDFGuideDialog() {
+    const dialog = document.getElementById('pdf-guide-dialog');
+    if (!dialog) return;
+    const closeBtn = document.getElementById('close-pdf-guide-dialog');
+    const cancelBtn = document.getElementById('cancel-pdf-guide');
+    const confirmBtn = document.getElementById('confirm-pdf-guide');
+    const checkbox = document.getElementById('skip-pdf-guide-checkbox');
+
+    const closeDialog = () => {
+        if (dialog.open) dialog.close();
+    };
+
+    if (closeBtn) closeBtn.addEventListener('click', closeDialog);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeDialog);
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async () => {
+            if (checkbox && checkbox.checked) {
+                try { localStorage.setItem('easycv_skip_print_guide', 'true'); } catch (_) {}
+            }
+            closeDialog();
+            setTimeout(() => {
+                directExportToPDF();
+            }, 60);
+        });
+    }
+}
+
+// 下载 JSON 简历配置文件至本地 (仅备份当前激活方案与文字)
+function downloadJSONFile() {
+    // 构建纯粹的单方案备份包
+    const backupPackage = {
+        // A. 共享文字内容数据
+        info: state.info,
+        skills: state.skills,
+        work: state.work,
+        projects: state.projects,
+        education: state.education,
+        custom: state.custom,
+
+        // B. 仅备份当前方案的排版参数
+        settings: state.settings
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupPackage, null, 4));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `easycv_backup_${state.info.name || 'unnamed'}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    showNotification("💾 简历数据与当前方案排版参数已成功导出备份！");
+}
+
+// 触发本地 JSON 上传
+function triggerJSONUpload() {
+    document.getElementById("json-upload-input").click();
+}
+
+// 上传本地 JSON 简历配置文件并一键加载 (仅影响并覆盖当前激活方案)
+function importJSONFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const parsed = normalizeResume(JSON.parse(e.target.result));
+            if (!parsed.info || !parsed.skills || !parsed.work || !parsed.projects || !parsed.education) {
+                showNotification("❌ 导入的备份文件结构不符，缺少简历核心内容字段！", "error");
+                return;
+            }
+
+            // 1. 恢复共享的简历文字内容
+            state.info = parsed.info;
+            state.skills = parsed.skills;
+            state.work = parsed.work;
+            state.projects = parsed.projects;
+            state.education = parsed.education;
+            state.custom = parsed.custom || [];
+
+            // 2. 仅恢复并覆盖当前激活方案 of 排版设置
+            if (parsed.settings) {
+                state.settings = parsed.settings;
+                lastRenderedTemplate = null; // 导入新设置时重置模板缓存，强制滑块刷新
+                // 强制写回当前方案的 LocalStorage 中
+                const key = `easycv_resume_settings_${currentScheme.toLowerCase()}`;
+                resumeStorage.setItem(key, JSON.stringify(state.settings));
+                showNotification("🎉 备份完美载入！已成功恢复文字内容与当前方案的排版参数。");
+            } else {
+                // 如果导入的是不含 settings 的纯文字简历 (例如 AI 润色助手复制的内容)
+                // 【极度高明】保持当前方案已调好的排版滑块绝对不动，仅平滑替换文字！
+                showNotification("✨ AI 纯简历文本已完美融合载入！已自动保留您当前方案的精细排版。");
+            }
+
+            // 保存到本地并重新渲染，自动重置并拉齐左侧滑块刻度值，防 UI 脱节
+            saveToLocal();
+
+            // 切换预览纸张的模板类，防错位
+            const sheet = document.getElementById("resume-page");
+            if (sheet && state.settings && state.settings.template) {
+                sheet.className = `resume-sheet ${state.settings.template} ${state.settings.font}`;
+            }
+
+            renderAll();
+            updateJSONCodearea();
+
+        } catch (err) {
+            console.error(err);
+            showNotification("❌ 读取备份文件失败，请确保导入的是合法的 JSON 格式文件。", "error");
+        }
+    };
+    reader.readAsText(file);
+    // 重置 input 以便能重复上传同一个文件
+    event.target.value = "";
+}
+
+// 自动计算比例以在小屏幕预览中自适应缩放 A4 画布，消灭水平滚动条，并支持用户通过 Ctrl+滚轮 局部无损缩放
+function adjustPreviewScale() {
+    const container = document.querySelector('.preview-container');
+    const sheet = document.getElementById('resume-page');
+    if (!container || !sheet) return;
+
+    const containerWidth = container.clientWidth;
+    const containerStyle = getComputedStyle(container);
+    const padding = parseFloat(containerStyle.paddingLeft) + parseFloat(containerStyle.paddingRight);
+    if (containerWidth <= padding) return;
+    const availableWidth = containerWidth - padding;
+    const sheetWidth = sheet.offsetWidth;
+
+    // 计算基础自适应缩放比例（仅在容器放不下时自动缩小）
+    let baseScale = 1.0;
+    if (availableWidth < sheetWidth) {
+        baseScale = availableWidth / sheetWidth;
+    }
+
+    // 最终的实际渲染缩放比例
+    const finalScale = Math.max(0.1, baseScale * customZoomFactor);
+    const zoomLabel = document.getElementById('zoom-reset');
+    if (zoomLabel) zoomLabel.textContent = `${Math.round(finalScale * 100)}%`;
+
+    sheet.style.transform = finalScale === 1 ? 'none' : `scale(${finalScale})`;
+    sheet.style.transformOrigin = 'top left';
+    const stage = sheet.parentElement;
+    stage.style.width = `${sheet.offsetWidth * finalScale}px`;
+    stage.style.height = `${sheet.offsetHeight * finalScale}px`;
+    updatePaginationGuides(sheet, finalScale);
+}
+
+function updatePaginationGuides(sheet, scale) {
+    const pixelsPerMM = 96 / 25.4;
+    const paddingY = (state.settings?.paddingY ?? 12) * pixelsPerMM;
+    const printableHeight = 297 * pixelsPerMM - 2 * paddingY;
+    // The continuous preview has one pair of margins; each printed page has its own.
+    // Allow 2px for CSS mm rounding. Print-time break avoidance can move content further.
+    const pages = Math.max(1, Math.ceil((sheet.scrollHeight - 2 * paddingY - 2) / printableHeight));
+    const status = document.getElementById('page-count');
+    if (status) { status.textContent = `A4 · 约 ${pages} 页`; status.title = '页数为预览估算，以打印结果为准'; }
+    sheet.dataset.pages = String(pages);
+
+    const guides = document.getElementById('page-guides');
+    if (!guides) return;
+    // Keep guides outside the sheet so they cannot affect measurement, editing or export.
+    if (guides.childElementCount !== pages - 1) {
+        const fragment = document.createDocumentFragment();
+        for (let page = 1; page < pages; page++) {
+            const guide = document.createElement('div');
+            guide.className = 'page-guide';
+            const label = document.createElement('span');
+            label.className = 'page-guide-label';
+            label.textContent = `${page} 页`;
+            guide.append(label);
+            fragment.append(guide);
+        }
+        guides.replaceChildren(fragment);
+    }
+    Array.from(guides.children).forEach((guide, index) => {
+        guide.style.top = `${(paddingY + (index + 1) * printableHeight) * scale}px`;
+    });
+}
+
+// 极其优雅的高亮浮动通知 Toast 组件
+function copyAIPromptToClipboard() {
+    // 构造完全去隐私的、通用的简历 JSON 数据骨架 Schema 占位符，保护用户隐私并实现 100% 开源通用
+    const genericSchema = `{
+    "info": {
+        "name": "【姓名】",
+        "title": "【求职意向 / 岗位名称】",
+        "email": "【电子邮箱地址】",
+        "phone": "【联系电话号码】",
+        "wechat": "【微信号（选填，若无则留空）】",
+        "location": "【意向城市 / 居住地】",
+        "github": "【GitHub 地址（选填，若无则留空）】",
+        "blog": "【个人博客/作品集（选填，若无则留空）】",
+        "summary": "【专业总结，简明扼要突出核心技术年限与显性业绩成果，用 <strong> 标签包裹重点词】"
+    },
+    "skills": [
+        {
+            "category": "【技能分类名称（如：前端技术、后端与云原生、人工智能等）】",
+            "tags": "【该分类下的具体技术栈列表，用逗号分隔，例如：Go, Java, React, Docker】"
+        }
+    ],
+    "work": [
+        {
+            "company": "【公司/企业名称】",
+            "role": "【担任职级/岗位名称】",
+            "time": "【在职起止时间（例如：2022.06 - 至今）】",
+            "details": [
+                "【工作职责】描述核心开发职责、带队人数、管理资产或系统规模",
+                "【技术攻坚】优化 MySQL 慢查询，引入分布式缓存，将系统核心接口高并发响应时间缩短了 <strong>40%</strong>",
+                "【量化成果】重构核心结算模块，在系统承载流量增长 2 倍的情况下，系统稳定性维持在 <strong>99.99%</strong>"
+            ]
+        }
+    ],
+    "projects": [
+        {
+            "name": "【项目名称】",
+            "tech": "【项目使用核心技术栈，例如：React, Next.js, Node.js, Web Audio API】",
+            "time": "【项目起止时间（例如：2023.03 - 2024.01）】",
+            "details": [
+                "【项目背景】解决什么核心痛点、业务瓶颈或系统架构瓶颈",
+                "【技术攻坚】采用 <strong>Kafka</strong> 消息缓冲区降噪，通过 <strong>Elasticsearch</strong> 分片索引实现百万级秒级检索",
+                "【最终成效】系统日处理日志突破 <strong>1亿条</strong>，故障定位耗时从 30分钟 <strong>极限缩短至 1分钟内</strong>"
+            ]
+        }
+    ],
+    "education": [
+        {
+            "school": "【学校/高校名称】",
+            "degree": "【学历学位，如：学士/硕士/博士】",
+            "major": "【专业名称，如：数据科学与大数据技术】",
+            "time": "【教育起止时间（例如：2023.09 - 2027.06）】",
+            "details": [
+                "【主修课程与荣誉】主修课程、学术竞赛奖项、奖学金荣誉等细节描述"
+            ]
+        }
+    ],
+    "custom": [
+        {
+            "title": "【自定义板块标题（如：个人开源项目经历、科研成果、语言能力等）】",
+            "items": [
+                {
+                    "title": "【条目名称】",
+                    "subtitle": "【副标题/角色定位（如：项目发起人与核心开发）】",
+                    "time": "【起止时间（例如：2026.04 - 2026.05）】",
+                    "details": [
+                        "【细节描述】描述具体的贡献、核心算法，用 <strong> 标签包裹重点词"
+                    ]
+                }
+            ]
+        }
+    ]
+}`;
+
+    const masterPrompt = `你是一个殿堂级的简历专家与内容优化师。你的任务是根据用户提供的“个人粗糙经历文字”，结合指定的 JSON 数据结构，输出一份 100% 符合 JSON 格式、且经过 STAR 原则深度优化的高含金量简历。
+
+### 简历黄金撰写规范 (STAR 原则包装)：
+1. 重点业务与技术词汇：所有核心技能词汇、关键职责名词必须使用 <strong> 标签包裹以在排版中自动加粗。例如：<strong>核心系统重构</strong>。
+2. 数据量化与显著成果：所有项目经历与工作产出必须包含量化指标。将关键业绩成果数值（如：效率提升 30%，耗时缩短至 1分钟内，稳定性维持在 99.9%）使用 <strong> 标签包裹加粗。
+3. 句式结构：严禁废话。对于细节描述，采用“【工作职责】... 【技术攻坚】... 【量化成果】...”或“【项目背景】... 【技术攻坚】... 【最终成效】...”的结构，以展现工作深度与真实价值。
+4. 格式约束：严禁在文本中混入任何 Markdown 字面量星号（如 **），所有加粗必须使用 HTML 的 <strong> 标签。同时严禁混入任何 emoji 表情。
+
+### 目标 JSON 结构 Schema (请严格按照此结构填入信息并输出)：
+${genericSchema}
+
+### 约束条件：
+1. 只返回合法的 JSON 代码块：严禁输出任何前言、解释、致谢或 Markdown 其它富文本，直接以 \`{\` 开始，以 \`}\` 结束。确保可以直接被 \`JSON.parse()\` 解析。
+2. 保持数据类型的完整，details 必须是数组。
+
+以下是我的简历相关经历文字与诉求：
+${(document.getElementById('ai-user-prompt-input')?.value?.trim()) || '[在此处输入或粘贴您的简历相关文字，然后把完整的提示词发给AI，然后再粘贴到简历编辑器中]'}`;
+
+    // 执行无痛复制
+    const tempTextarea = document.createElement('textarea');
+    tempTextarea.value = masterPrompt;
+    document.body.appendChild(tempTextarea);
+    tempTextarea.select();
+    try {
+        document.execCommand('copy');
+        showNotification("✨ AI 专属通用型 Master Prompt 已成功打包并复制到您的剪贴板！快发给 AI 吧！");
+    } catch (err) {
+        showNotification("复制失败，请手动选择复制。");
+    }
+    document.body.removeChild(tempTextarea);
+}
+
+function initThemeToggle() {
+    const toggleBtn = document.getElementById("theme-toggle-btn");
+    if (!toggleBtn) return;
+
+    // 从缓存读取已保存的主题 (默认是暗黑主题)
+    const cachedTheme = localStorage.getItem("easycv_editor_theme") || "light";
+    if (cachedTheme === "light") {
+        document.body.classList.add("light-theme");
+        toggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        toggleBtn.title = "切换深色外观";
+    } else {
+        document.body.classList.remove("light-theme");
+        toggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        toggleBtn.title = "切换浅色外观";
+    }
+
+    toggleBtn.addEventListener("click", () => {
+        const isLight = document.body.classList.toggle("light-theme");
+        if (isLight) {
+            localStorage.setItem("easycv_editor_theme", "light");
+            toggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+            toggleBtn.title = "切换深色外观";
+            // 响应用户反馈，静默无感极速秒级切换主题，不显示任何 Toast 通知
+        } else {
+            localStorage.setItem("easycv_editor_theme", "dark");
+            toggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            toggleBtn.title = "切换浅色外观";
+            // 响应用户反馈，静默无感极速秒级切换主题，不显示任何 Toast 通知
+        }
+    });
+}
+
+// ====================================================
+// 8. 简历编辑器文字加粗核心功能逻辑 (自研 DOM 净化 + 气泡浮动控制器)
+// ====================================================
+
+// 净化 HTML：只保留 <strong> 标签，过滤掉 contenteditable 产生的所有块级和多余元素，保证数据干净
+function sanitizeHTMLKeepBold(html) {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    function clean(node) {
+        if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+        if (node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) return '';
+        if (['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT'].includes(node.nodeName)) return '';
+        const text = Array.from(node.childNodes, clean).join('');
+        if (['STRONG', 'B'].includes(node.nodeName)) return `<strong>${text}</strong>`;
+        if (node.nodeName === 'BR') return ' ';
+        return text;
+    }
+    return clean(template.content);
+}
+
+// 初始化就地文字加粗的毛玻璃工具气泡
+function initBoldPopover() {
+    // 1. 动态构建全局悬浮气泡 DOM 并插入到 body
+    let popover = document.querySelector('.bold-popover');
+    if (!popover) {
+        popover = document.createElement('div');
+        popover.className = 'bold-popover no-print';
+        popover.innerHTML = `
+            <button class="bold-popover-btn" title="文字加粗">
+                <i class="fa-solid fa-bold"></i>
+            </button>
+        `;
+        document.body.appendChild(popover);
+    }
+
+    let activeInputTarget = null; // 当前聚焦的左侧输入框 (input/textarea)
+
+    // 2. 处理选区变化的核心定位与显示逻辑
+    function handleSelection() {
+        const selection = window.getSelection();
+        const selectedText = selection.toString().trim();
+
+        // 选中文本为空则隐藏气泡
+        if (!selectedText) {
+            popover.classList.remove('show');
+            return;
+        }
+
+        const activeEl = document.activeElement;
+
+        // 判定选区是否发生在合法的编辑节点内
+        const inPreview = activeEl && activeEl.closest('#resume-page') && activeEl.hasAttribute('contenteditable');
+        const inSidebar = activeEl && (activeEl.tagName === 'TEXTAREA' || (activeEl.tagName === 'INPUT' && activeEl.type === 'text'));
+
+        if (!inPreview && !inSidebar) {
+            popover.classList.remove('show');
+            return;
+        }
+
+        // 记录当前的左侧目标，以便加粗动作精确分流
+        activeInputTarget = inSidebar ? activeEl : null;
+
+        // 计算选区的屏幕坐标
+        try {
+            const rect = inSidebar ? activeEl.getBoundingClientRect() : selection.getRangeAt(0).getBoundingClientRect();
+
+            if (rect.width === 0 || rect.height === 0) {
+                popover.classList.remove('show');
+                return;
+            }
+
+            // 定位到选区中间正上方
+            const popoverWidth = 44; // button (32px) + padding (12px)
+            const popoverHeight = 44;
+            const top = rect.top + window.scrollY - popoverHeight - 8;
+            const left = rect.left + window.scrollX + rect.width / 2 - popoverWidth / 2;
+
+            popover.style.top = `${top}px`;
+            popover.style.left = `${left}px`;
+            popover.classList.add('show');
+        } catch (e) {
+            popover.classList.remove('show');
+        }
+    }
+
+    // 鼠标释放与键盘按键后触发选区检测（使用微延迟防止在点击按钮的瞬间因选区消失而发生误隐藏）
+    document.addEventListener('mouseup', () => {
+        setTimeout(handleSelection, 120);
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if (e.key === 'Shift' || e.key.startsWith('Arrow')) {
+            handleSelection();
+        }
+    });
+
+    // 3. 气泡内“加粗”按钮点击事件
+    popover.querySelector('.bold-popover-btn').addEventListener('mousedown', (e) => {
+        // 使用 mousedown 且 preventDefault，可以防止点击的瞬间导致原有的编辑框丢失光标焦点
+        e.preventDefault();
+        e.stopPropagation();
+
+        const selection = window.getSelection();
+        const selectedText = selection.toString();
+
+        if (!selectedText) return;
+
+        if (activeInputTarget) {
+            // 场景 A: 左侧编辑器输入框加粗 (包裹 <strong> 标签)
+            const start = activeInputTarget.selectionStart;
+            const end = activeInputTarget.selectionEnd;
+            const oldVal = activeInputTarget.value;
+            const boldMarkup = `<strong>${selectedText}</strong>`;
+
+            activeInputTarget.value = oldVal.substring(0, start) + boldMarkup + oldVal.substring(end);
+
+            // 重新派发原生 input 事件，驱动双向绑定将改动同步渲染到右侧和 JSON 中
+            activeInputTarget.dispatchEvent(new Event('input'));
+
+            // 重新高亮选定新包裹的加粗文本，优化用户二次编辑体验
+            activeInputTarget.focus();
+            activeInputTarget.setSelectionRange(start, start + boldMarkup.length);
+        } else {
+            // 场景 B: 右侧 A4 简历预览区就地编辑加粗
+            document.execCommand('bold', false, null);
+
+            // 手动触发当前正在编辑元素的 input 事件，将 <strong> 加粗节点写入 state 并持久化
+            const activeEl = document.activeElement;
+            if (activeEl && activeEl.hasAttribute('contenteditable')) {
+                activeEl.dispatchEvent(new Event('input'));
+            }
+        }
+
+        // 隐藏气泡
+        popover.classList.remove('show');
+    });
+
+    // 4. 点击除气泡以外的区域，立刻隐藏气泡
+    document.addEventListener('mousedown', (e) => {
+        if (!popover.contains(e.target)) {
+            popover.classList.remove('show');
+        }
+    });
+}
+
+// 初始化侧边栏拖拽调宽功能 (含偏好记忆与预览区联动)
+function initSidebarResize() {
+    const sidebar = document.querySelector('.editor-sidebar');
+    const handle = document.getElementById('sidebar-resize-handle');
+    if (!sidebar || !handle) return;
+
+    // 1. 初始化读取 localStorage 缓存偏好宽度
+    const cachedWidth = localStorage.getItem('easycv_sidebar_width');
+    if (cachedWidth) {
+        sidebar.style.width = `${cachedWidth}px`;
+        // 微调：触发一次缩放，确保一开始就排版对齐
+        setTimeout(adjustPreviewScale, 100);
+    }
+
+    // 2. 绑定鼠标按下事件开始拖拽
+    handle.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // 阻断全局文本选中，确保拖拽流畅
+
+        const startX = e.clientX;
+        const startWidth = sidebar.offsetWidth;
+
+        handle.classList.add('active');
+        document.body.style.cursor = 'col-resize';
+
+        // 拖拽过程中的防抖与节流优化：利用 requestAnimationFrame 提高渲染帧率，杜绝闪烁和卡顿
+        let animationFrameId = null;
+
+        function onMouseMove(moveEvent) {
+            const deltaX = moveEvent.clientX - startX;
+            let newWidth = startWidth + deltaX;
+
+            // 限制安全拖拽阈值 (最小320px，最大窗口60%或750px)
+            const minWidth = 320;
+            const maxWidth = Math.min(window.innerWidth * 0.6, 750);
+
+            if (newWidth < minWidth) newWidth = minWidth;
+            if (newWidth > maxWidth) newWidth = maxWidth;
+
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            animationFrameId = requestAnimationFrame(() => {
+                // 实时渲染宽度
+                sidebar.style.width = `${newWidth}px`;
+                // 缓存偏好宽度至 LocalStorage
+
+                // 核心联动：命令右侧 A4 简历视口重新执行缩放比例换算，平滑贴合！
+                adjustPreviewScale();
+            });
+        }
+
+        function onMouseUp() {
+            handle.classList.remove('active');
+            document.body.style.cursor = '';
+
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+            localStorage.setItem('easycv_sidebar_width', sidebar.offsetWidth);
+            // 结束后再精确校准一次比例，保障布局完美
+            adjustPreviewScale();
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+}
+
+// ====================================================
+// 9. 专为 AI 自动填报与精修简历定制的智能 Prompt 合成引擎 & 纯前端免下载 AI Copilot
+// ====================================================
+
+// 展开与收折 AI 极客助手卡片
+function toggleAICopilot() {
+    const card = document.querySelector('.ai-copilot-card');
+    if (card) {
+        card.classList.toggle('expanded');
+    }
+}
+
+// 初始化纯前端 AI Copilot
+function initAICopilot() {
+    const apiKeyInput = document.getElementById('ai-api-key-input');
+    const modelSelect = document.getElementById('ai-model-select');
+    const customContainer = document.getElementById('ai-custom-model-container');
+    const customInput = document.getElementById('ai-custom-model-input');
+
+    if (!apiKeyInput || !modelSelect) return;
+
+    // 从本地 localStorage 读取已保存的 Key
+    const savedKey = localStorage.getItem('easycv_openrouter_key');
+    if (savedKey) {
+        apiKeyInput.value = savedKey;
+    }
+
+    apiKeyInput.addEventListener('input', () => {
+        localStorage.setItem('easycv_openrouter_key', apiKeyInput.value.trim());
+    });
+
+    // 从本地读取模型配置
+    const savedModel = localStorage.getItem('easycv_ai_model');
+    if (savedModel) {
+        const optionExists = Array.from(modelSelect.options).some(opt => opt.value === savedModel);
+        if (optionExists) {
+            modelSelect.value = savedModel;
+            if (customContainer) customContainer.style.display = 'none';
+        } else {
+            modelSelect.value = 'custom';
+            if (customContainer) {
+                customContainer.style.display = 'block';
+                if (customInput) customInput.value = savedModel;
+            }
+        }
+    }
+
+    modelSelect.addEventListener('change', () => {
+        if (modelSelect.value === 'custom') {
+            if (customContainer) customContainer.style.display = 'block';
+            if (customInput && customInput.value.trim()) {
+                localStorage.setItem('easycv_ai_model', customInput.value.trim());
+            }
+        } else {
+            if (customContainer) customContainer.style.display = 'none';
+            localStorage.setItem('easycv_ai_model', modelSelect.value);
+        }
+    });
+
+    if (customInput) {
+        customInput.addEventListener('input', () => {
+            if (modelSelect.value === 'custom') {
+                localStorage.setItem('easycv_ai_model', customInput.value.trim());
+            }
+        });
+    }
+}
+
+// 执行纯前端 AI 智能生成并直接填报简历
+async function runAICopilot() {
+    const apiKeyInput = document.getElementById('ai-api-key-input');
+    const modelSelect = document.getElementById('ai-model-select');
+    const customInput = document.getElementById('ai-custom-model-input');
+    const promptInput = document.getElementById('ai-user-prompt-input');
+    const statusIndicator = document.getElementById('ai-status-indicator');
+    const generateBtn = document.getElementById('ai-generate-btn');
+
+    if (!apiKeyInput || !promptInput || !statusIndicator) return;
+
+    const apiKey = apiKeyInput.value.trim();
+    if (!apiKey) {
+        statusIndicator.style.display = 'block';
+        statusIndicator.style.borderLeftColor = '#ef4444';
+        statusIndicator.innerHTML = '<span style="color:#ef4444;"><i class="fa-solid fa-circle-exclamation"></i> 请输入 OpenRouter API Key（点击上方链接可免费申请）。</span>';
+        apiKeyInput.focus();
+        return;
+    }
+
+    let selectedModel = modelSelect ? modelSelect.value : 'liquid/lfm-2.5-2.6b:free';
+    if (selectedModel === 'custom') {
+        selectedModel = (customInput && customInput.value.trim()) ? customInput.value.trim() : '';
+        if (!selectedModel) {
+            statusIndicator.style.display = 'block';
+            statusIndicator.style.borderLeftColor = '#ef4444';
+            statusIndicator.innerHTML = '<span style="color:#ef4444;"><i class="fa-solid fa-circle-exclamation"></i> 请输入自定义模型 ID。</span>';
+            if (customInput) customInput.focus();
+            return;
+        }
+    }
+
+    const userText = promptInput.value.trim();
+    if (!userText) {
+        statusIndicator.style.display = 'block';
+        statusIndicator.style.borderLeftColor = '#ef4444';
+        statusIndicator.innerHTML = '<span style="color:#ef4444;"><i class="fa-solid fa-circle-exclamation"></i> 请在上方输入您的经历、项目描述或优化诉求。</span>';
+        promptInput.focus();
+        return;
+    }
+
+    statusIndicator.style.display = 'block';
+    statusIndicator.style.borderLeftColor = 'var(--edit-accent)';
+    statusIndicator.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在调用 AI 进行 STAR 提炼与量化加粗，请稍候...';
+    if (generateBtn) {
+        generateBtn.disabled = true;
+        generateBtn.style.opacity = '0.7';
+    }
+
+    try {
+        const currentData = window.resumeApp ? window.resumeApp.getData() : state;
+        const systemPrompt = `你是一个顶级职业发展顾问与简历制作专家。根据用户提供的经历描述或更新诉求，结合现有的简历数据，生成一份高质量、符合 STAR 原则（情境、任务、行动、结果）的简历 JSON。
+
+### 核心写作规范：
+1. 重点词汇加粗：所有关键技能名称、重要职责行为、核心量化业绩（如：<strong>Python</strong>、<strong>节省12小时工时</strong>、<strong>稳定性达 99.99%</strong>）必须用 <strong> 标签包裹。
+2. 严禁 Markdown 加粗：绝对不要输出 ** 双星号加粗，所有加粗必须使用 <strong> 标签。
+3. 严禁 Emoji 表情与多余修饰。
+4. 保护现有简历：如果用户未提及某板块（如基本信息、教育背景），保留现有简历的合理内容；将新经历精准归纳到 skills、work 或 projects 中。
+5. 只返回纯 JSON 字符串：绝对不要输出任何 markdown 围栏（不要写 \`\`\`json），不要输出任何前言、总结或致谢，必须直接以 { 开始，以 } 结束。确保可以直接被 JSON.parse() 解析。
+
+### 数据结构 Schema 参考：
+{
+  "info": {
+    "name": "姓名",
+    "title": "求职意向/岗位",
+    "email": "邮箱",
+    "phone": "电话",
+    "wechat": "微信号(选填)",
+    "location": "意向城市",
+    "github": "GitHub(选填)",
+    "blog": "博客/作品集(选填)",
+    "summary": "专业总结（重点词用 <strong> 包裹）"
+  },
+  "skills": [
+    { "category": "技能分类", "tags": "技能项用逗号分隔" }
+  ],
+  "work": [
+    {
+      "company": "公司名称",
+      "role": "职位",
+      "time": "时间（如：2023.03 - 至今）",
+      "details": ["工作与量化成果细节，重点词用 <strong> 包裹"]
+    }
+  ],
+  "projects": [
+    {
+      "name": "项目名称",
+      "tech": "所用技术栈",
+      "time": "时间（如：2023.10 - 2024.02）",
+      "details": ["项目背景、技术攻坚与最终成效，重点词用 <strong> 包裹"]
+    }
+  ],
+  "education": [
+    {
+      "school": "学校名称",
+      "degree": "学历",
+      "major": "专业",
+      "time": "时间",
+      "details": ["主修课程或荣誉"]
+    }
+  ],
+  "custom": []
+}`;
+
+        const resumeContentOnly = {
+            info: currentData.info,
+            skills: currentData.skills,
+            work: currentData.work,
+            projects: currentData.projects,
+            education: currentData.education,
+            custom: currentData.custom
+        };
+
+        const userPrompt = `【用户最新提供的经历与诉求】：
+${userText}
+
+【当前已有简历数据参考】：
+${JSON.stringify(resumeContentOnly, null, 2)}`;
+
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.origin || 'https://easycv.app',
+                'X-Title': 'EasyCV Resume Builder'
+            },
+            body: JSON.stringify({
+                model: selectedModel,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                temperature: 0.3
+            })
+        });
+
+        if (!response.ok) {
+            const errBody = await response.text();
+            let errMsg = `请求失败 (HTTP ${response.status})`;
+            try {
+                const parsedErr = JSON.parse(errBody);
+                if (parsedErr.error && parsedErr.error.message) {
+                    errMsg += `: ${parsedErr.error.message}`;
+                }
+            } catch (e) {
+                if (errBody) errMsg += `: ${errBody.slice(0, 100)}`;
+            }
+            throw new Error(errMsg);
+        }
+
+        const data = await response.json();
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            throw new Error('AI 返回的数据结构不完整，请重试');
+        }
+
+        let rawContent = data.choices[0].message.content.trim();
+        // 清洗可能存在的 markdown 代码围栏
+        const jsonBlockMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (jsonBlockMatch) {
+            rawContent = jsonBlockMatch[1].trim();
+        } else {
+            const braceMatch = rawContent.match(/(\{[\s\S]*\})/);
+            if (braceMatch) {
+                rawContent = braceMatch[1].trim();
+            }
+        }
+
+        let parsedResume;
+        try {
+            parsedResume = JSON.parse(rawContent);
+        } catch (jsonErr) {
+            throw new Error('AI 返回的内容未能成功解析为合法 JSON，请尝试切换其它模型或简化输入。返回摘要：' + rawContent.slice(0, 80));
+        }
+
+        // 确保 settings 完整继承现有配置（模板、强调色、排版滑块）
+        parsedResume.settings = { ...(currentData.settings || {}) };
+
+        // 注入到应用中
+        if (window.resumeApp && typeof window.resumeApp.setData === 'function') {
+            window.resumeApp.setData(parsedResume);
+        } else {
+            state = normalizeResume(parsedResume);
+            saveToLocal();
+            renderAll();
+        }
+
+        updateJSONCodearea();
+
+        statusIndicator.style.borderLeftColor = '#10b981';
+        statusIndicator.innerHTML = '<span style="color:#10b981;"><i class="fa-solid fa-circle-check"></i> 简历已成功智能生成并注入画布！您可直接在右侧画布或“内容”标签中查看微调。</span>';
+        showNotification('✨ AI 智能简历生成成功，已实时更新右侧画布！');
+    } catch (err) {
+        console.error('EasyCV AI Copilot Error:', err);
+        statusIndicator.style.borderLeftColor = '#ef4444';
+        statusIndicator.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-circle-exclamation"></i> 生成失败: ${err.message || '网络异常，请重试'}</span>`;
+        showNotification('AI 生成遇到问题，请查看卡片提示');
+    } finally {
+        if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.style.opacity = '1';
+        }
+    }
+}
+
+// 暴露函数供外部与测试调用
+window.initAICopilot = initAICopilot;
+window.runAICopilot = runAICopilot;
+
+// 自适应 textarea 高度，消灭垂直滚动条，实现内容自动完整展开
+function autoResizeTextarea(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+}
+
+
+

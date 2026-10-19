@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AITextRestorer - 智能图像文字变形自适应修复系统</title>
+    <meta name="description" content="修复AI图像增强模型导致的中文汉字变形、篡改和错乱，将原图正确的文字无缝融合回AI高清背景。">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 头部精致毛玻璃标题栏 -->
+    <header class="app-header">
+        <div class="logo-area">
+            <span class="logo-icon">✦</span>
+            <h1>AITextRestorer <span class="badge">Web</span></h1>
+        </div>
+        <div class="engine-status" id="engine-status">
+            <span class="status-dot pulsing" id="status-dot"></span>
+            <span class="status-text" id="status-text">OpenCV 引擎加载中...</span>
+        </div>
+    </header>
+
+    <!-- 主工作区 -->
+    <main class="main-container">
+        <!-- 左侧控制面板 -->
+        <aside class="control-panel">
+            <!-- 1. 导入部分 -->
+            <section class="panel-section">
+                <h2 class="section-title">1. 导入照片</h2>
+                <div class="file-inputs">
+                    <label class="file-btn primary-file-btn" id="label-orig">
+                        <input type="file" id="load-orig" accept="image/*">
+                        📷 导入 原始清晰照片
+                    </label>
+                    <label class="file-btn secondary-file-btn" id="label-opt">
+                        <input type="file" id="load-opt" accept="image/*">
+                        🤖 导入 AI增强后照片
+                    </label>
+                </div>
+                <div class="file-status" id="file-status"></div>
+            </section>
+
+            <!-- 2. 工具模式选择 -->
+            <section class="panel-section">
+                <h2 class="section-title">2. 模式与笔刷工具</h2>
+
+                <!-- 苹果风滑动胶囊切换 -->
+                <div class="capsule-container">
+                    <div class="capsule-slider" id="capsule-slider"></div>
+                    <button class="capsule-btn active" data-mode="draw">🎨 还原笔刷</button>
+                    <button class="capsule-btn" data-mode="erase">🧽 擦除橡皮</button>
+                    <button class="capsule-btn" data-mode="block">⛶ 文字板块</button>
+                </div>
+
+                <!-- 滑块控制 -->
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>画笔大小</span>
+                        <span id="brush-val">22 px</span>
+                    </div>
+                    <input type="range" id="slider-brush" min="3" max="120" value="22">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label">
+                        <span>边缘羽化</span>
+                        <span id="feather-val">8 px</span>
+                    </div>
+                    <input type="range" id="slider-feather" min="0" max="40" value="8">
+                </div>
+
+                <!-- 历史与重置 -->
+                <div class="action-row">
+                    <button id="btn-undo" class="action-btn" disabled>↩ 撤销</button>
+                    <button id="btn-clear" class="action-btn" disabled>✕ 重置涂抹</button>
+                </div>
+            </section>
+
+            <!-- 3. 板块对齐管理器 -->
+            <section class="panel-section block-section">
+                <h2 class="section-title">3. 文字对齐板块管理器</h2>
+                <div class="block-list-container" id="block-list">
+                    <div class="placeholder-text">无活跃板块。<br>在「文字板块」模式下于画布中拉框创建。</div>
+                </div>
+            </section>
+
+            <!-- 4. 导出大图 -->
+            <section class="panel-section export-section">
+                <button id="btn-save" class="export-btn" disabled>💾 导出最终无损图片</button>
+            </section>
+        </aside>
+
+        <!-- 右侧画布区 -->
+        <div class="canvas-workspace" id="canvas-workspace">
+            <!-- 欢迎占位 -->
+            <div class="welcome-overlay" id="welcome-overlay">
+                <div class="welcome-content">
+                    <span class="welcome-icon">✦</span>
+                    <h2>AITextRestorer</h2>
+                    <p>请在左侧导入<strong>原始清晰照片</strong>和<strong>AI增强后照片</strong>以开始修复。</p>
+                </div>
+            </div>
+            <div class="canvas-holder" id="canvas-holder">
+                <canvas id="editor-canvas"></canvas>
+            </div>
+
+            <!-- 画布浮动控制工具条 -->
+            <div class="canvas-controls" id="canvas-controls">
+                <button id="btn-compare" class="compare-btn" disabled>按住对比原图</button>
+                <div class="zoom-controls">
+                    <button id="zoom-out" class="zoom-step-btn">－</button>
+                    <span id="zoom-lbl">100%</span>
+                    <button id="zoom-in" class="zoom-step-btn">＋</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部状态条 -->
+    <footer class="app-footer">
+        <span id="status-msg">就绪。请导入两张照片开始修复。</span>
+        <span class="credit">Powered by OpenCV.js & Canvas</span>
+    </footer>
+
+    <!-- 弹框 -->
+    <div class="modal" id="alert-modal">
+        <div class="modal-content">
+            <h3 id="modal-title">提示</h3>
+            <p id="modal-body">内容</p>
+            <button class="modal-btn" onclick="closeModal()">确定</button>
+        </div>
+    </div>
+
+    <!-- 异步加载 OpenCV.js -->
+    <script>
+        var Module = {
+            onRuntimeInitialized: function() {
+                window.cvReadyState = true;
+                document.dispatchEvent(new Event('opencv-ready'));
+            }
+        };
+    </script>
+    <script async
+        src="https://docs.opencv.org/4.13.0/opencv.js"
+        onload="console.log('[OpenCV] Script tag loaded.')"
+        onerror="document.dispatchEvent(new Event('opencv-failed'))">
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
