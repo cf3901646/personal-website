@@ -53,11 +53,11 @@
 
 ---
 
-## 🛠️ 纯前端集成工具（国内免梯极速直连）
+## 🛠️ 独立工具全自动部署集群（国内免梯极速直连 · 实时自动拉取）
 
-为彻底解决海外 Vercel 域名在国内访问受限的问题，全套前端工具已完全统一内嵌至主站：
-- **EasyCV 简历工作台**：[https://3901646.xyz/cv/](https://3901646.xyz/cv/)（源码位于 `public/cv/`，纯前端本地渲染、排版调节与 PDF 导出）
-- **AITextRestorer 文字修复系统**：[https://3901646.xyz/restore/](https://3901646.xyz/restore/)（源码位于 `public/restore/`，纯前端 Canvas / OpenCV 图像文字自适应修复）
+两大代表工具已与各自的 GitHub 仓库通过 Cloudflare Pages 深度集成独立部署，只要向对应仓库 push 代码即可实时全球生效：
+- **EasyCV 简历工作台**：[https://cv.3901646.xyz](https://cv.3901646.xyz)（源码仓库 [`cf3901646/EasyCV`](https://github.com/cf3901646/EasyCV)，纯前端本地渲染、排版微调与 PDF 导出）
+- **AITextRestorer 文字修复系统**：[https://restore.3901646.xyz](https://restore.3901646.xyz)（源码仓库 [`cf3901646/AITextRestorer-Web`](https://github.com/cf3901646/AITextRestorer-Web)，纯前端 Canvas / OpenCV 图像文字自适应修复）
 
 ---
 
