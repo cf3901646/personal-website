@@ -146,19 +146,18 @@
     .scroll-track::before { content: ""; position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: linear-gradient(to right,var(--track-ink) var(--range-fill,50%),var(--track-rest) var(--range-fill,50%)); }
     .scroll-track::after { content: ""; position: absolute; top: 7px; left: clamp(0px,calc(var(--range-fill,50%) - 7px),calc(100% - 14px)); width: 14px; height: 14px; border-radius: 50%; border: 3px solid #fcfcf5; background: var(--track-ink); box-shadow: 0 0 0 1px var(--track-ink); }
     .scroll-note { margin: 18px 0 0; color: #7a826c; font-size: 10px; }
-    .cv-preview { min-width: 0; height: clamp(320px,66svh,600px); overflow: hidden; padding: 20px 30px; display: grid; place-items: start center; background: radial-gradient(ellipse at 70% 20%,#f5f5e6aa,transparent 70%),#e6e7dc; }
-    .resume-sheet { --cv-font: 11px; --cv-line: 1.65; --cv-gap: 18px; --cv-margin: 28px; width: min(100%,344px); min-height: 454px; padding: var(--cv-margin); background: #fffef8; box-shadow: 0 3px 5px #4a533b05,8px 16px 35px #4a533b12; font-size: var(--cv-font); line-height: var(--cv-line); color: #555c4d; }
-    .resume-name { margin: 0; font: 400 26px/1.25 Georgia,"Songti SC",SimSun,serif; color: #414b37; }
-    .resume-sheet { transform: translateY(var(--resume-pan,0px)); }
-    .resume-role { margin: 6px 0 10px; font-size: .9em; color: #7b846f; letter-spacing: .08em; }
-    .resume-line { height: 1px; background: #c9cfbb; }
+    .cv-preview { min-width: 0; height: 500px; overflow: hidden; padding: 24px; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 70% 20%,#f5f5e6aa,transparent 70%),#e6e7dc; }
+    .resume-sheet { --cv-font: 10.8px; --cv-line: 1.58; --cv-gap: 14px; --cv-margin: 22px; width: 310px; height: 430px; box-sizing: border-box; overflow: hidden; padding: var(--cv-margin); background: #fffef8; border-radius: 2px; box-shadow: 0 4px 10px #4a533b08,0 16px 36px #4a533b14; font-size: var(--cv-font); line-height: var(--cv-line); color: #555c4d; flex-shrink: 0; }
+    .resume-name { margin: 0; font: 400 22px/1.2 Georgia,"Songti SC",SimSun,serif; color: #414b37; }
+    .resume-role { margin: 4px 0 8px; font-size: .88em; color: #7b846f; letter-spacing: .06em; }
+    .resume-line { height: 1px; background: #d0d6c5; margin-bottom: 2px; }
     .resume-section { margin-top: var(--cv-gap); }
-    .resume-section h5 { margin: 0 0 6px; font: inherit; font-weight: 600; letter-spacing: .1em; color: #4c5c3f; }
-    .resume-section p { margin: 0; }
-    .resume-item { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; margin-bottom: 5px; }
+    .resume-section h5 { margin: 0 0 4px; font: inherit; font-size: .95em; font-weight: 600; letter-spacing: .08em; color: #4c5c3f; }
+    .resume-section p { margin: 0; font-size: .92em; }
+    .resume-item { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; margin-bottom: 3px; }
     .resume-item span { font-size: .85em; color: #8b9280; }
-    .resume-item strong { font-weight: 500; }
-    .resume-skills { word-spacing: .5em; }
+    .resume-item strong { font-weight: 500; font-size: .95em; }
+    .resume-skills { word-spacing: .4em; font-size: .9em; }
     .work-meta { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; margin-top: 27px; }
     .work-meta h3 { margin: 0; font: 400 25px/1.5 Georgia,"Songti SC",SimSun,serif; }
     .work-meta span { font-size: 10px; color: var(--muted); letter-spacing: .08em; }
@@ -239,8 +238,8 @@
       .section-heading > p { margin-top: 18px; }
       .work-grid { grid-template-columns: 1fr; gap: 52px; }
       .cv-workbench { grid-template-columns: 1fr; }
-      .cv-preview { grid-row: 1; height: clamp(185px,33svh,300px); padding: 22px 18px; }
-      .resume-sheet { min-height: 420px; }
+      .cv-preview { grid-row: 1; height: 430px; padding: 18px 12px; display: flex; align-items: center; justify-content: center; }
+      .resume-sheet { width: 285px; height: 395px; }
       .cv-controls { padding: 16px 22px; border-right: 0; border-top: 1px solid #d8dbcd; }
       .cv-controls h4, .control-intro, .cv-controls .scroll-note { display: none; }
       .cv-slider-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 22px; }
@@ -746,8 +745,13 @@
       const controls = ['font','line','gap','margin'].map((key,index) => ({
         key, index, track: document.querySelector(`#cv-${key}`), output: document.querySelector(`#cv-${key}-value`)
       }));
-      const presets = [[10,1.4,12,22],[11,1.65,18,28],[12,1.85,24,36]];
-      const ranges = [[9,14],[1.3,2],[10,30],[18,42]];
+      // 微妙而克制的专业排版节奏演化：紧凑(10.5px/1.44) -> 均衡(10.8px/1.58) -> 舒展(11.2px/1.72)
+      const presets = [
+        [10.5, 1.44, 11, 20],
+        [10.8, 1.58, 14, 22],
+        [11.2, 1.72, 18, 24]
+      ];
+      const ranges = [[10, 12], [1.4, 1.8], [10, 20], [18, 26]];
       const phases = [...document.querySelectorAll('[data-cv-preset]')];
       const motion = matchMedia('(prefers-reduced-motion: reduce)');
       const clamp = value => Math.max(0,Math.min(1,value));
@@ -762,18 +766,13 @@
         controls.forEach(({key,index,track,output}) => {
           const value = lerp(presets[segment][index],presets[segment+1][index],t);
           const unit = key === 'line' ? '' : 'px';
-          sheet.style.setProperty(`--cv-${key}`,`${value.toFixed(3)}${unit}`);
+          sheet.style.setProperty(`--cv-${key}`,`${value.toFixed(2)}${unit}`);
           output.textContent = key === 'line' ? value.toFixed(2) : `${Number(value.toFixed(1))} px`;
           paintRange(track,(value-ranges[index][0])/(ranges[index][1]-ranges[index][0]));
         });
         const active = progress < .25 ? 0 : progress < .75 ? 1 : 2;
         phases.forEach((element,index) => element.classList.toggle('is-active',index===active));
         document.querySelector('#cv-phase').textContent = phases[active].textContent;
-        // 窄屏随排版展开自然掠过纸面，避免嵌套滚动区域截住滚轮。
-        const viewport = document.querySelector('.cv-preview');
-        const padding = parseFloat(getComputedStyle(viewport).paddingTop)*2;
-        const overflow = Math.max(0,sheet.offsetHeight-viewport.clientHeight+padding);
-        sheet.style.setProperty('--resume-pan',`${motion.matches?0:-overflow*ease(progress)}px`);
       }
 
       const restoreRange = document.querySelector('#restore-range');
