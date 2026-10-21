@@ -470,7 +470,7 @@
     </div>
   </main>
 
-  <script>
+<script>
     (() => {
       'use strict';
       const settings = { grain: 1, shadow: .62 };
@@ -481,11 +481,14 @@
       const shadowContext = shadowCanvas.getContext('2d');
       const dustCanvas = document.querySelector('#motes');
       const dustContext = dustCanvas.getContext('2d');
+      const lightBloom = document.querySelector('.light-bloom');
+      const paperElement = document.querySelector('.paper');
+      const motion = matchMedia('(prefers-reduced-motion: reduce)');
       if (!ctx) return;
 
       // 0ms 极速首屏底图（纯渐变直出，无空白等待）
       function fastInitialPaint() {
-        const bounds = document.querySelector('.paper').getBoundingClientRect();
+        const bounds = paperElement.getBoundingClientRect();
         const width = bounds.width || window.innerWidth, height = bounds.height || window.innerHeight;
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = Math.round(width * dpr);
@@ -499,6 +502,58 @@
         ctx.fillRect(0, 0, width, height);
       }
       fastInitialPaint();
+
+      // 24小时真实自然日光状态机（无手动交互，与访客本地现实时间自然流转）
+      function getSolarConditions() {
+        const now = new Date();
+        const h = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+        let bloomColor, shadowAlpha, shadowX, shadowY, shadowScale, paperTone;
+
+        if (h >= 5 && h < 9.5) {
+          // 清晨：晨曦微光、低角度朝阳、树影倾长、色调清润
+          const p = (h - 5) / 4.5;
+          bloomColor = 'radial-gradient(ellipse at 42% 62%, #fff5dbcc, transparent 58%)';
+          shadowAlpha = 0.55 + p * 0.1;
+          shadowX = -35 + p * 15;
+          shadowY = 15 - p * 15;
+          shadowScale = 1.12 - p * 0.12;
+          paperTone = '#f5f2ea';
+        } else if (h >= 9.5 && h < 16) {
+          // 日中：午后斜阳穿透、光柱清晰、影子立体短促
+          const p = (h - 9.5) / 6.5;
+          bloomColor = 'radial-gradient(ellipse at 48% 65%, #fffcedd0, transparent 55%)';
+          shadowAlpha = 0.65;
+          shadowX = -20 - p * 15;
+          shadowY = 0 + p * 10;
+          shadowScale = 1.0 + p * 0.08;
+          paperTone = '#f3f0e7';
+        } else if (h >= 16 && h < 19.5) {
+          // 黄昏：金色夕照、琥珀色光晕大面积漫射、树影斜斜拉长
+          const p = (h - 16) / 3.5;
+          bloomColor = 'radial-gradient(ellipse at 52% 70%, #ffd79ecc, transparent 60%)';
+          shadowAlpha = 0.62 - p * 0.12;
+          shadowX = -35 - p * 30;
+          shadowY = 10 + p * 25;
+          shadowScale = 1.08 + p * 0.16;
+          paperTone = '#f2ece0';
+        } else {
+          // 夜间：案前静谧微光、柔和漫射
+          bloomColor = 'radial-gradient(ellipse at 48% 60%, #ffe9c755, transparent 65%)';
+          shadowAlpha = 0.46;
+          shadowX = -20;
+          shadowY = 0;
+          shadowScale = 1.02;
+          paperTone = '#eae3d4';
+        }
+
+        return { bloomColor, shadowAlpha, shadowX, shadowY, shadowScale, paperTone };
+      }
+
+      function applySolarTheme(solar) {
+        if (lightBloom) lightBloom.style.background = solar.bloomColor;
+        if (paperElement) paperElement.style.backgroundColor = solar.paperTone;
+        settings.shadow = solar.shadowAlpha;
+      }
 
       function random(seed) {
         return () => {
@@ -531,15 +586,53 @@
         };
       }
 
-      // 根据设备性能自适应纸面倍率：移动端采用 1.25x 节约 70% 显存与计算，桌面端采用 2x 视网膜渲染
       const isMobile = window.innerWidth <= 768;
       const paperScale = isMobile ? 1.25 : 2;
       let paper = null;
-      let scene = null;
-      let dustLayer = null;
+      let sceneComposite = null;
+      let clusterA = null; // 主枝干（低频微晃）
+      let clusterB = null; // 中层茂叶（自然微风摆动）
+      let clusterC = null; // 外缘嫩稍（灵动微颤）
+      let distantTrunks = null; // 远景柔焦枝干
+      let dustCanvasLayer = null;
+      let dustContextLayer = null;
+      let motesList = [];
+      let solar = getSolarConditions();
+      let animRunning = false;
+      let animFrameId = null;
+
+      // 视口对齐几何缓存
+      let renderMetrics = { dpr: 1, scale: 1, left: 0, top: 0, width: 0, height: 0 };
+
+      function updateMetrics() {
+        const bounds = paperElement.getBoundingClientRect();
+        const width = bounds.width || window.innerWidth;
+        const height = bounds.height || window.innerHeight;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const scale = Math.max(width / W, height / H);
+        const left = (width - W * scale) / 2;
+        const top = (height - H * scale) / 2;
+        renderMetrics = { dpr, scale, left, top, width, height };
+
+        [canvas, shadowCanvas, dustCanvas].forEach(c => {
+          c.width = Math.round(width * dpr);
+          c.height = Math.round(height * dpr);
+        });
+        [ctx, shadowContext, dustContext].forEach(c => {
+          c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        });
+
+        // 重新绘制静态纸面底纹
+        if (paper) {
+          ctx.drawImage(paper, left, top, W * scale, H * scale);
+        }
+      }
 
       function generateLayers() {
-        // 纸面微纤维与光影计算
+        solar = getSolarConditions();
+        applySolarTheme(solar);
+
+        // 1. 纸面微纤维与光影计算（静态纹理）
         const paperCanvas = layer(Math.round(W * paperScale), Math.round(H * paperScale));
         const p = paperCanvas.getContext('2d');
         const pixels = p.createImageData(paperCanvas.width, paperCanvas.height);
@@ -550,7 +643,6 @@
         const fineGrain = noiseField(1.2, random(802));
         const surfaceRng = random(9046);
 
-        // 光束查找表（消灭 420 万次 transcendental 指数计算）
         const expLUT = new Float32Array(3000);
         for (let i = 0; i < 3000; i++) {
           const c = i * 0.5;
@@ -583,7 +675,6 @@
         }
         p.putImageData(pixels, 0, 0);
 
-        // 微纤维贝塞尔曲线
         p.setTransform(paperScale, 0, 0, paperScale, 0, 0);
         p.lineCap = 'round';
         const fleckRng = random(160);
@@ -603,57 +694,68 @@
           p.quadraticCurveTo(x+dx*.5, y+dy*.5+bend-.22, x+dx, y+dy-.22); p.stroke();
         }
 
-        // 树影与枝叶层
-        const shade = layer();
-        const s = shade.getContext('2d');
-        const leavesRng = random(27);
+        paper = paperCanvas;
 
-        function leaf(x, y, length, width, angle, opacity) {
-          s.save();
-          s.translate(x, y); s.rotate(angle);
-          s.fillStyle = `rgba(72,73,52,${opacity})`;
-          s.beginPath(); s.moveTo(0, 0);
-          s.bezierCurveTo(length * .28, -width * .7, length * .72, -width * .65, length, 0);
-          s.bezierCurveTo(length * .68, width * .42, length * .22, width * .7, 0, 0);
-          s.fill(); s.restore();
-        }
-
+        // 2. 树影分层与预模糊（彻底消除动画循环中的实时模糊开销）
         const branches = [
-          [1410, -80, 940, 510, 20],
-          [1230, -105, 810, 480, 20],
-          [1110, -120, 640, 480, 16],
-          [1520, 40, 1130, 490, 18],
-          [1310, -120, 980, 380, 19],
-          [1480, -60, 1070, 400, 18]
+          [1410, -80, 940, 510, 20],  // 0 主干 A
+          [1230, -105, 810, 480, 20], // 1 中干 B
+          [1110, -120, 640, 480, 16], // 2 梢干 C
+          [1520, 40, 1130, 490, 18],  // 3 主干 A
+          [1310, -120, 980, 380, 19], // 4 中干 B
+          [1480, -60, 1070, 400, 18]  // 5 梢干 C
         ];
-        for (const [x0, y0, x1, y1, count] of branches) {
-          s.beginPath(); s.moveTo(x0, y0);
-          s.quadraticCurveTo(x0 - 150, y1 * .56, x1, y1);
-          s.strokeStyle = 'rgba(68,69,51,.18)'; s.lineWidth = 9;
-          s.lineCap = 'round'; s.stroke();
-          for (let i = 0; i < count; i++) {
-            const t = (i + .3 + leavesRng() * .6) / count;
-            const q = 1 - t;
-            const x = q * q * x0 + 2 * q * t * (x0 - 150) + t * t * x1;
-            const y = q * q * y0 + 2 * q * t * (y1 * .56) + t * t * y1;
-            const side = i % 2 === 0 ? 1 : -1;
-            const angle = side > 0 ? -.92 + leavesRng() * .5 : 2.28 + leavesRng() * .45;
-            leaf(x + (leavesRng() - .5) * 40, y, 65 + leavesRng() * 150, 12 + leavesRng() * 26,
-              angle, (.14 + leavesRng() * .20) * (1 - t * .60));
+
+        function renderCluster(branchIndices, seed) {
+          const raw = layer();
+          const s = raw.getContext('2d');
+          const leavesRng = random(seed);
+
+          function leaf(x, y, length, width, angle, opacity) {
+            s.save();
+            s.translate(x, y); s.rotate(angle);
+            s.fillStyle = `rgba(72,73,52,${opacity})`;
+            s.beginPath(); s.moveTo(0, 0);
+            s.bezierCurveTo(length * .28, -width * .7, length * .72, -width * .65, length, 0);
+            s.bezierCurveTo(length * .68, width * .42, length * .22, width * .7, 0, 0);
+            s.fill(); s.restore();
           }
+
+          branchIndices.forEach(idx => {
+            const [x0, y0, x1, y1, count] = branches[idx];
+            s.beginPath(); s.moveTo(x0, y0);
+            s.quadraticCurveTo(x0 - 150, y1 * .56, x1, y1);
+            s.strokeStyle = 'rgba(68,69,51,.18)'; s.lineWidth = 9;
+            s.lineCap = 'round'; s.stroke();
+            for (let i = 0; i < count; i++) {
+              const t = (i + .3 + leavesRng() * .6) / count;
+              const q = 1 - t;
+              const x = q * q * x0 + 2 * q * t * (x0 - 150) + t * t * x1;
+              const y = q * q * y0 + 2 * q * t * (y1 * .56) + t * t * y1;
+              const side = i % 2 === 0 ? 1 : -1;
+              const angle = side > 0 ? -.92 + leavesRng() * .5 : 2.28 + leavesRng() * .45;
+              leaf(x + (leavesRng() - .5) * 40, y, 65 + leavesRng() * 150, 12 + leavesRng() * 26,
+                angle, (.14 + leavesRng() * .20) * (1 - t * .60));
+            }
+          });
+
+          // 离屏烘焙 7px 高斯模糊
+          const blurred = layer();
+          const bc = blurred.getContext('2d');
+          bc.filter = 'blur(7px)';
+          bc.drawImage(raw, 0, 0);
+          return blurred;
         }
 
-        const sceneCanvas = layer();
-        const c = sceneCanvas.getContext('2d');
-        c.save();
-        c.filter = 'blur(7px)';
-        c.globalAlpha = settings.shadow;
-        c.drawImage(shade, 0, 0);
-        c.restore();
+        clusterA = renderCluster([0, 3], 27);
+        clusterB = renderCluster([1, 4], 42);
+        clusterC = renderCluster([2, 5], 88);
 
-        c.save();
-        c.filter = 'blur(19px)';
-        c.lineCap = 'round';
+        // 远景柔焦枝干
+        const distantLayer = layer();
+        const dc = distantLayer.getContext('2d');
+        dc.filter = 'blur(19px)';
+        dc.lineCap = 'round';
         const distant = [
           [-90, 775, 370, 625, 790, 180, 28, .20],
           [90, 860, 490, 555, 1010, 125, 30, .24],
@@ -662,55 +764,165 @@
           [130, 785, 300, 670, 380, 580, 55, .11]
         ];
         for (const [x, y, cx, cy, ex, ey, width, alpha] of distant) {
-          c.strokeStyle = `rgba(92,88,64,${alpha * settings.shadow})`;
-          c.lineWidth = width;
-          c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(cx, cy, ex, ey); c.stroke();
+          dc.strokeStyle = `rgba(92,88,64,${alpha})`;
+          dc.lineWidth = width;
+          dc.beginPath(); dc.moveTo(x, y); dc.quadraticCurveTo(cx, cy, ex, ey); dc.stroke();
         }
-        c.restore();
+        distantTrunks = distantLayer;
 
-        // 浮尘微粒层
-        const dustCanvasLayer = layer();
-        const d = dustCanvasLayer.getContext('2d');
-        const dust = random(18);
-        for (let i = 0; i < 26; i++) {
-          const x = 190 + dust() * 430, y = 120 + dust() * 520;
-          const r = .45 + dust() * 1.45;
-          d.beginPath();
-          d.fillStyle = `rgba(255,244,195,${.3 + dust() * .45})`;
-          d.shadowColor = '#fff5d0'; d.shadowBlur = 3;
-          d.ellipse(x, y, r, r * .72, -.5, 0, Math.PI * 2); d.fill();
-        }
-        c.shadowBlur = 0;
-
-        paper = paperCanvas;
-        scene = sceneCanvas;
-        dustLayer = dustCanvasLayer;
-        render();
-      }
-
-      function render() {
-        if (!paper || !scene || !dustLayer) return;
-        const bounds = document.querySelector('.paper').getBoundingClientRect();
-        const width = bounds.width, height = bounds.height;
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const scale = Math.max(width / W, height / H);
-        const left = (width - W * scale) / 2;
-        const top = (height - H * scale) / 2;
-        [[canvas,ctx,paper],[shadowCanvas,shadowContext,scene],[dustCanvas,dustContext,dustLayer]].forEach(([target,context,source]) => {
-          target.width = Math.round(width * dpr);
-          target.height = Math.round(height * dpr);
-          context.setTransform(dpr, 0, 0, dpr, 0, 0);
-          context.drawImage(source, left, top, W * scale, H * scale);
+        // 3. 浮尘微粒动力学初始化
+        dustCanvasLayer = layer();
+        dustContextLayer = dustCanvasLayer.getContext('2d');
+        motesList = Array.from({ length: 26 }, (_, i) => {
+          const drng = random(18 + i * 17);
+          return {
+            x: 180 + drng() * 450,
+            y: 110 + drng() * 520,
+            r: 0.45 + drng() * 1.45,
+            speedY: 0.12 + drng() * 0.18,
+            driftPhase: drng() * Math.PI * 2,
+            driftFreq: 0.0008 + drng() * 0.0012,
+            driftAmp: 3 + drng() * 6,
+            alpha: 0.3 + drng() * 0.45
+          };
         });
+
+        sceneComposite = layer();
+        updateMetrics();
+
+        // 启动高性能动画调度器
+        startAnimation();
       }
 
-      let frame;
+      let lastSolarCheck = 0;
+
+      function renderFrame(time) {
+        if (!clusterA || !distantTrunks || !dustCanvasLayer) return;
+
+        // 每隔 20 秒轻量更新一次日光时刻
+        if (time - lastSolarCheck > 20000) {
+          lastSolarCheck = time;
+          solar = getSolarConditions();
+          applySolarTheme(solar);
+        }
+
+        const sc = sceneComposite.getContext('2d');
+        sc.clearRect(0, 0, W, H);
+
+        // 1. 远景树干：极其微弱的慢呼吸摆动
+        sc.save();
+        sc.globalAlpha = settings.shadow;
+        sc.translate(W * 0.5, H * 0.85);
+        sc.rotate(Math.sin(time * 0.00025) * 0.002);
+        sc.translate(-W * 0.5, -H * 0.85);
+        sc.drawImage(distantTrunks, 0, 0);
+        sc.restore();
+
+        // 2. 太阳投影变换（朝向与拉伸随真实时间自然变化）
+        sc.save();
+        sc.globalAlpha = settings.shadow;
+        sc.translate(solar.shadowX, solar.shadowY);
+        sc.scale(solar.shadowScale, solar.shadowScale);
+
+        // 树叶影子随风微颤逻辑（三层频率差模拟有机自然风）
+        // 主干层 A：周期约 15 秒，幅度沉稳
+        const angleA = Math.sin(time * 0.00042) * 0.008 + Math.sin(time * 0.00095 + 1.2) * 0.004;
+        sc.save();
+        sc.translate(1460, -20);
+        sc.rotate(angleA);
+        sc.translate(-1460, 20);
+        sc.drawImage(clusterA, 0, 0);
+        sc.restore();
+
+        // 中层茂叶 B：周期约 11 秒，微风扰动
+        const angleB = Math.sin(time * 0.00058 + 0.8) * 0.014 + Math.sin(time * 0.00125 + 2.4) * 0.007;
+        sc.save();
+        sc.translate(1270, -110);
+        sc.rotate(angleB);
+        sc.translate(-1270, 110);
+        sc.drawImage(clusterB, 0, 0);
+        sc.restore();
+
+        // 外缘嫩稍 C：微风拂过时的轻快灵动微颤
+        const angleC = Math.sin(time * 0.00072 + 1.9) * 0.019 + Math.sin(time * 0.00155 + 0.5) * 0.009;
+        sc.save();
+        sc.translate(1300, -90);
+        sc.rotate(angleC);
+        sc.translate(-1300, 90);
+        sc.drawImage(clusterC, 0, 0);
+        sc.restore();
+
+        sc.restore(); // 还原太阳投影变换
+
+        // 输出至屏幕树影画布
+        const { left, top, scale } = renderMetrics;
+        shadowContext.clearRect(0, 0, shadowCanvas.width, shadowCanvas.height);
+        shadowContext.drawImage(sceneComposite, left, top, W * scale, H * scale);
+
+        // 3. 光中浮尘微粒：上升气流与微幅游弋
+        dustContextLayer.clearRect(0, 0, W, H);
+        dustContextLayer.shadowColor = '#fff5d0';
+        dustContextLayer.shadowBlur = 3;
+        for (let i = 0; i < motesList.length; i++) {
+          const m = motesList[i];
+          m.y -= m.speedY;
+          if (m.y < 85) m.y = 650;
+          const curX = m.x + Math.sin(time * m.driftFreq + m.driftPhase) * m.driftAmp;
+          dustContextLayer.beginPath();
+          dustContextLayer.fillStyle = `rgba(255,244,195,${m.alpha})`;
+          dustContextLayer.ellipse(curX, m.y, m.r, m.r * 0.72, -0.5, 0, Math.PI * 2);
+          dustContextLayer.fill();
+        }
+        dustContextLayer.shadowBlur = 0;
+
+        dustContext.clearRect(0, 0, dustCanvas.width, dustCanvas.height);
+        dustContext.drawImage(dustCanvasLayer, left, top, W * scale, H * scale);
+      }
+
+      function loop(now) {
+        if (!animRunning) return;
+        renderFrame(now);
+        animFrameId = requestAnimationFrame(loop);
+      }
+
+      function startAnimation() {
+        if (motion.matches) {
+          // 尊重用户的减少动效偏好：仅单帧渲染当前日光，不启动持续摆动
+          renderFrame(performance.now());
+          return;
+        }
+        if (!animRunning) {
+          animRunning = true;
+          animFrameId = requestAnimationFrame(loop);
+        }
+      }
+
+      function stopAnimation() {
+        animRunning = false;
+        if (animFrameId) {
+          cancelAnimationFrame(animFrameId);
+          animFrameId = null;
+        }
+      }
+
+      // 智能功耗守护：离开视口或切后台时彻底挂起 0% CPU 占用
+      function checkVisibility() {
+        const scrolledPast = window.scrollY > (window.innerHeight * 1.5);
+        if (document.hidden || scrolledPast) {
+          stopAnimation();
+        } else {
+          startAnimation();
+        }
+      }
+
+      document.addEventListener('visibilitychange', checkVisibility);
+      window.addEventListener('scroll', checkVisibility, { passive: true });
       window.addEventListener('resize', () => {
-        cancelAnimationFrame(frame);
-        frame = requestAnimationFrame(render);
+        updateMetrics();
+        if (!animRunning) renderFrame(performance.now());
       }, { passive: true });
 
-      // 使用 requestIdleCallback 或微延迟异步启动全量烘焙，彻底阻断主线程阻塞
+      // 异步无阻全量烘焙
       if (typeof window.requestIdleCallback === 'function') {
         window.requestIdleCallback(generateLayers, { timeout: 300 });
       } else {
