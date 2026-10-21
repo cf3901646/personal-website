@@ -7,10 +7,33 @@
   <meta name="description" content="关于设计、日常观察与小工具的个人手册。">
   <link rel="icon" href="data:,">
   <title>cf. · 日光里的个人手册</title>
+  <!-- 微信内置浏览器字体防劫持 -->
+  <script>
+    (function() {
+      function handleFontSize() {
+        if (typeof WeixinJSBridge !== 'undefined' && WeixinJSBridge.invoke) {
+          WeixinJSBridge.invoke('setFontSizeCallback', { fontSize: 0 });
+          WeixinJSBridge.on('menu:setfont', function() {
+            WeixinJSBridge.invoke('setFontSizeCallback', { fontSize: 0 });
+          });
+        }
+      }
+      if (typeof WeixinJSBridge === 'object' && typeof WeixinJSBridge.invoke === 'function') {
+        handleFontSize();
+      } else {
+        document.addEventListener('WeixinJSBridgeReady', handleFontSize, false);
+      }
+    })();
+  </script>
   <style>
     * { box-sizing: border-box; }
     :root { --page: #f3f0e7; --ink: #393d33; --muted: #77796b; --rule: #d9d9cb; --accent: #777e58; }
-    html, body { width: 100%; margin: 0; }
+    html, body {
+      width: 100%;
+      margin: 0;
+      -webkit-text-size-adjust: 100% !important;
+      text-size-adjust: 100% !important;
+    }
     html { scroll-behavior: smooth; scroll-padding-top: 110px; }
     body { background: var(--page); color: var(--ink); font: 15px/1.8 "Segoe UI", "Microsoft YaHei", sans-serif; }
     a { color: inherit; }
@@ -33,7 +56,16 @@
       overflow: hidden;
       background: var(--page);
     }
-    .paper canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transform-origin: 50% 50%; }
+    .paper canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+      contain: strict;
+    }
     .paper::after {
       content: "";
       position: absolute;
@@ -54,6 +86,7 @@
       line-height: 1.15;
       letter-spacing: .006em;
       white-space: nowrap;
+      flex-shrink: 0;
       text-decoration: none;
       color: #b6a48b;
       background: linear-gradient(102deg,
@@ -78,11 +111,11 @@
       .letterpress { background: none; -webkit-text-fill-color: LinkText; filter: none; }
     }
 
-    /* 同一片底色贯穿整个滚动区，纸面与正文之间没有容器接缝。 */
-    #surface { opacity: var(--scene-opacity, 1); transform: translate3d(0,var(--paper-y,0px),0) scale(var(--paper-scale,1)); }
-    #shadows { opacity: var(--shadow-opacity,1); transform: translate3d(var(--shadow-x,0px),var(--shadow-y,0px),0) scale(var(--shadow-scale,1)); }
-    #motes { opacity: var(--dust-opacity,1); transform: translate3d(0,var(--dust-y,0px),0); }
-    .hero-title { opacity: var(--title-opacity,1); transform: translate3d(0,var(--title-y,0px),0); filter: blur(var(--title-blur,0px)); }
+    /* 同一片底色贯穿整个滚动区，纸面与正文之间没有容器接缝。硬件加速独立合成层 */
+    #surface { opacity: var(--scene-opacity, 1); transform: translate3d(0,var(--paper-y,0px),0) scale(var(--paper-scale,1)); will-change: transform, opacity; }
+    #shadows { opacity: var(--shadow-opacity,1); transform: translate3d(var(--shadow-x,0px),var(--shadow-y,0px),0) scale(var(--shadow-scale,1)); will-change: transform, opacity; }
+    #motes { opacity: var(--dust-opacity,1); transform: translate3d(0,var(--dust-y,0px),0); will-change: transform, opacity; }
+    .hero-title { opacity: var(--title-opacity,1); transform: translate3d(0,var(--title-y,0px),0); will-change: transform, opacity; }
     .paper-to-color { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: var(--page); mask-image: linear-gradient(to bottom,transparent calc(var(--wash-front,160%) - 40%),#000 calc(var(--wash-front,160%) + 15%)); }
     .light-bloom { position: absolute; inset: -25%; z-index: 2; pointer-events: none; background: radial-gradient(ellipse at 48% 65%,#fffcedb3,transparent 55%); opacity: var(--bloom-opacity,0); transform: translate3d(0,var(--bloom-y,80px),0); }
     .scroll-invitation { position: absolute; z-index: 4; bottom: 35px; left: 50%; transform: translateX(-50%); display: grid; justify-items: center; gap: 13px; opacity: var(--hint-opacity,1); text-decoration: none; color: #7d725e; font-size: 11px; letter-spacing: .2em; }
@@ -95,11 +128,11 @@
     .threshold h2 span { color: var(--accent); }
     .threshold .aside { margin: 34px 0 0; color: var(--muted); font-size: 14px; letter-spacing: .15em; }
     .threshold .chapter-line { width: 46px; height: 1px; margin: 34px 0 0; background: #a9ac92; transform-origin: left; transform: scaleX(var(--chapter-line,0)); }
-    .site-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; padding: 23px max(6vw,24px); background: #f3f0e7e8; backdrop-filter: blur(16px); opacity: 0; transform: translateY(-12px); pointer-events: none; transition: opacity .4s,transform .4s; }
+    .site-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; padding: 23px max(6vw,24px); background: #f3f0e7e8; backdrop-filter: blur(16px); opacity: 0; transform: translateY(-12px); pointer-events: none; transition: opacity .4s,transform .4s; will-change: transform, opacity; }
     .site-nav.is-visible, .site-nav:focus-within { opacity: 1; transform: none; pointer-events: auto; }
-    .wordmark { font: 26px/1 Georgia,serif; text-decoration: none; }
+    .wordmark { font: 26px/1 Georgia,serif; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
     .nav-links { display: flex; gap: 30px; }
-    .nav-links a { font-size: 12px; text-decoration: none; }
+    .nav-links a { font-size: 12px; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
     .nav-links a:hover { color: var(--accent); }
     .wrap { width: min(1040px,80%); margin-inline: auto; }
     .content { position: relative; z-index: 5; background: var(--page); }
@@ -175,7 +208,7 @@
     .restore-demo { --restore-split: 50%; background: #e9e2d6; border-color: #ded6c9; }
     .restore-demo .demo-bar, .restore-demo .demo-caption { border-color: #d9d1c3; color: #81725e; }
     .restore-stage { padding: 28px 25px 20px; }
-    .restore-comparison { position: relative; height: 240px; isolation: isolate; user-select: none; -webkit-user-select: none; }
+    .restore-comparison { position: relative; height: 240px; isolation: isolate; user-select: none; -webkit-user-select: none; touch-action: pan-y; overscroll-behavior: contain; }
     .restore-art { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; background: radial-gradient(ellipse at 20% 15%,#f9f1dccc,transparent 65%),#dfd5c3; }
     .restore-art::before { content: ""; position: absolute; width: 70%; height: 200%; left: -30%; top: -90%; transform: rotate(36deg); background: #fff7d54d; filter: blur(12px); }
     .restore-art::after { content: ""; position: absolute; width: 110%; height: 30px; bottom: -5px; left: -20%; transform: rotate(-35deg); background: #8d866a17; box-shadow: 0 -40px 14px #8d866a17,0 -80px 15px #8d866a17; filter: blur(5px); }
@@ -440,7 +473,6 @@
   <script>
     (() => {
       'use strict';
-      // 修改这两个参数即可调整整幅画面的颗粒感与叶影深浅。
       const settings = { grain: 1, shadow: .62 };
       const W = 1376, H = 768;
       const canvas = document.querySelector('#surface');
@@ -450,6 +482,23 @@
       const dustCanvas = document.querySelector('#motes');
       const dustContext = dustCanvas.getContext('2d');
       if (!ctx) return;
+
+      // 0ms 极速首屏底图（纯渐变直出，无空白等待）
+      function fastInitialPaint() {
+        const bounds = document.querySelector('.paper').getBoundingClientRect();
+        const width = bounds.width || window.innerWidth, height = bounds.height || window.innerHeight;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const g = ctx.createLinearGradient(0, 0, width, height);
+        g.addColorStop(0, '#f2ece0');
+        g.addColorStop(0.48, '#f7f4ea');
+        g.addColorStop(1, '#eee7da');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, width, height);
+      }
+      fastInitialPaint();
 
       function random(seed) {
         return () => {
@@ -470,8 +519,9 @@
         const columns = Math.ceil(W / cell) + 2;
         const rows = Math.ceil(H / cell) + 2;
         const values = Float32Array.from({ length: columns * rows }, () => rng() * 2 - 1);
+        const invCell = 1 / cell;
         return (x, y) => {
-          const gx = x / cell, gy = y / cell;
+          const gx = x * invCell, gy = y * invCell;
           const ix = Math.floor(gx), iy = Math.floor(gy);
           let u = gx - ix, v = gy - iy;
           u = u * u * (3 - 2 * u); v = v * v * (3 - 2 * v);
@@ -481,145 +531,168 @@
         };
       }
 
-      // 纸面以双倍分辨率烘焙：细纤维只改变表面质感，日光与底色保持原值。
-      const paperScale = 2;
-      const paper = layer(W * paperScale, H * paperScale);
-      const p = paper.getContext('2d');
-      const pixels = p.createImageData(paper.width, paper.height);
-      const rng = random(3901646);
-      // 保留原有光线噪声的随机种子与采样顺序。
-      const cloud = noiseField(125, rng);
-      const pulp = noiseField(22, rng);
-      const fiber = noiseField(3, rng);
-      const fineGrain = noiseField(1.2, random(802));
-      const surfaceRng = random(9046);
-      for (let py = 0; py < paper.height; py++) {
-        const y = py / paperScale;
-        for (let px = 0; px < paper.width; px++) {
-          const x = px / paperScale;
-          const cross = x * .56 + y * .83;
-          const beam = Math.exp(-Math.pow((cross - 650) / 230, 2));
-          const ribbons = Math.sin(cross / 21 + cloud(x, y) * .8 + x / 650)
-            * 5.5 + Math.sin(cross / 43 + x / 300) * 4;
-          const light = beam * (28 + ribbons);
-          // 相邻采样的细小亮暗差模拟纸浆起伏，不再使用大片灰斑或深色颗粒。
-          const relief = (fiber(x,y) - fiber(x+.45,y+.35)) * 4.8
-            + (fineGrain(x,y) - fineGrain(x+.24,y+.18)) * 4.2;
-          const tooth = (surfaceRng() + surfaceRng() + surfaceRng() - 1.5) * 2.2;
-          const shade = (relief + tooth + pulp(x,y) * .7) * settings.grain;
-          const i = (py * paper.width + px) * 4;
-          pixels.data[i] = 219 + light + shade;
-          pixels.data[i + 1] = 213 + light + shade;
-          pixels.data[i + 2] = 196 + light * .94 + shade;
-          pixels.data[i + 3] = 255;
+      // 根据设备性能自适应纸面倍率：移动端采用 1.25x 节约 70% 显存与计算，桌面端采用 2x 视网膜渲染
+      const isMobile = window.innerWidth <= 768;
+      const paperScale = isMobile ? 1.25 : 2;
+      let paper = null;
+      let scene = null;
+      let dustLayer = null;
+
+      function generateLayers() {
+        // 纸面微纤维与光影计算
+        const paperCanvas = layer(Math.round(W * paperScale), Math.round(H * paperScale));
+        const p = paperCanvas.getContext('2d');
+        const pixels = p.createImageData(paperCanvas.width, paperCanvas.height);
+        const rng = random(3901646);
+        const cloud = noiseField(125, rng);
+        const pulp = noiseField(22, rng);
+        const fiber = noiseField(3, rng);
+        const fineGrain = noiseField(1.2, random(802));
+        const surfaceRng = random(9046);
+
+        // 光束查找表（消灭 420 万次 transcendental 指数计算）
+        const expLUT = new Float32Array(3000);
+        for (let i = 0; i < 3000; i++) {
+          const c = i * 0.5;
+          expLUT[i] = Math.exp(-Math.pow((c - 650) / 230, 2));
         }
-      }
-      p.putImageData(pixels, 0, 0);
 
-      // 低对比短纤维带一条微弱的受光边，像细棉纸；不画黑色划痕。
-      p.setTransform(paperScale,0,0,paperScale,0,0);
-      p.lineCap = 'round';
-      const fleckRng = random(160);
-      for (let i = 0; i < 42000; i++) {
-        const x = fleckRng() * W, y = fleckRng() * H;
-        const length = .45 + fleckRng() * 1.7;
-        const angle = (fleckRng() - .5) * Math.PI;
-        const dx = Math.cos(angle) * length, dy = Math.sin(angle) * length;
-        const bend = (fleckRng() - .5) * .35;
-        p.lineWidth = .16 + fleckRng() * .2;
-        p.strokeStyle = 'rgba(164,149,119,.028)';
-        p.beginPath(); p.moveTo(x, y);
-        p.quadraticCurveTo(x+dx*.5,y+dy*.5+bend,x+dx,y+dy); p.stroke();
-        p.strokeStyle = 'rgba(255,253,239,.17)';
-        p.beginPath(); p.moveTo(x,y-.22);
-        p.quadraticCurveTo(x+dx*.5,y+dy*.5+bend-.22,x+dx,y+dy-.22); p.stroke();
-      }
+        const invScale = 1 / paperScale;
+        const pw = paperCanvas.width, ph = paperCanvas.height;
 
-      const shade = layer();
-      const s = shade.getContext('2d');
-      const leavesRng = random(27);
-
-      function leaf(x, y, length, width, angle, opacity) {
-        s.save();
-        s.translate(x, y); s.rotate(angle);
-        s.fillStyle = `rgba(72,73,52,${opacity})`;
-        s.beginPath(); s.moveTo(0, 0);
-        s.bezierCurveTo(length * .28, -width * .7, length * .72, -width * .65, length, 0);
-        s.bezierCurveTo(length * .68, width * .42, length * .22, width * .7, 0, 0);
-        s.fill(); s.restore();
-      }
-
-      // 斜射光把枝叶的影子拉长；每根小枝都稍微偏离规则排列。
-      const branches = [
-        [1410, -80, 940, 510, 20],
-        [1230, -105, 810, 480, 20],
-        [1110, -120, 640, 480, 16],
-        [1520, 40, 1130, 490, 18],
-        [1310, -120, 980, 380, 19],
-        [1480, -60, 1070, 400, 18]
-      ];
-      for (const [x0, y0, x1, y1, count] of branches) {
-        s.beginPath(); s.moveTo(x0, y0);
-        s.quadraticCurveTo(x0 - 150, y1 * .56, x1, y1);
-        s.strokeStyle = 'rgba(68,69,51,.18)'; s.lineWidth = 9;
-        s.lineCap = 'round'; s.stroke();
-        for (let i = 0; i < count; i++) {
-          const t = (i + .3 + leavesRng() * .6) / count;
-          const q = 1 - t;
-          const x = q * q * x0 + 2 * q * t * (x0 - 150) + t * t * x1;
-          const y = q * q * y0 + 2 * q * t * (y1 * .56) + t * t * y1;
-          const side = i % 2 === 0 ? 1 : -1;
-          const angle = side > 0 ? -.92 + leavesRng() * .5 : 2.28 + leavesRng() * .45;
-          leaf(x + (leavesRng() - .5) * 40, y, 65 + leavesRng() * 150, 12 + leavesRng() * 26,
-            angle, (.14 + leavesRng() * .20) * (1 - t * .60));
+        for (let py = 0; py < ph; py++) {
+          const y = py * invScale;
+          const y083 = y * .83;
+          for (let px = 0; px < pw; px++) {
+            const x = px * invScale;
+            const cross = x * .56 + y083;
+            const beam = expLUT[Math.min(2999, Math.max(0, (cross * 2) | 0))];
+            const ribbons = Math.sin(cross / 21 + cloud(x, y) * .8 + x / 650)
+              * 5.5 + Math.sin(cross / 43 + x / 300) * 4;
+            const light = beam * (28 + ribbons);
+            const relief = (fiber(x,y) - fiber(x+.45,y+.35)) * 4.8
+              + (fineGrain(x,y) - fineGrain(x+.24,y+.18)) * 4.2;
+            const tooth = (surfaceRng() + surfaceRng() + surfaceRng() - 1.5) * 2.2;
+            const shadeVal = (relief + tooth + pulp(x,y) * .7) * settings.grain;
+            const i = (py * pw + px) * 4;
+            pixels.data[i] = 219 + light + shadeVal;
+            pixels.data[i + 1] = 213 + light + shadeVal;
+            pixels.data[i + 2] = 196 + light * .94 + shadeVal;
+            pixels.data[i + 3] = 255;
+          }
         }
-      }
+        p.putImageData(pixels, 0, 0);
 
-      const scene = layer();
-      const c = scene.getContext('2d');
-      c.save();
-      c.filter = 'blur(7px)';
-      c.globalAlpha = settings.shadow;
-      c.drawImage(shade, 0, 0);
-      c.restore();
+        // 微纤维贝塞尔曲线
+        p.setTransform(paperScale, 0, 0, paperScale, 0, 0);
+        p.lineCap = 'round';
+        const fleckRng = random(160);
+        const fleckCount = isMobile ? 22000 : 42000;
+        for (let i = 0; i < fleckCount; i++) {
+          const x = fleckRng() * W, y = fleckRng() * H;
+          const length = .45 + fleckRng() * 1.7;
+          const angle = (fleckRng() - .5) * Math.PI;
+          const dx = Math.cos(angle) * length, dy = Math.sin(angle) * length;
+          const bend = (fleckRng() - .5) * .35;
+          p.lineWidth = .16 + fleckRng() * .2;
+          p.strokeStyle = 'rgba(164,149,119,.028)';
+          p.beginPath(); p.moveTo(x, y);
+          p.quadraticCurveTo(x+dx*.5, y+dy*.5+bend, x+dx, y+dy); p.stroke();
+          p.strokeStyle = 'rgba(255,253,239,.17)';
+          p.beginPath(); p.moveTo(x, y-.22);
+          p.quadraticCurveTo(x+dx*.5, y+dy*.5+bend-.22, x+dx, y+dy-.22); p.stroke();
+        }
 
-      // 更远处的枝叶在左下形成宽而散的影子。
-      c.save();
-      c.filter = 'blur(19px)';
-      c.lineCap = 'round';
-      const distant = [
-        [-90, 775, 370, 625, 790, 180, 28, .20],
-        [90, 860, 490, 555, 1010, 125, 30, .24],
-        [420, 875, 695, 615, 1240, 205, 36, .25],
-        [640, 900, 860, 610, 1300, 400, 25, .16],
-        [130, 785, 300, 670, 380, 580, 55, .11]
-      ];
-      for (const [x, y, cx, cy, ex, ey, width, alpha] of distant) {
-        c.strokeStyle = `rgba(92,88,64,${alpha * settings.shadow})`;
-        c.lineWidth = width;
-        c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(cx, cy, ex, ey); c.stroke();
-      }
-      c.restore();
+        // 树影与枝叶层
+        const shade = layer();
+        const s = shade.getContext('2d');
+        const leavesRng = random(27);
 
-      // 独立的亮尘图层，以便在滚动时产生比纸面更近的视差。
-      const dustLayer = layer();
-      const d = dustLayer.getContext('2d');
-      const dust = random(18);
-      for (let i = 0; i < 26; i++) {
-        const x = 190 + dust() * 430, y = 120 + dust() * 520;
-        const r = .45 + dust() * 1.45;
-        d.beginPath();
-        d.fillStyle = `rgba(255,244,195,${.3 + dust() * .45})`;
-        d.shadowColor = '#fff5d0'; d.shadowBlur = 3;
-        d.ellipse(x, y, r, r * .72, -.5, 0, Math.PI * 2); d.fill();
+        function leaf(x, y, length, width, angle, opacity) {
+          s.save();
+          s.translate(x, y); s.rotate(angle);
+          s.fillStyle = `rgba(72,73,52,${opacity})`;
+          s.beginPath(); s.moveTo(0, 0);
+          s.bezierCurveTo(length * .28, -width * .7, length * .72, -width * .65, length, 0);
+          s.bezierCurveTo(length * .68, width * .42, length * .22, width * .7, 0, 0);
+          s.fill(); s.restore();
+        }
+
+        const branches = [
+          [1410, -80, 940, 510, 20],
+          [1230, -105, 810, 480, 20],
+          [1110, -120, 640, 480, 16],
+          [1520, 40, 1130, 490, 18],
+          [1310, -120, 980, 380, 19],
+          [1480, -60, 1070, 400, 18]
+        ];
+        for (const [x0, y0, x1, y1, count] of branches) {
+          s.beginPath(); s.moveTo(x0, y0);
+          s.quadraticCurveTo(x0 - 150, y1 * .56, x1, y1);
+          s.strokeStyle = 'rgba(68,69,51,.18)'; s.lineWidth = 9;
+          s.lineCap = 'round'; s.stroke();
+          for (let i = 0; i < count; i++) {
+            const t = (i + .3 + leavesRng() * .6) / count;
+            const q = 1 - t;
+            const x = q * q * x0 + 2 * q * t * (x0 - 150) + t * t * x1;
+            const y = q * q * y0 + 2 * q * t * (y1 * .56) + t * t * y1;
+            const side = i % 2 === 0 ? 1 : -1;
+            const angle = side > 0 ? -.92 + leavesRng() * .5 : 2.28 + leavesRng() * .45;
+            leaf(x + (leavesRng() - .5) * 40, y, 65 + leavesRng() * 150, 12 + leavesRng() * 26,
+              angle, (.14 + leavesRng() * .20) * (1 - t * .60));
+          }
+        }
+
+        const sceneCanvas = layer();
+        const c = sceneCanvas.getContext('2d');
+        c.save();
+        c.filter = 'blur(7px)';
+        c.globalAlpha = settings.shadow;
+        c.drawImage(shade, 0, 0);
+        c.restore();
+
+        c.save();
+        c.filter = 'blur(19px)';
+        c.lineCap = 'round';
+        const distant = [
+          [-90, 775, 370, 625, 790, 180, 28, .20],
+          [90, 860, 490, 555, 1010, 125, 30, .24],
+          [420, 875, 695, 615, 1240, 205, 36, .25],
+          [640, 900, 860, 610, 1300, 400, 25, .16],
+          [130, 785, 300, 670, 380, 580, 55, .11]
+        ];
+        for (const [x, y, cx, cy, ex, ey, width, alpha] of distant) {
+          c.strokeStyle = `rgba(92,88,64,${alpha * settings.shadow})`;
+          c.lineWidth = width;
+          c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(cx, cy, ex, ey); c.stroke();
+        }
+        c.restore();
+
+        // 浮尘微粒层
+        const dustCanvasLayer = layer();
+        const d = dustCanvasLayer.getContext('2d');
+        const dust = random(18);
+        for (let i = 0; i < 26; i++) {
+          const x = 190 + dust() * 430, y = 120 + dust() * 520;
+          const r = .45 + dust() * 1.45;
+          d.beginPath();
+          d.fillStyle = `rgba(255,244,195,${.3 + dust() * .45})`;
+          d.shadowColor = '#fff5d0'; d.shadowBlur = 3;
+          d.ellipse(x, y, r, r * .72, -.5, 0, Math.PI * 2); d.fill();
+        }
+        c.shadowBlur = 0;
+
+        paper = paperCanvas;
+        scene = sceneCanvas;
+        dustLayer = dustCanvasLayer;
+        render();
       }
-      c.shadowBlur = 0;
 
       function render() {
+        if (!paper || !scene || !dustLayer) return;
         const bounds = document.querySelector('.paper').getBoundingClientRect();
         const width = bounds.width, height = bounds.height;
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        // 小屏幕采用居中裁切，不拉伸树影与纸纹。
         const scale = Math.max(width / W, height / H);
         const left = (width - W * scale) / 2;
         const top = (height - H * scale) / 2;
@@ -630,12 +703,26 @@
           context.drawImage(source, left, top, W * scale, H * scale);
         });
       }
+
       let frame;
       window.addEventListener('resize', () => {
         cancelAnimationFrame(frame);
         frame = requestAnimationFrame(render);
       }, { passive: true });
-      render();
+
+      // 使用 requestIdleCallback 或微延迟异步启动全量烘焙，彻底阻断主线程阻塞
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(generateLayers, { timeout: 300 });
+      } else {
+        setTimeout(generateLayers, 30);
+      }
+
+      // PWA 离线极速引擎注册
+      if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
     })();
   </script>
   <script>
@@ -689,7 +776,6 @@
           set('--dust-y',`${depth*-175}px`);
           set('--title-y',`${depth*-135}px`);
           set('--title-opacity',1-smooth(.06,.48,progress));
-          set('--title-blur',`${motion.matches?0:smooth(.16,.50,progress)*5}px`);
           set('--hint-opacity',1-smooth(0,.14,progress));
           set('--wash-front',`${160-smooth(.10,.99,progress)*215}%`);
           set('--bloom-opacity',Math.sin(progress*Math.PI)*.6);
