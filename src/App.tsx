@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { SunlitPaperStage } from './components/SunlitPaperStage';
 import { WorksSection } from './components/WorksSection';
+import { PocketToolsSection } from './components/PocketToolsSection';
 
 export default function App() {
   const [navVisible, setNavVisible] = useState(false);
@@ -113,7 +114,8 @@ export default function App() {
         </a>
         <div className="nav-links">
           <a href="#philosophy">理念</a>
-          <a href="#works">工具</a>
+          <a href="#works">作品</a>
+          <a href="#tools">小工具</a>
           <a href="#contact">联系</a>
         </div>
       </nav>
@@ -171,9 +173,11 @@ export default function App() {
 
           <WorksSection />
 
+          <PocketToolsSection />
+
           <footer className="contact wrap" id="contact">
             <div className="reveal">
-              <p className="eyebrow">03 / A conversation starts here</p>
+              <p className="eyebrow">04 / A conversation starts here</p>
               <h2>
                 有一个值得
                 <br />
