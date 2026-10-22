@@ -375,9 +375,9 @@ export const WorksSection: React.FC = () => {
           <h2 id="works-title">想法，在这里成为工具。</h2>
         </div>
         <p>
-          三个日常问题，三个小小的回应。
+          关于日常工具、排版节奏与前沿声景生成的小小回应。
           <br />
-          向下滚动自动演示，也可直接点击或拖动滑块把玩。
+          向下滚动自动演示，也可直接点击把玩或启动飞船体验。
         </p>
       </header>
 
@@ -628,6 +628,113 @@ export const WorksSection: React.FC = () => {
                   rel="noopener noreferrer"
                 >
                   {'查看源码 ↗\uFE0E'}
+                  <span className="sr-only">（新窗口）</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        {/* 04 / Space DJ */}
+        <article className="work work-featured" id="spacedj" aria-labelledby="spacedj-title">
+          <div className="demo-scroll">
+            <div className="demo-pin">
+              <div
+                className="work-visual space-preview-stage"
+                style={{
+                  background: 'radial-gradient(ellipse at center, #182232 0%, #080a0f 100%)',
+                  color: '#fff',
+                  borderRadius: '12px',
+                  minHeight: '340px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  padding: '28px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: 'inset 0 0 40px rgba(0,0,0,0.6)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 2 }}>
+                  <span style={{ fontSize: '12px', letterSpacing: '0.1em', fontWeight: 600, color: '#ffca28', textTransform: 'uppercase' }}>
+                    Google Magenta × Lyria RealTime
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      background: 'rgba(255,202,40,0.15)',
+                      border: '1px solid rgba(255,202,40,0.3)',
+                      color: '#ffca28',
+                    }}
+                  >
+                    国内免翻直连 · 多Key配额池
+                  </span>
+                </div>
+
+                <div style={{ margin: 'auto 0', zIndex: 2 }}>
+                  <h3 style={{ fontSize: '26px', fontWeight: 700, margin: '0 0 10px 0', letterSpacing: '-0.02em', color: '#ffffff' }}>
+                    Space DJ · 3D 潜空间星际漫游
+                  </h3>
+                  <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.8)', maxWidth: '520px', margin: 0 }}>
+                    驾驶飞船在 3D 音符星座中自由穿梭。基于航行坐标实时融合风格 Prompt，通过 Google Lyria RealTime API 持续无缝生成流式合成音乐。
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'center', zIndex: 2, flexWrap: 'wrap' }}>
+                  <a
+                    href="/space/"
+                    target="_blank"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 22px',
+                      borderRadius: '8px',
+                      background: '#ffca28',
+                      color: '#121316',
+                      fontWeight: 700,
+                      fontSize: '14px',
+                      textDecoration: 'none',
+                      boxShadow: '0 4px 16px rgba(255,202,40,0.4)',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    启动飞船 · 立即体验 ↗
+                  </a>
+                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                    支持 WASD / 键盘方向键 6-DOF 飞行控制 · 2 分钟安全限额保护
+                  </span>
+                </div>
+
+                {/* Decorative cosmic stars background glow */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    opacity: 0.4,
+                    pointerEvents: 'none',
+                    background:
+                      'radial-gradient(circle at 20% 30%, rgba(120, 119, 198, 0.45), transparent 45%), radial-gradient(circle at 80% 70%, rgba(255, 202, 40, 0.25), transparent 45%)',
+                  }}
+                />
+              </div>
+
+              <div className="work-meta">
+                <h3 id="spacedj-title">Space DJ</h3>
+                <span>04 / 声音与星际</span>
+              </div>
+              <div className="work-summary">
+                <h4>当音乐在宇宙空间中拥有坐标。</h4>
+                <p>
+                  改造自 Google Magenta 实验项目。将数百种音乐风格通过 UMAP 映射为三维星系，当飞船掠过不同星辰，Lyria 实时模型动态平滑插值合成流式音乐。自建边缘网关保障国内极速直连。
+                </p>
+              </div>
+              <div className="work-links">
+                <a className="text-button" href="/space/" target="_blank">
+                  全屏进入
+                  <span aria-hidden="true">{'↗︎'}</span>
                   <span className="sr-only">（新窗口）</span>
                 </a>
               </div>

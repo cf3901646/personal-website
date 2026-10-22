@@ -1,7 +1,18 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import dotenv from 'dotenv';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite';
+
+dotenv.config();
+
+const rawKeys = process.env.GEMINI_API_KEYS || '';
+const DEV_API_KEYS = rawKeys
+  .split(',')
+  .map((k) => k.trim())
+  .filter(Boolean);
+
+let devKeyCursor = 0;
 
 export default defineConfig(() => {
   return {
@@ -12,11 +23,28 @@ export default defineConfig(() => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
+      proxy: {
+        '/ws': {
+          target: 'wss://generativelanguage.googleapis.com',
+          ws: true,
+          changeOrigin: true,
+          secure: true,
+          configure: (proxy) => {
+            // @ts-ignore
+            proxy.on('proxyReqWs', (proxyReq) => {
+              if (DEV_API_KEYS.length > 0) {
+                const selectedKey = DEV_API_KEYS[devKeyCursor % DEV_API_KEYS.length];
+                devKeyCursor++;
+                if (proxyReq.path) {
+                  proxyReq.path = proxyReq.path.replace(/key=[^&]+/, `key=${selectedKey}`);
+                }
+              }
+            });
+          },
+        },
+      },
     },
     build: {
       rollupOptions: {
