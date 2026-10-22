@@ -1,0 +1,8 @@
+{
+  "name": "astro",
+  "version": "99.0.0",
+  "type": "module",
+  "bin": {
+    "astro": "./astro-cli.js"
+  }
+}

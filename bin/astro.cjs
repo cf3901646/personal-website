@@ -1,9 +1,7 @@
 #!/usr/bin/env node
-const { spawn } = require('child_process');
-const child = spawn('npx', ['vite', 'build'], {
-  stdio: 'inherit',
-  shell: true
-});
-child.on('exit', (code) => {
-  process.exit(code === null ? 1 : code);
+import('vite').then(({ build }) => {
+  return build();
+}).catch((err) => {
+  console.error('Vite build failed via bin/astro.cjs:', err);
+  process.exit(1);
 });
