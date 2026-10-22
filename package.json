@@ -1,11 +1,16 @@
 {
-  "name": "react-example",
+  "name": "personal-website",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "packageManager": "pnpm@10.33.4",
+  "bin": {
+    "astro": "./bin/astro.cjs"
+  },
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
+    "astro": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
