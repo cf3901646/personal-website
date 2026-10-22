@@ -1,11 +1,10 @@
-// Minimal offline service worker for Charlie Freeman's portfolio
-const CACHE_NAME = 'cf-portfolio-v1';
-const CORE_SHELL = ['/', '/index.html'];
+// Minimal offline service worker with zero-stale cache strategy
+const CACHE_NAME = 'cf-portfolio-v2';
+const CORE_SHELL = ['/'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_SHELL)).then(() => self.skipWaiting())
-  );
+  // Take over immediately without waiting for existing tabs to close
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -20,12 +19,17 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Only handle GET requests from the same origin
+  // 1. Only handle GET requests from the same origin
   if (request.method !== 'GET' || url.origin !== self.location.origin) {
     return;
   }
 
-  // Immutable hashed assets: Cache-First
+  // 2. Completely bypass Space DJ sub-app and WebSocket routes from Service Worker interception
+  if (url.pathname.startsWith('/space') || url.pathname.startsWith('/ws') || url.pathname.startsWith('/api')) {
+    return;
+  }
+
+  // 3. Immutable hashed assets: Cache-First
   if (url.pathname.startsWith('/assets/')) {
     event.respondWith(
       caches.match(request).then((cached) => {
@@ -42,31 +46,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation and document requests: Network-First with Offline fallback
-  if (request.mode === 'navigate') {
+  // 4. Navigation and HTML requests: Network-First ALWAYS, zero stale HTML
+  if (request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
     event.respondWith(
-      fetch(request).then((response) => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        }
-        return response;
-      }).catch(() => caches.match(request).then((cached) => cached || caches.match('/index.html')))
+      fetch(request).catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
     );
     return;
   }
 
-  // Fallback: Stale-While-Revalidate
+  // 5. Default: Network with Cache fallback
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const fetchPromise = fetch(request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        }
-        return networkResponse;
-      }).catch(() => cached);
-      return cached || fetchPromise;
-    })
+    fetch(request).catch(() => caches.match(request))
   );
 });
