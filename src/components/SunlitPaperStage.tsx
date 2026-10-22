@@ -457,13 +457,15 @@ export const SunlitPaperStage: React.FC<SunlitPaperStageProps> = ({ onNavVisibil
     }
 
     let lastRenderTime = 0;
-    const TARGET_FRAME_MS = 1000 / 35; // 35 FPS cap: saves 70%+ GPU/Canvas overhead for 15s slow ambient motion
+    const FRAME_INTERVAL = 1000 / 60; // 60 FPS: 1:1 match with 60Hz displays, 1:2 on 120Hz ProMotion, zero cadence jitter
 
     function loop(now: number) {
       if (!animRunning) return;
-      if (now - lastRenderTime >= TARGET_FRAME_MS) {
+      const delta = now - lastRenderTime;
+      // 1.8ms tolerance to prevent dropping to 30fps when 60Hz timestamps jitter between 16.3ms and 16.8ms
+      if (delta >= FRAME_INTERVAL - 1.8) {
         renderFrame(now);
-        lastRenderTime = now - ((now - lastRenderTime) % TARGET_FRAME_MS);
+        lastRenderTime = now - (delta % FRAME_INTERVAL);
       }
       animFrameId = requestAnimationFrame(loop);
     }
