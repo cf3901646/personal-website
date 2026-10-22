@@ -1,0 +1,6 @@
+{
+  "name": "Charlie Freeman · 日光里的个人手册",
+  "description": "Charlie Freeman 的个人网站——关于设计、日常观察与顺手小工具的日光凹印手册。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

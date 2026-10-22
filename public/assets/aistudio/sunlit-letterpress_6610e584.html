@@ -1,0 +1,1314 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f0e7">
+  <meta name="description" content="Charlie Freeman 的个人网站——关于设计、日常观察与顺手小工具的个人手册。">
+  <meta property="og:title" content="Charlie Freeman · 日光里的个人手册">
+  <meta property="og:description" content="关于设计、日常观察与小工具的个人手册。让工具顺手，让体验从容。">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Charlie Freeman · 日光里的个人手册">
+  <meta name="twitter:description" content="关于设计、日常观察与小工具的个人手册。让工具顺手，让体验从容。">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23f3f0e7'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' dominant-baseline='middle' font-family='Georgia,serif' font-size='34' fill='%23393d33'%3Ecf.%3C/text%3E%3C/svg%3E">
+  <title>Charlie Freeman · 日光里的个人手册</title>
+  <!-- 微信内置浏览器字体防劫持 -->
+  <script>
+    (function() {
+      function handleFontSize() {
+        if (typeof WeixinJSBridge !== 'undefined' && WeixinJSBridge.invoke) {
+          WeixinJSBridge.invoke('setFontSizeCallback', { fontSize: 0 });
+          WeixinJSBridge.on('menu:setfont', function() {
+            WeixinJSBridge.invoke('setFontSizeCallback', { fontSize: 0 });
+          });
+        }
+      }
+      if (typeof WeixinJSBridge === 'object' && typeof WeixinJSBridge.invoke === 'function') {
+        handleFontSize();
+      } else {
+        document.addEventListener('WeixinJSBridgeReady', handleFontSize, false);
+      }
+    })();
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --page: #f3f0e7;
+      --ink: #393d33;
+      --muted: #77796b;
+      --rule: #d9d9cb;
+      --accent: #777e58;
+      --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+      --font-serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "STSong", Georgia, serif;
+    }
+    html, body {
+      width: 100%;
+      margin: 0;
+      -webkit-text-size-adjust: 100% !important;
+      text-size-adjust: 100% !important;
+    }
+    html { scroll-behavior: smooth; scroll-padding-top: 110px; }
+    body { background: var(--page); color: var(--ink); font: 15px/1.8 var(--font-sans); }
+    a { color: inherit; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+    ::selection { background: #d9dcc5; color: #363d30; }
+    .opening { height: 100svh; position: relative; }
+    .js .opening { height: 300svh; }
+
+    .paper {
+      position: sticky;
+      top: 0;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100svh;
+      min-height: 100svh;
+      isolation: isolate;
+      overflow: hidden;
+      background: var(--page);
+    }
+    .paper canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+      contain: strict;
+    }
+    .paper::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 50% 50%, transparent 36%, #9a8b6d0b 100%);
+      opacity: var(--scene-opacity, 1);
+      z-index: 3;
+    }
+    h1 { position: relative; z-index: 2; margin: 0; font-size: inherit; font-weight: normal; }
+    .letterpress {
+      display: block;
+      font-family: "Times New Roman", "Baskerville", Georgia, serif;
+      font-size: clamp(28px, 5.2vw, 96px);
+      font-weight: 400;
+      font-kerning: normal;
+      line-height: 1.15;
+      letter-spacing: .012em;
+      white-space: nowrap;
+      flex-shrink: 0;
+      text-decoration: none;
+      /* 纯单色无墨凹印：不依赖渐变，完全由凹槽光影与上层树影自然塑形 */
+      color: #cbbda6;
+      filter: url(#pressed-ink);
+      transform: translateY(1px);
+      transition: opacity .25s ease;
+    }
+    .letterpress:hover { opacity: .92; }
+    .letterpress:focus-visible {
+      outline: 1px solid #8a795f;
+      outline-offset: 12px;
+      border-radius: 2px;
+    }
+    .filter-definitions { position: absolute; width: 0; height: 0; overflow: hidden; }
+    @media (max-width: 600px) {
+      .letterpress { font-size: clamp(26px, 8.8vw, 48px); letter-spacing: -.015em; }
+    }
+    @media (forced-colors: active) {
+      .letterpress { color: LinkText; filter: none; }
+    }
+
+    /* 硬件加速独立合成层：树影 (#shadows) 位于凹印文字 (.hero-title) 之上并采用正片叠底，使树影真实投射进字槽与高光棱线上 */
+    #surface { z-index: 1; opacity: var(--scene-opacity, 1); transform: translate3d(0,var(--paper-y,0px),0) scale(var(--paper-scale,1)); will-change: transform, opacity; }
+    .hero-title { z-index: 2; opacity: var(--title-opacity,1); transform: translate3d(0,var(--title-y,0px),0); will-change: transform, opacity; }
+    #shadows { z-index: 3; mix-blend-mode: multiply; opacity: var(--shadow-opacity,1); transform: translate3d(var(--shadow-x,0px),var(--shadow-y,0px),0) scale(var(--shadow-scale,1)); will-change: transform, opacity; }
+    #motes { z-index: 4; opacity: var(--dust-opacity,1); transform: translate3d(0,var(--dust-y,0px),0); will-change: transform, opacity; }
+    .paper-to-color {
+      position: absolute; inset: 0; z-index: 5; pointer-events: none; background: var(--page);
+      -webkit-mask-image: linear-gradient(to bottom,transparent calc(var(--wash-front,160%) - 40%),#000 calc(var(--wash-front,160%) + 15%));
+      mask-image: linear-gradient(to bottom,transparent calc(var(--wash-front,160%) - 40%),#000 calc(var(--wash-front,160%) + 15%));
+    }
+    .light-bloom { position: absolute; inset: -25%; z-index: 4; pointer-events: none; background: radial-gradient(ellipse at 48% 65%,#fffcedb3,transparent 55%); opacity: var(--bloom-opacity,0); transform: translate3d(0,var(--bloom-y,80px),0); }
+    .scroll-invitation { position: absolute; z-index: 6; bottom: 35px; left: 50%; transform: translateX(-50%); display: grid; justify-items: center; gap: 13px; opacity: var(--hint-opacity,1); text-decoration: none; color: #7d725e; font-size: 11px; letter-spacing: .2em; }
+    .scroll-invitation::after { content: ""; display: block; width: 1px; height: 36px; background: linear-gradient(#a8997b,transparent); }
+    .threshold { position: absolute; z-index: 6; inset: 0; display: flex; align-items: center; pointer-events: none; opacity: var(--chapter-opacity,0); transform: translate3d(0,var(--chapter-y,70px),0); }
+    .threshold-inner { width: min(1040px,80%); margin: 0 auto; }
+    .eyebrow { font-size: 11px; font-weight: 400; line-height: 1.6; letter-spacing: .18em; color: var(--muted); text-transform: uppercase; }
+    .threshold .eyebrow { margin: 0 0 32px; }
+    .threshold h2 { margin: 0; font: 400 clamp(38px,5.2vw,76px)/1.5 var(--font-serif); letter-spacing: .05em; }
+    .threshold h2 span { color: var(--accent); }
+    .threshold .aside { margin: 34px 0 0; color: var(--muted); font-size: 14px; letter-spacing: .15em; }
+    .threshold .chapter-line { width: 46px; height: 1px; margin: 34px 0 0; background: #a9ac92; transform-origin: left; transform: scaleX(var(--chapter-line,0)); }
+    .site-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; padding: 23px max(6vw,24px); background: #f3f0e7e8; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); opacity: 0; transform: translateY(-12px); pointer-events: none; transition: opacity .4s,transform .4s; will-change: transform, opacity; }
+    .site-nav.is-visible, .site-nav:focus-within { opacity: 1; transform: none; pointer-events: auto; }
+    .wordmark { font: 26px/1 Georgia,serif; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+    .nav-links { display: flex; gap: 30px; }
+    .nav-links a { font-size: 12px; text-decoration: none; white-space: nowrap; flex-shrink: 0; }
+    .nav-links a:hover { color: var(--accent); }
+    .wrap { width: min(1040px,80%); margin-inline: auto; }
+    .content { position: relative; z-index: 5; background: var(--page); }
+    .manifesto { padding: 0 0 130px; }
+    .manifesto-intro { display: grid; grid-template-columns: 1fr 2fr; gap: 70px; align-items: start; }
+    .manifesto-intro p { margin: 0; }
+    .manifesto-copy { max-width: 650px; font-size: clamp(18px,2vw,25px); line-height: 2; font-weight: 400; }
+    .manifesto-copy em { font-style: normal; color: var(--accent); }
+    .principles { display: grid; grid-template-columns: repeat(3,1fr); gap: 48px; margin-top: 80px; }
+    .principle { border-top: 1px solid var(--rule); padding-top: 25px; }
+    .principle .number { color: #949882; font: italic 16px/1 Georgia,serif; }
+    .principle h3 { font: 400 23px/1.5 var(--font-serif); margin: 25px 0 14px; }
+    .principle p { margin: 0; color: var(--muted); font-size: 14px; }
+    .reveal { opacity: 1; transform: none; }
+    .js .reveal { opacity: 0; transform: translate3d(0,28px,0); transition: opacity .85s ease var(--delay,0ms),transform 1s cubic-bezier(.2,.7,.2,1) var(--delay,0ms); }
+    .js .reveal.is-visible { opacity: 1; transform: none; }
+    .works { padding: 110px 0 130px; border-top: 1px solid var(--rule); }
+    .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 30px; margin-bottom: 64px; }
+    .section-heading h2 { font: 400 clamp(30px,3.2vw,46px)/1.5 var(--font-serif); margin: 20px 0 0; }
+    .section-heading > p { color: var(--muted); font-size: 12px; }
+    .work-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 76px 44px; align-items: start; }
+    .work { min-width: 0; }
+    .work-featured { grid-column: 1 / -1; }
+    .demo-scroll { position: relative; }
+    .js .demo-scroll { height: calc(var(--demo-height,630px) + var(--demo-travel,90svh)); }
+    .js .demo-pin { position: sticky; top: var(--demo-top,84px); }
+    .demo-scroll .work-visual::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #aab294; transform-origin: left; transform: scaleX(var(--demo-progress,0)); pointer-events: none; }
+    .work-visual { position: relative; background: #e6e7dc; border: 1px solid #dfe0d3; }
+    .demo-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 15px 24px; border-bottom: 1px solid #d8dbcd; color: #646d57; font-size: 10px; letter-spacing: .08em; }
+    .demo-brand { font: 19px/1.2 Georgia,serif; letter-spacing: -.03em; }
+    .demo-bar small { font-size: 10px; }
+    .mode-reset-btn { border: 0; background: #e2e5d5; color: #48523c; padding: 3px 8px; border-radius: 2px; font-size: 10px; letter-spacing: .04em; transition: background .15s ease; }
+    .mode-reset-btn:hover { background: #d5dac4; }
+    .demo-caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 13px 24px; font-size: 10px; color: #737969; border-top: 1px solid #d8dbcd; }
+    .cv-workbench { display: grid; grid-template-columns: minmax(220px,.8fr) minmax(0,1.7fr); }
+    .cv-controls { padding: 30px; background: #f6f5ed; border-right: 1px solid #d8dbcd; }
+    .cv-controls h4 { margin: 0 0 6px; font-size: 17px; font-weight: 400; }
+    .control-intro { margin: 0 0 24px; font-size: 11px; color: #747967; }
+    .preset-group { display: flex; padding: 4px; background: #e9ebdf; gap: 3px; margin-bottom: 22px; }
+    .preset-group button { flex: 1; padding: 8px 5px; text-align: center; color: #66705b; font-size: 11px; border: 0; background: transparent; transition: background .18s ease, color .18s ease, box-shadow .18s ease; }
+    .preset-group button:hover { color: #3e4936; }
+    .preset-group button.is-active { background: #fffef8; color: #3e4936; box-shadow: 0 2px 6px #36462d0c; }
+    .slider-control { display: block; margin-top: 15px; }
+    .slider-label { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 11px; color: #59634e; cursor: pointer; }
+    .slider-label .demo-value { color: #838973; font: 12px/1.8 Georgia,serif; font-variant-numeric: tabular-nums; }
+    .scroll-track { --track-ink: #8d997b; --track-rest: #d7ddcb; position: relative; height: 28px; margin-top: 2px; }
+    .scroll-track::before { content: ""; position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: linear-gradient(to right,var(--track-ink) var(--range-fill,50%),var(--track-rest) var(--range-fill,50%)); pointer-events: none; }
+    .scroll-track::after { content: ""; position: absolute; top: 7px; left: clamp(0px,calc(var(--range-fill,50%) - 7px),calc(100% - 14px)); width: 14px; height: 14px; border-radius: 50%; border: 3px solid #fcfcf5; background: var(--track-ink); box-shadow: 0 0 0 1px var(--track-ink); pointer-events: none; transition: transform .15s ease; }
+    .interactive-track:hover::after { transform: scale(1.18); }
+    .interactive-track input[type="range"] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 2; }
+    .interactive-stage { cursor: ew-resize; }
+    .scroll-note { margin: 18px 0 0; color: #7a826c; font-size: 10px; }
+    .cv-preview { min-width: 0; height: 460px; overflow: hidden; padding: 24px; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 70% 20%,#f5f5e6aa,transparent 70%),#e6e7dc; }
+    .resume-sheet { --cv-font: 10.8px; --cv-line: 1.58; --cv-gap: 14px; --cv-margin: 22px; width: 310px; height: 412px; box-sizing: border-box; overflow: hidden; padding: var(--cv-margin); background: #fffef8; border-radius: 2px; box-shadow: 0 4px 10px #4a533b08,0 16px 36px #4a533b14; font-size: var(--cv-font); line-height: var(--cv-line); color: #555c4d; flex-shrink: 0; }
+    .resume-name { margin: 0; font: 400 21px/1.2 Georgia,var(--font-serif); color: #414b37; }
+    .resume-role { margin: 4px 0 8px; font-size: .88em; color: #7b846f; letter-spacing: .06em; }
+    .resume-line { height: 1px; background: #d0d6c5; margin-bottom: 2px; }
+    .resume-section { margin-top: var(--cv-gap); }
+    .resume-section h5 { margin: 0 0 4px; font: inherit; font-size: .95em; font-weight: 600; letter-spacing: .08em; color: #4c5c3f; }
+    .resume-section p { margin: 0; font-size: .92em; }
+    .resume-item { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; margin-bottom: 3px; }
+    .resume-item span { font-size: .85em; color: #8b9280; }
+    .resume-item strong { font-weight: 500; font-size: .95em; }
+    .resume-skills { word-spacing: .4em; font-size: .9em; }
+    .work-meta { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; margin-top: 22px; }
+    .work-meta h3 { margin: 0; font: 400 25px/1.4 Georgia,var(--font-serif); }
+    .work-meta span { font-size: 10px; color: var(--muted); letter-spacing: .08em; }
+    .work-summary { margin-top: 10px; }
+    .work-summary h4 { font-size: 16px; font-weight: 400; margin: 0 0 6px; }
+    .work-summary p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.88; }
+    .work-featured .work-summary { display: grid; grid-template-columns: 1fr 1.25fr; gap: 40px; }
+    .work-featured .work-summary h4 { font: 400 24px/1.6 var(--font-serif); }
+    .work-links { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; margin-top: 16px; }
+    .text-button { display: inline-flex; align-items: center; gap: 14px; padding: 8px 0; min-height: 44px; color: #596343; font-size: 12px; text-decoration: none; border: 0; border-bottom: 1px solid #b6baa3; background: transparent; }
+    .text-button span { transition: transform .2s; }
+    .text-button:hover span { transform: translate(2px,-2px); }
+    .quiet-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 11px; color: var(--muted); text-decoration: none; }
+    .quiet-link:hover { color: var(--ink); }
+    .restore-demo { --restore-split: 50%; background: #e9e2d6; border-color: #ded6c9; }
+    .restore-demo .demo-bar, .restore-demo .demo-caption { border-color: #d9d1c3; color: #81725e; }
+    .restore-stage { padding: 28px 25px 20px; }
+    .restore-comparison { position: relative; height: 240px; isolation: isolate; user-select: none; -webkit-user-select: none; touch-action: pan-y; overscroll-behavior: contain; }
+    .restore-art { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; background: radial-gradient(ellipse at 20% 15%,#f9f1dccc,transparent 65%),#dfd5c3; }
+    .restore-art::before { content: ""; position: absolute; width: 70%; height: 200%; left: -30%; top: -90%; transform: rotate(36deg); background: #fff7d54d; filter: blur(12px); }
+    .restore-art::after { content: ""; position: absolute; width: 110%; height: 30px; bottom: -5px; left: -20%; transform: rotate(-35deg); background: #8d866a17; box-shadow: 0 -40px 14px #8d866a17,0 -80px 15px #8d866a17; filter: blur(5px); }
+    .restore-art.before { clip-path: inset(0 calc(100% - var(--restore-split)) 0 0); z-index: 1; }
+    .sample-print { position: relative; z-index: 1; text-align: center; width: 70%; padding: 25px 12px; background: #f8f3e5; box-shadow: 7px 9px 20px #5a4e2a15; color: #736043; transform: rotate(-5deg); }
+    .sample-print small { display: block; font: 8px/1.4 Georgia,serif; letter-spacing: .2em; }
+    .sample-print strong { display: block; margin: 16px 0 12px; font: 400 clamp(24px,2.3vw,33px)/1.4 var(--font-serif); letter-spacing: .12em; }
+    .sample-print p { font-size: 9px; margin: 0; letter-spacing: .2em; }
+    .sample-print .print-rule { display: block; width: 28px; height: 1px; background: #baae93; margin: 16px auto 0; }
+    .before .sample-print strong, .before .sample-print p { filter: url(#damaged-type); }
+    .compare-label { position: absolute; z-index: 3; top: 10px; padding: 3px 6px; font-size: 9px; background: #f8f3e5e6; color: #77684e; pointer-events: none; }
+    .compare-label.before-label { left: 10px; }
+    .compare-label.after-label { right: 10px; }
+    .compare-divider { position: absolute; z-index: 2; inset: 0 auto 0 var(--restore-split); width: 1px; background: #fffcf2; pointer-events: none; }
+    .compare-divider::after { content: ""; position: absolute; top: 50%; left: -3px; width: 7px; height: 32px; transform: translateY(-50%); background: #fffdf5; border-radius: 3px; box-shadow: 0 2px 7px #594c2826; }
+    .compare-control { padding: 0 25px 14px; }
+    .compare-control .slider-label { color: #7c715c; }
+    .weather-demo { background: radial-gradient(ellipse at 80% 0%,#fffef9,transparent 70%),#faf9f2; border-color: #e7e7dc; }
+    .weather-demo .demo-bar, .weather-demo .demo-caption { border-color: #e7e8de; color: #7a8173; }
+    .weather-demo .scroll-track { --track-ink: #a9b59b; --track-rest: #e6e9df; }
+    .weather-demo.work-visual::after { background: #c2ccb7; }
+    .weather-stage { padding: 24px 25px 0; }
+    .weather-heading { display: flex; align-items: center; justify-content: space-between; color: #7d8576; font-size: 10px; }
+    .weather-heading time { font: 18px/1.2 Georgia,serif; color: #7b8773; font-variant-numeric: tabular-nums; }
+    .weather-readings { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0 7px; }
+    .weather-reading { color: #87967b; }
+    .weather-reading.outdoor { color: #b89571; }
+    .weather-reading span { color: #768269; display: block; font-size: 10px; }
+    .weather-reading.outdoor span { color: #9b7c5d; }
+    .weather-reading output { font: 38px/1.25 Georgia,serif; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+    .weather-reading sup { font: 13px/1 Georgia,serif; margin-left: 3px; }
+    .weather-chart { display: block; width: 100%; height: 145px; overflow: visible; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+    .chart-grid { stroke: #e0e5d7; stroke-width: 1; stroke-dasharray: 2 5; }
+    .chart-label { fill: #85917a; font: 9px var(--font-sans); }
+    .weather-slider { padding: 5px 25px 14px; }
+    .weather-slider .slider-label { color: #76836a; }
+    .contact { border-top: 1px solid var(--rule); padding: 110px 0 60px; }
+    .contact h2 { font: 400 clamp(30px,4.3vw,58px)/1.6 var(--font-serif); margin: 30px 0; }
+    .contact-link { display: inline-block; font: clamp(20px,3vw,38px)/1.5 "Times New Roman",Georgia,serif; color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 10px; }
+    .colophon { margin-top: 100px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 18px; color: var(--muted); font-size: 11px; }
+    .colophon a { text-decoration: none; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width:700px) {
+      html { scroll-padding-top: 85px; }
+      .wrap, .threshold-inner { width: 84%; }
+      .js .opening { height: 270svh; }
+      .threshold h2 { font-size: clamp(35px,8.6vw,54px); }
+      .threshold .eyebrow { margin-bottom: 26px; }
+      .threshold .aside { font-size: 11px; letter-spacing: .1em; }
+      .scroll-invitation { bottom: 24px; font-size: 10px; }
+      .site-nav { padding: 16px 8%; }
+      .nav-links { gap: 22px; }
+      .manifesto { padding-bottom: 80px; }
+      .manifesto-intro { grid-template-columns: 1fr; gap: 28px; }
+      .principles { grid-template-columns: 1fr; gap: 32px; margin-top: 48px; }
+      .principle h3 { margin-top: 14px; }
+      .works { padding: 70px 0 85px; }
+      .section-heading { display: block; margin-bottom: 38px; }
+      .section-heading > p { margin-top: 18px; }
+      .work-grid { grid-template-columns: 1fr; gap: 52px; }
+      .cv-workbench { grid-template-columns: 1fr; }
+      .cv-preview { grid-row: 1; height: 415px; padding: 16px 12px; display: flex; align-items: center; justify-content: center; }
+      .resume-sheet { width: 285px; height: 385px; }
+      .cv-controls { padding: 16px 22px; border-right: 0; border-top: 1px solid #d8dbcd; }
+      .cv-controls h4, .control-intro, .cv-controls .scroll-note { display: none; }
+      .cv-slider-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 22px; }
+      .preset-group { margin-bottom: 6px; }
+      .slider-control { margin-top: 7px; }
+      .scroll-track { height: 22px; }
+      .work-featured .work-summary { display: block; }
+      .work-featured .work-summary h4 { font-size: 22px; }
+      .demo-bar, .demo-caption { padding-inline: 18px; }
+      .demo-bar { gap: 8px; }
+      .work-meta { flex-wrap: wrap; gap: 5px 16px; margin-top: 20px; }
+      .work-meta h3 { font-size: 23px; }
+      .sample-print strong { font-size: clamp(24px,6.6vw,34px); }
+      .restore-stage, .weather-stage { padding-inline: 20px; }
+      .compare-control, .weather-slider { padding-inline: 20px; }
+      .contact { padding-top: 75px; }
+      .colophon { margin-top: 65px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .js .opening { height: 150svh; }
+      #surface, #shadows, #motes, .hero-title, .threshold { transform: none !important; filter: none; }
+      .js .reveal { opacity: 1; transform: none; transition: none; }
+      .site-nav, .text-button span { transition: none; }
+      .light-bloom { display: none; }
+      .js .demo-scroll { height: auto; }
+      .js .demo-pin { position: relative; top: auto; }
+      .resume-sheet { transform: none; }
+      .cv-preview { height: auto; }
+      .work-visual::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <svg class="filter-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <filter id="damaged-type" x="-20%" y="-25%" width="140%" height="150%">
+        <feTurbulence type="fractalNoise" baseFrequency=".075 .12" numOctaves="2" seed="8" result="warp"/>
+        <feDisplacementMap in="SourceGraphic" in2="warp" scale="9" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <filter id="pressed-ink" x="-12%" y="-35%" width="124%" height="180%" color-interpolation-filters="sRGB">
+        <feOffset in="SourceAlpha" dx="-0.4" dy="-0.55" result="outer-shift"/>
+        <feComposite in="outer-shift" in2="SourceAlpha" operator="out" result="outer-edge"/>
+        <feGaussianBlur in="outer-edge" stdDeviation="0.45" result="outer-soft"/>
+        <feFlood flood-color="#7c6a52" flood-opacity="0.24"/>
+        <feComposite in2="outer-soft" operator="in" result="outer-cushion"/>
+        <feGaussianBlur in="SourceAlpha" stdDeviation="0.35" result="soft-alpha"/>
+        <feOffset in="soft-alpha" dx="0.48" dy="1.4" result="lower-edge"/>
+        <feComposite in="lower-edge" in2="SourceAlpha" operator="out" result="rim"/>
+        <feFlood flood-color="#fffcf0" flood-opacity="0.94"/>
+        <feComposite in2="rim" operator="in" result="lit-rim"/>
+        <feFlood flood-color="#998669" flood-opacity="0.34"/>
+        <feComposite in2="SourceAlpha" operator="in" result="cavity-base"/>
+        <feOffset in="SourceAlpha" dx="1.35" dy="2.4" result="ao-shift"/>
+        <feComposite in="SourceAlpha" in2="ao-shift" operator="out" result="ao-edge"/>
+        <feGaussianBlur in="ao-edge" stdDeviation="1.15" result="ao-soft"/>
+        <feFlood flood-color="#69563d" flood-opacity="0.42"/>
+        <feComposite in2="ao-soft" operator="in" result="ao-clipped"/>
+        <feComposite in="ao-clipped" in2="SourceAlpha" operator="in" result="inner-ao"/>
+        <feOffset in="SourceAlpha" dx="0.62" dy="1.25" result="shifted"/>
+        <feComposite in="SourceAlpha" in2="shifted" operator="out" result="inset-edge"/>
+        <feGaussianBlur in="inset-edge" stdDeviation="0.36" result="inset-soft"/>
+        <feFlood flood-color="#463522" flood-opacity="0.84"/>
+        <feComposite in2="inset-soft" operator="in" result="inset-raw"/>
+        <feComposite in="inset-raw" in2="SourceAlpha" operator="in" result="inset-shadow"/>
+        <feMerge>
+          <feMergeNode in="outer-cushion"/>
+          <feMergeNode in="lit-rim"/>
+          <feMergeNode in="cavity-base"/>
+          <feMergeNode in="inner-ao"/>
+          <feMergeNode in="inset-shadow"/>
+        </feMerge>
+      </filter>
+    </defs>
+  </svg>
+
+  <nav class="site-nav" aria-label="网站导航" inert>
+    <a class="wordmark" href="#top" aria-label="回到首页">cf.</a>
+    <div class="nav-links"><a href="#philosophy">理念</a><a href="#works">工具</a><a href="#contact">联系</a></div>
+  </nav>
+  <main id="top">
+    <section class="opening" aria-label="日光下的凹印纸面">
+      <div class="paper">
+        <canvas id="surface" aria-hidden="true"></canvas>
+        <canvas id="shadows" aria-hidden="true"></canvas>
+        <canvas id="motes" aria-hidden="true"></canvas>
+        <div class="light-bloom" aria-hidden="true"></div>
+        <div class="paper-to-color" aria-hidden="true"></div>
+        <h1 class="hero-title"><a class="letterpress" href="#contact" aria-label="Charlie Freeman — 跳转至联系与交流">Charlie Freeman</a></h1>
+        <a class="scroll-invitation" href="#philosophy">向下，慢慢展开</a>
+        <div class="threshold" aria-hidden="true">
+          <div class="threshold-inner">
+            <p class="eyebrow">01 / A way of seeing</p>
+            <h2>让工具顺手，<br><span>让体验从容。</span></h2>
+            <div class="chapter-line"></div>
+            <p class="aside">从日常的观察，到恰到好处的设计。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="content">
+      <section class="manifesto wrap" id="philosophy" aria-labelledby="philosophy-title">
+        <h2 id="philosophy-title" class="sr-only">设计理念：让工具顺手，让体验从容</h2>
+        <div class="manifesto-intro reveal">
+          <p class="eyebrow">Design as a daily practice<br>关于设计的日常练习</p>
+          <p class="manifesto-copy">我关注日常里那些微小的阻力。<br>通过设计和工具，试着让复杂的事情变得清楚，让每一次使用<em>少一点负担。</em></p>
+        </div>
+        <div class="principles">
+          <article class="principle reveal"><span class="number">01</span><h3>从具体问题出发</h3><p>先理解一件事为什么令人困扰，<br>再决定它应该如何被改变。</p></article>
+          <article class="principle reveal" style="--delay:100ms"><span class="number">02</span><h3>少做一个决定</h3><p>把思考放进设计过程，<br>把清楚的选择留给使用者。</p></article>
+          <article class="principle reveal" style="--delay:200ms"><span class="number">03</span><h3>留一点温度</h3><p>在理性的秩序之外，<br>也为直觉、触感和呼吸留下位置。</p></article>
+        </div>
+      </section>
+
+      <section class="works wrap" id="works" aria-labelledby="works-title">
+        <header class="section-heading reveal"><div><p class="eyebrow">02 / Small things, made with care</p><h2 id="works-title">想法，在这里成为工具。</h2></div><p>三个日常问题，三个小小的回应。<br>向下滚动自动演示，也可直接点击或拖动滑块把玩。</p></header>
+        <div class="work-grid">
+          <article class="work work-featured" id="easycv" aria-labelledby="easycv-title">
+            <div class="demo-scroll" data-scroll-demo="cv">
+            <div class="demo-pin">
+              <div class="work-visual cv-demo">
+                <div class="demo-bar"><span class="demo-brand">EasyCV</span><small id="cv-status-area">排版随滚动展开 / <span id="cv-phase">紧凑</span></small></div>
+                <div class="cv-workbench">
+                  <div class="cv-controls">
+                    <h4>找到文字的呼吸感。</h4>
+                    <p class="control-intro">可随页面滚动展开，也可直接点击预设或拖动滑块微调。</p>
+                    <div class="preset-group" role="group" aria-label="切换紧凑、均衡、舒展三种排版预设">
+                      <button type="button" data-cv-preset="compact" class="is-active">紧凑</button>
+                      <button type="button" data-cv-preset="balanced">均衡</button>
+                      <button type="button" data-cv-preset="airy">舒展</button>
+                    </div>
+                    <div class="cv-slider-grid">
+                      <div class="slider-control"><label class="slider-label" for="cv-font-input"><span>正文字号</span><span class="demo-value" id="cv-font-value">10.5 px</span></label><div class="scroll-track interactive-track" id="cv-font"><input id="cv-font-input" type="range" min="10" max="12" step="0.1" value="10.5" aria-label="正文字号"></div></div>
+                      <div class="slider-control"><label class="slider-label" for="cv-line-input"><span>文字行距</span><span class="demo-value" id="cv-line-value">1.44</span></label><div class="scroll-track interactive-track" id="cv-line"><input id="cv-line-input" type="range" min="1.4" max="1.8" step="0.02" value="1.44" aria-label="文字行距"></div></div>
+                      <div class="slider-control"><label class="slider-label" for="cv-gap-input"><span>段落间距</span><span class="demo-value" id="cv-gap-value">11 px</span></label><div class="scroll-track interactive-track" id="cv-gap"><input id="cv-gap-input" type="range" min="10" max="20" step="0.5" value="11" aria-label="段落间距"></div></div>
+                      <div class="slider-control"><label class="slider-label" for="cv-margin-input"><span>纸面留白</span><span class="demo-value" id="cv-margin-value">20 px</span></label><div class="scroll-track interactive-track" id="cv-margin"><input id="cv-margin-input" type="range" min="18" max="26" step="0.5" value="20" aria-label="纸面留白"></div></div>
+                    </div>
+                    <p class="scroll-note" id="cv-scroll-note">随你的滚动节奏展开 · 亦可直接点击或拖动滑块</p>
+                  </div>
+                  <div class="cv-preview">
+                    <div class="resume-sheet" id="resume-preview" role="region" aria-label="简历排版示例，虚构内容">
+                      <p class="resume-name">Charlie Freeman</p><p class="resume-role">产品设计师 / Product Designer</p><div class="resume-line"></div>
+                      <div class="resume-section"><h5>关于我</h5><p>从日常观察出发，把复杂的问题整理成清楚、自然的使用体验。喜欢纸张、步行，以及刚刚好的留白。</p></div>
+                      <div class="resume-section"><h5>项目经历</h5><div class="resume-item"><strong>日常手册 · 体验设计</strong><span>2024 — 2025</span></div><p>梳理信息层级与阅读路径，通过原型验证，让记录和查找都更顺手。</p></div>
+                      <div class="resume-section"><h5>工作方式</h5><p>观察具体场景，画出可讨论的原型，在真实反馈中持续调整细节。</p></div>
+                      <div class="resume-section"><h5>擅长的事</h5><p class="resume-skills">信息设计 交互原型 视觉表达</p></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-caption"><span>同一份内容，不同的阅读节奏。</span><span>示例简历 · 支持滚动与手动微调</span></div>
+              </div>
+              <div class="work-meta"><h3 id="easycv-title">EasyCV</h3><span>01 / 简历与排版</span></div>
+              <div class="work-summary"><h4>把注意力留给内容，<br>让排版跟着你的想法走。</h4><p>在 EasyCV 中，用滑块细调字号、行距和留白，即刻看到变化。支持多种模板与 A/B 排版对照，内容保存在本地，可导出 PDF。让一份简历，找到适合自己的表达。</p></div>
+              <div class="work-links"><a class="text-button" href="https://cv.3901646.xyz" target="_blank" rel="noopener noreferrer">打开 EasyCV<span aria-hidden="true">↗</span><span class="sr-only">（新窗口）</span></a><a class="quiet-link" href="https://github.com/cf3901646/EasyCV" target="_blank" rel="noopener noreferrer">查看源码 ↗<span class="sr-only">（新窗口）</span></a></div>
+            </div>
+            </div>
+          </article>
+
+          <article class="work" id="text-restorer" aria-labelledby="restorer-title">
+            <div class="demo-scroll" data-scroll-demo="restore">
+            <div class="demo-pin">
+              <div class="work-visual restore-demo" id="restore-visual">
+                <div class="demo-bar"><span class="demo-brand">Aa.</span><small id="restore-status-area">AITextRestorer / 文字修复</small></div>
+                <div class="restore-stage">
+                  <div class="restore-comparison interactive-stage" id="restore-comparison" role="img" aria-label="文字修复原理示意：左侧笔画变形，右侧保留正确文字">
+                    <div class="restore-art after" aria-hidden="true"><div class="sample-print"><small>NOTES ON EVERYDAY LIFE</small><strong>日常有光</strong><p>把美好留在纸上</p><i class="print-rule"></i></div></div>
+                    <div class="restore-art before" aria-hidden="true"><div class="sample-print"><small>NOTES ON EVERYDAY LIFE</small><strong>日常有光</strong><p>把美好留在纸上</p><i class="print-rule"></i></div></div>
+                    <span class="compare-label before-label" aria-hidden="true">文字变形</span><span class="compare-label after-label" aria-hidden="true">还原文字</span><div class="compare-divider" aria-hidden="true"></div>
+                  </div>
+                </div>
+                <div class="compare-control"><label class="slider-label" for="restore-range-input"><span>向下滚动或拖动滑块，文字回到原样</span><span class="demo-value" id="restore-value">0%</span></label><div class="scroll-track interactive-track" id="restore-range"><input id="restore-range-input" type="range" min="0" max="100" step="1" value="0" aria-label="文字修复进度百分比"></div></div>
+                <div class="demo-caption"><span>原图文字 + 增强后的背景</span><span>支持直接拖动分割线对照</span></div>
+              </div>
+              <div class="work-meta"><h3 id="restorer-title">AITextRestorer</h3><span>02 / 图像与文字</span></div>
+              <div class="work-summary"><h4>画面变清楚，文字保持原样。</h4><p>AI 增强画面时，也可能改变文字的笔画。将原图中的正确文字重新对齐、融合进增强后的背景，并通过笔刷与羽化调整细节。</p></div>
+              <div class="work-links"><a class="text-button" href="https://restore.3901646.xyz" target="_blank" rel="noopener noreferrer">打开网页版<span aria-hidden="true">↗</span><span class="sr-only">（新窗口）</span></a><a class="quiet-link" href="https://github.com/cf3901646/AITextRestorer" target="_blank" rel="noopener noreferrer">查看项目 ↗<span class="sr-only">（新窗口）</span></a></div>
+            </div>
+            </div>
+          </article>
+
+          <article class="work" id="thermal" aria-labelledby="thermal-title">
+            <div class="demo-scroll" data-scroll-demo="weather">
+            <div class="demo-pin">
+              <div class="work-visual weather-demo">
+                <div class="demo-bar"><span class="demo-brand">°C</span><small id="weather-status-area">Thermal / 体感温度</small></div>
+                <div class="weather-stage">
+                  <div class="weather-heading"><span>一天之中，身体感受到的温度</span><time id="weather-time">14:00</time></div>
+                  <div class="weather-readings"><div class="weather-reading"><span>室内 · 阴凉处</span><output id="indoor-value" aria-live="off">28.2</output><sup>°C</sup></div><div class="weather-reading outdoor"><span>室外 · 日光下</span><output id="outdoor-value" aria-live="off">35.8</output><sup>°C</sup></div></div>
+                  <svg class="weather-chart interactive-stage" id="weather-chart" viewBox="0 0 400 145" role="img" aria-labelledby="weather-chart-title weather-chart-desc">
+                    <title id="weather-chart-title">室内外体感温度示例曲线</title><desc id="weather-chart-desc">示例数据展示室外体感在午后上升，室内变化较缓；支持左右拖动查看任意时刻。</desc>
+                    <defs><linearGradient id="weather-fill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ddc8a8" stop-opacity=".18"/><stop offset="1" stop-color="#ddc8a8" stop-opacity="0"/></linearGradient></defs>
+                    <path class="chart-grid" d="M8 26H392 M8 67H392 M8 108H392"/><text class="chart-label" x="8" y="140">00:00</text><text class="chart-label" x="102" y="140" text-anchor="middle">06:00</text><text class="chart-label" x="200" y="140" text-anchor="middle">12:00</text><text class="chart-label" x="296" y="140" text-anchor="middle">18:00</text><text class="chart-label" x="392" y="140" text-anchor="end">24:00</text>
+                    <path id="outdoor-area" fill="url(#weather-fill)"/><path id="outdoor-line" fill="none" stroke="#c9ad88" stroke-width="2" stroke-linecap="round"/><path id="indoor-line" fill="none" stroke="#a0b191" stroke-width="2" stroke-linecap="round"/>
+                    <line id="weather-marker" x1="232" x2="232" y1="12" y2="116" stroke="#d1d9c8" stroke-dasharray="3 4"/><circle id="outdoor-point" r="4" fill="#c9ad88" stroke="#fffdf6" stroke-width="2"/><circle id="indoor-point" r="4" fill="#a0b191" stroke="#fffdf6" stroke-width="2"/>
+                  </svg>
+                </div>
+                <div class="weather-slider"><label class="slider-label" for="weather-hour-input"><span>随滚动或拖动滑块，走过一天的温度</span><span>24 小时</span></label><div class="scroll-track interactive-track" id="weather-hour"><input id="weather-hour-input" type="range" min="0" max="24" step="0.1" value="14" aria-label="全天24小时体感温度时刻选择"></div></div>
+                <div class="demo-caption"><span>室内外对照 · 体感估算</span><span>支持直接拖动曲线或滑块</span></div>
+              </div>
+              <div class="work-meta"><h3 id="thermal-title">体感温度计</h3><span>03 / 天气与感受</span></div>
+              <div class="work-summary"><h4>天气数字之外，还有身体的感受。</h4><p>结合温度、湿度、风速与日照，估算室内外体感差异。用一天的变化曲线，让天气信息更接近日常的感受。</p></div>
+              <div class="work-links"><a class="text-button" href="https://github.com/cf3901646/thermal-feels-like" target="_blank" rel="noopener noreferrer">了解这个工具<span aria-hidden="true">↗</span><span class="sr-only">（新窗口）</span></a></div>
+            </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <footer class="contact wrap" id="contact">
+        <div class="reveal"><p class="eyebrow">03 / A conversation starts here</p><h2>有一个值得<br>一起做的想法？</h2><a class="contact-link" href="mailto:cf3901646@gmail.com">cf3901646@gmail.com</a></div>
+        <div class="colophon"><span>Charlie Freeman · cf. / A personal notebook</span><a href="https://github.com/cf3901646" target="_blank" rel="noopener noreferrer">更多记录，在 GitHub ↗<span class="sr-only">（新窗口）</span></a><a href="#top">回到日光里 ↑</a></div>
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+      const settings = { grain: 1, shadow: .62 };
+      const W = 1376, H = 768;
+      const canvas = document.querySelector('#surface');
+      const ctx = canvas.getContext('2d', { alpha: false });
+      const shadowCanvas = document.querySelector('#shadows');
+      const shadowContext = shadowCanvas.getContext('2d');
+      const dustCanvas = document.querySelector('#motes');
+      const dustContext = dustCanvas.getContext('2d');
+      const lightBloom = document.querySelector('.light-bloom');
+      const paperElement = document.querySelector('.paper');
+      const motion = matchMedia('(prefers-reduced-motion: reduce)');
+      if (!ctx) return;
+
+      function fastInitialPaint() {
+        const bounds = paperElement.getBoundingClientRect();
+        const width = bounds.width || window.innerWidth, height = bounds.height || window.innerHeight;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const g = ctx.createLinearGradient(0, 0, width, height);
+        g.addColorStop(0, '#f2ece0');
+        g.addColorStop(0.48, '#f7f4ea');
+        g.addColorStop(1, '#eee7da');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, width, height);
+      }
+      fastInitialPaint();
+
+      function getSolarConditions() {
+        const now = new Date();
+        const h = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+        let bloomColor, shadowAlpha, shadowX, shadowY, shadowScale, paperTone;
+
+        if (h >= 5 && h < 9.5) {
+          const p = (h - 5) / 4.5;
+          bloomColor = 'radial-gradient(ellipse at 42% 62%, #fff5dbcc, transparent 58%)';
+          shadowAlpha = 0.55 + p * 0.1;
+          shadowX = -35 + p * 15;
+          shadowY = 15 - p * 15;
+          shadowScale = 1.12 - p * 0.12;
+          paperTone = '#f5f2ea';
+        } else if (h >= 9.5 && h < 16) {
+          const p = (h - 9.5) / 6.5;
+          bloomColor = 'radial-gradient(ellipse at 48% 65%, #fffcedd0, transparent 55%)';
+          shadowAlpha = 0.65;
+          shadowX = -20 - p * 15;
+          shadowY = 0 + p * 10;
+          shadowScale = 1.0 + p * 0.08;
+          paperTone = '#f3f0e7';
+        } else if (h >= 16 && h < 19.5) {
+          const p = (h - 16) / 3.5;
+          bloomColor = 'radial-gradient(ellipse at 52% 70%, #ffd79ecc, transparent 60%)';
+          shadowAlpha = 0.62 - p * 0.12;
+          shadowX = -35 - p * 30;
+          shadowY = 10 + p * 25;
+          shadowScale = 1.08 + p * 0.16;
+          paperTone = '#f2ece0';
+        } else {
+          bloomColor = 'radial-gradient(ellipse at 48% 60%, #ffe9c766, transparent 65%)';
+          shadowAlpha = 0.58;
+          shadowX = -18;
+          shadowY = 4;
+          shadowScale = 1.04;
+          paperTone = '#eee8da';
+        }
+        return { bloomColor, shadowAlpha, shadowX, shadowY, shadowScale, paperTone };
+      }
+
+      function applySolarTheme(solar) {
+        if (lightBloom) lightBloom.style.background = solar.bloomColor;
+        if (paperElement) paperElement.style.backgroundColor = solar.paperTone;
+        settings.shadow = solar.shadowAlpha;
+      }
+
+      function random(seed) {
+        return () => {
+          seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+          let n = Math.imul(seed ^ seed >>> 15, 1 | seed);
+          n = n + Math.imul(n ^ n >>> 7, 61 | n) ^ n;
+          return ((n ^ n >>> 14) >>> 0) / 4294967296;
+        };
+      }
+
+      function layer(w = W, h = H) {
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        return c;
+      }
+
+      const isMobile = window.innerWidth <= 768;
+      const paperScale = isMobile ? 1.15 : 1.45;
+      let paper = null;
+      let sceneComposite = null;
+      let clusterA = null, clusterB = null, clusterC = null, distantTrunks = null;
+      let dustCanvasLayer = null, dustContextLayer = null, moteSprite = null;
+      let motesList = [];
+      let solar = getSolarConditions();
+      let animRunning = false, animFrameId = null;
+      let renderMetrics = { dpr: 1, scale: 1, left: 0, top: 0, width: 0, height: 0 };
+
+      function updateMetrics() {
+        const bounds = paperElement.getBoundingClientRect();
+        const width = bounds.width || window.innerWidth;
+        const height = bounds.height || window.innerHeight;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const scale = Math.max(width / W, height / H);
+        const left = (width - W * scale) / 2;
+        const top = (height - H * scale) / 2;
+        renderMetrics = { dpr, scale, left, top, width, height };
+
+        [canvas, shadowCanvas, dustCanvas].forEach(c => {
+          c.width = Math.round(width * dpr);
+          c.height = Math.round(height * dpr);
+        });
+        [ctx, shadowContext, dustContext].forEach(c => {
+          c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        });
+
+        if (paper) {
+          ctx.drawImage(paper, left, top, W * scale, H * scale);
+        }
+      }
+
+      // Web Worker 后台离屏生成纸张纤维纹理，0 主线程阻塞
+      function startPaperWorker() {
+        if (typeof Worker !== 'undefined' && typeof OffscreenCanvas !== 'undefined') {
+          const workerCode = `
+            function random(seed) {
+              return () => {
+                seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+                let n = Math.imul(seed ^ seed >>> 15, 1 | seed);
+                n = n + Math.imul(n ^ n >>> 7, 61 | n) ^ n;
+                return ((n ^ n >>> 14) >>> 0) / 4294967296;
+              };
+            }
+            function noiseField(W, H, cell, rng) {
+              const columns = Math.ceil(W / cell) + 2;
+              const rows = Math.ceil(H / cell) + 2;
+              const values = Float32Array.from({ length: columns * rows }, () => rng() * 2 - 1);
+              const invCell = 1 / cell;
+              return (x, y) => {
+                const gx = x * invCell, gy = y * invCell;
+                const ix = Math.floor(gx), iy = Math.floor(gy);
+                let u = gx - ix, v = gy - iy;
+                u = u * u * (3 - 2 * u); v = v * v * (3 - 2 * v);
+                const i = iy * columns + ix;
+                return (values[i] * (1 - u) + values[i + 1] * u) * (1 - v)
+                  + (values[i + columns] * (1 - u) + values[i + columns + 1] * u) * v;
+              };
+            }
+            self.onmessage = (e) => {
+              const { W, H, paperScale, isMobile } = e.data;
+              const pw = Math.round(W * paperScale), ph = Math.round(H * paperScale);
+              const offscreen = new OffscreenCanvas(pw, ph);
+              const p = offscreen.getContext('2d');
+              const pixels = p.createImageData(pw, ph);
+              const rng = random(3901646);
+              const cloud = noiseField(W, H, 125, rng);
+              const pulp = noiseField(W, H, 22, rng);
+              const fiber = noiseField(W, H, 3, rng);
+              const fineGrain = noiseField(W, H, 1.2, random(802));
+              const surfaceRng = random(9046);
+              const expLUT = new Float32Array(3000);
+              for (let i = 0; i < 3000; i++) expLUT[i] = Math.exp(-Math.pow((i * 0.5 - 650) / 230, 2));
+              const invScale = 1 / paperScale;
+              for (let py = 0; py < ph; py++) {
+                const y = py * invScale, y083 = y * .83;
+                for (let px = 0; px < pw; px++) {
+                  const x = px * invScale, cross = x * .56 + y083;
+                  const beam = expLUT[Math.min(2999, Math.max(0, (cross * 2) | 0))];
+                  const ribbons = Math.sin(cross / 21 + cloud(x, y) * .8 + x / 650) * 5.5 + Math.sin(cross / 43 + x / 300) * 4;
+                  const light = beam * (28 + ribbons);
+                  const relief = (fiber(x,y) - fiber(x+.45,y+.35)) * 4.8 + (fineGrain(x,y) - fineGrain(x+.24,y+.18)) * 4.2;
+                  const tooth = (surfaceRng() + surfaceRng() + surfaceRng() - 1.5) * 2.2;
+                  const shadeVal = relief + tooth + pulp(x,y) * .7;
+                  const i = (py * pw + px) * 4;
+                  pixels.data[i] = 219 + light + shadeVal;
+                  pixels.data[i + 1] = 213 + light + shadeVal;
+                  pixels.data[i + 2] = 196 + light * .94 + shadeVal;
+                  pixels.data[i + 3] = 255;
+                }
+              }
+              p.putImageData(pixels, 0, 0);
+              p.setTransform(paperScale, 0, 0, paperScale, 0, 0);
+              p.lineCap = 'round';
+              const fleckRng = random(160);
+              const fleckCount = isMobile ? 18000 : 34000;
+              for (let i = 0; i < fleckCount; i++) {
+                const x = fleckRng() * W, y = fleckRng() * H;
+                const length = .45 + fleckRng() * 1.7;
+                const angle = (fleckRng() - .5) * Math.PI;
+                const dx = Math.cos(angle) * length, dy = Math.sin(angle) * length;
+                const bend = (fleckRng() - .5) * .35;
+                p.lineWidth = .16 + fleckRng() * .2;
+                p.strokeStyle = 'rgba(164,149,119,.028)';
+                p.beginPath(); p.moveTo(x, y); p.quadraticCurveTo(x+dx*.5, y+dy*.5+bend, x+dx, y+dy); p.stroke();
+                p.strokeStyle = 'rgba(255,253,239,.17)';
+                p.beginPath(); p.moveTo(x, y-.22); p.quadraticCurveTo(x+dx*.5, y+dy*.5+bend-.22, x+dx, y+dy-.22); p.stroke();
+              }
+              const bitmap = offscreen.transferToImageBitmap();
+              self.postMessage({ bitmap }, [bitmap]);
+            };
+          `;
+          try {
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const url = URL.createObjectURL(blob);
+            const w = new Worker(url);
+            w.onmessage = (e) => {
+              if (e.data && e.data.bitmap) {
+                paper = e.data.bitmap;
+                const { left, top, scale } = renderMetrics;
+                ctx.drawImage(paper, left, top, W * scale, H * scale);
+              }
+              URL.revokeObjectURL(url);
+              w.terminate();
+            };
+            w.postMessage({ W, H, paperScale, isMobile });
+          } catch {}
+        }
+      }
+
+      function generateLayers() {
+        solar = getSolarConditions();
+        applySolarTheme(solar);
+        startPaperWorker();
+
+        const branches = [
+          [1410, -80, 860, 520, 22],
+          [1230, -105, 720, 490, 22],
+          [1110, -120, 520, 485, 20],
+          [1520, 40, 1060, 500, 19],
+          [1310, -120, 890, 410, 20],
+          [1480, -60, 990, 430, 19]
+        ];
+
+        function renderCluster(branchIndices, seed) {
+          const raw = layer();
+          const s = raw.getContext('2d');
+          const leavesRng = random(seed);
+
+          function leaf(x, y, length, width, angle, opacity) {
+            s.save();
+            s.translate(x, y); s.rotate(angle);
+            s.fillStyle = `rgba(66,68,48,${opacity})`;
+            s.beginPath(); s.moveTo(0, 0);
+            s.bezierCurveTo(length * .28, -width * .7, length * .72, -width * .65, length, 0);
+            s.bezierCurveTo(length * .68, width * .42, length * .22, width * .7, 0, 0);
+            s.fill(); s.restore();
+          }
+
+          branchIndices.forEach(idx => {
+            const [x0, y0, x1, y1, count] = branches[idx];
+            s.beginPath(); s.moveTo(x0, y0);
+            s.quadraticCurveTo(x0 - 150, y1 * .56, x1, y1);
+            s.strokeStyle = 'rgba(64,66,47,.22)'; s.lineWidth = 9;
+            s.lineCap = 'round'; s.stroke();
+            for (let i = 0; i < count; i++) {
+              const t = (i + .3 + leavesRng() * .6) / count;
+              const q = 1 - t;
+              const x = q * q * x0 + 2 * q * t * (x0 - 150) + t * t * x1;
+              const y = q * q * y0 + 2 * q * t * (y1 * .56) + t * t * y1;
+              const side = i % 2 === 0 ? 1 : -1;
+              const angle = side > 0 ? -.92 + leavesRng() * .5 : 2.28 + leavesRng() * .45;
+              leaf(x + (leavesRng() - .5) * 40, y, 65 + leavesRng() * 150, 12 + leavesRng() * 26,
+                angle, (.19 + leavesRng() * .24) * (1 - t * .36));
+            }
+          });
+
+          const blurred = layer();
+          const bc = blurred.getContext('2d');
+          bc.filter = 'blur(7px)';
+          bc.drawImage(raw, 0, 0);
+          return blurred;
+        }
+
+        clusterA = renderCluster([0, 3], 27);
+        clusterB = renderCluster([1, 4], 42);
+        clusterC = renderCluster([2, 5], 88);
+
+        const distantLayer = layer();
+        const dc = distantLayer.getContext('2d');
+        dc.filter = 'blur(19px)';
+        dc.lineCap = 'round';
+        const distant = [
+          [-90, 775, 370, 625, 790, 180, 28, .20],
+          [90, 860, 490, 555, 1010, 125, 30, .24],
+          [420, 875, 695, 615, 1240, 205, 36, .25],
+          [640, 900, 860, 610, 1300, 400, 25, .16],
+          [130, 785, 300, 670, 380, 580, 55, .11]
+        ];
+        for (const [x, y, cx, cy, ex, ey, width, alpha] of distant) {
+          dc.strokeStyle = `rgba(92,88,64,${alpha})`;
+          dc.lineWidth = width;
+          dc.beginPath(); dc.moveTo(x, y); dc.quadraticCurveTo(cx, cy, ex, ey); dc.stroke();
+        }
+        distantTrunks = distantLayer;
+
+        // 预烘焙发光微粒 Sprite，消除每帧 shadowBlur 开销
+        moteSprite = layer(24, 24);
+        const spCtx = moteSprite.getContext('2d');
+        spCtx.shadowColor = '#fff5d0';
+        spCtx.shadowBlur = 4;
+        spCtx.fillStyle = 'rgba(255,244,195,1)';
+        spCtx.beginPath();
+        spCtx.ellipse(12, 12, 3, 2.15, -0.5, 0, Math.PI * 2);
+        spCtx.fill();
+
+        dustCanvasLayer = layer();
+        dustContextLayer = dustCanvasLayer.getContext('2d');
+        motesList = Array.from({ length: 26 }, (_, i) => {
+          const drng = random(18 + i * 17);
+          return {
+            x: 180 + drng() * 450,
+            y: 110 + drng() * 520,
+            r: 0.45 + drng() * 1.45,
+            speedY: 0.12 + drng() * 0.18,
+            driftPhase: drng() * Math.PI * 2,
+            driftFreq: 0.0008 + drng() * 0.0012,
+            driftAmp: 3 + drng() * 6,
+            alpha: 0.3 + drng() * 0.45
+          };
+        });
+
+        sceneComposite = layer();
+        updateMetrics();
+        startAnimation();
+      }
+
+      let lastSolarCheck = 0;
+
+      function renderFrame(time) {
+        if (!clusterA || !distantTrunks || !dustCanvasLayer) return;
+
+        if (time - lastSolarCheck > 20000) {
+          lastSolarCheck = time;
+          solar = getSolarConditions();
+          applySolarTheme(solar);
+        }
+
+        const sc = sceneComposite.getContext('2d');
+        sc.clearRect(0, 0, W, H);
+
+        sc.save();
+        sc.globalAlpha = settings.shadow;
+        sc.translate(W * 0.5, H * 0.85);
+        sc.rotate(Math.sin(time * 0.00025) * 0.002);
+        sc.translate(-W * 0.5, -H * 0.85);
+        sc.drawImage(distantTrunks, 0, 0);
+        sc.restore();
+
+        sc.save();
+        sc.globalAlpha = settings.shadow;
+        sc.translate(solar.shadowX, solar.shadowY);
+        sc.scale(solar.shadowScale, solar.shadowScale);
+
+        const angleA = Math.sin(time * 0.00042) * 0.008 + Math.sin(time * 0.00095 + 1.2) * 0.004;
+        sc.save();
+        sc.translate(1460, -20);
+        sc.rotate(angleA);
+        sc.translate(-1460, 20);
+        sc.drawImage(clusterA, 0, 0);
+        sc.restore();
+
+        const angleB = Math.sin(time * 0.00058 + 0.8) * 0.014 + Math.sin(time * 0.00125 + 2.4) * 0.007;
+        sc.save();
+        sc.translate(1270, -110);
+        sc.rotate(angleB);
+        sc.translate(-1270, 110);
+        sc.drawImage(clusterB, 0, 0);
+        sc.restore();
+
+        const angleC = Math.sin(time * 0.00072 + 1.9) * 0.019 + Math.sin(time * 0.00155 + 0.5) * 0.009;
+        sc.save();
+        sc.translate(1300, -90);
+        sc.rotate(angleC);
+        sc.translate(-1300, 90);
+        sc.drawImage(clusterC, 0, 0);
+        sc.restore();
+
+        sc.restore();
+
+        const { left, top, scale } = renderMetrics;
+        shadowContext.clearRect(0, 0, shadowCanvas.width, shadowCanvas.height);
+        shadowContext.drawImage(sceneComposite, left, top, W * scale, H * scale);
+
+        dustContextLayer.clearRect(0, 0, W, H);
+        if (moteSprite) {
+          for (let i = 0; i < motesList.length; i++) {
+            const m = motesList[i];
+            m.y -= m.speedY;
+            if (m.y < 85) m.y = 650;
+            const curX = m.x + Math.sin(time * m.driftFreq + m.driftPhase) * m.driftAmp;
+            const drawSize = (m.r / 3) * 24;
+            dustContextLayer.globalAlpha = m.alpha;
+            dustContextLayer.drawImage(moteSprite, curX - drawSize * 0.5, m.y - drawSize * 0.5, drawSize, drawSize);
+          }
+          dustContextLayer.globalAlpha = 1;
+        }
+
+        dustContext.clearRect(0, 0, dustCanvas.width, dustCanvas.height);
+        dustContext.drawImage(dustCanvasLayer, left, top, W * scale, H * scale);
+      }
+
+      function loop(now) {
+        if (!animRunning) return;
+        renderFrame(now);
+        animFrameId = requestAnimationFrame(loop);
+      }
+
+      function startAnimation() {
+        if (motion.matches) {
+          renderFrame(performance.now());
+          return;
+        }
+        if (!animRunning) {
+          animRunning = true;
+          animFrameId = requestAnimationFrame(loop);
+        }
+      }
+
+      function stopAnimation() {
+        animRunning = false;
+        if (animFrameId) {
+          cancelAnimationFrame(animFrameId);
+          animFrameId = null;
+        }
+      }
+
+      function checkVisibility() {
+        const scrolledPast = window.scrollY > (window.innerHeight * 1.5);
+        if (document.hidden || scrolledPast) {
+          stopAnimation();
+        } else {
+          startAnimation();
+        }
+      }
+
+      document.addEventListener('visibilitychange', checkVisibility);
+      window.addEventListener('scroll', checkVisibility, { passive: true });
+      window.addEventListener('resize', () => {
+        updateMetrics();
+        if (!animRunning) renderFrame(performance.now());
+      }, { passive: true });
+
+      setTimeout(generateLayers, 16);
+    })();
+  </script>
+  <script>
+    (() => {
+      'use strict';
+      const root = document.documentElement;
+      const opening = document.querySelector('.opening');
+      const stage = document.querySelector('.paper');
+      const title = document.querySelector('.hero-title');
+      const invitation = document.querySelector('.scroll-invitation');
+      const navigation = document.querySelector('.site-nav');
+      const motion = matchMedia('(prefers-reduced-motion: reduce)');
+      let travel = 1;
+      let stageHeight = innerHeight;
+      let frame = 0;
+      let lastProgress = -1;
+      let navigationVisible = false;
+      const clamp = value => Math.max(0,Math.min(1,value));
+      const smooth = (start,end,value) => { const t = clamp((value-start)/(end-start)); return t*t*(3-2*t); };
+      const set = (name,value) => stage.style.setProperty(name,value);
+
+      function measure() {
+        stageHeight = stage.offsetHeight;
+        travel = Math.max(1, opening.offsetHeight - stageHeight);
+        lastProgress = -1;
+        requestUpdate();
+      }
+
+      function update() {
+        frame = 0;
+        const y = Math.max(0,scrollY);
+        const progress = clamp(y/travel);
+        const depth = motion.matches ? 0 : progress;
+        if (progress !== lastProgress) {
+          set('--scene-opacity',1-smooth(.12,.97,progress));
+          set('--shadow-opacity',1-smooth(.04,.77,progress));
+          set('--dust-opacity',1-smooth(.03,.49,progress));
+          set('--paper-y',`${depth*stageHeight*.018}px`);
+          set('--paper-scale',1+depth*.075);
+          set('--shadow-x',`${depth*-30}px`);
+          set('--shadow-y',`${depth*-105}px`);
+          set('--shadow-scale',1+depth*.17);
+          set('--dust-y',`${depth*-175}px`);
+          set('--title-y',`${depth*-135}px`);
+          set('--title-opacity',1-smooth(.06,.48,progress));
+          set('--hint-opacity',1-smooth(0,.14,progress));
+          set('--wash-front',`${160-smooth(.10,.99,progress)*215}%`);
+          set('--bloom-opacity',Math.sin(progress*Math.PI)*.6);
+          set('--bloom-y',`${(1-progress)*80}px`);
+          set('--chapter-opacity',smooth(.34,.82,progress));
+          set('--chapter-y',`${(1-smooth(.30,.95,progress))*70}px`);
+          set('--chapter-line',smooth(.65,1,progress));
+          title.inert = progress > .47;
+          invitation.inert = progress > .13;
+          title.setAttribute('aria-hidden',String(progress>.47));
+          invitation.setAttribute('aria-hidden',String(progress>.13));
+          lastProgress = progress;
+        }
+        const showNav = progress > .76;
+        if (showNav !== navigationVisible) {
+          navigationVisible = showNav;
+          navigation.classList.toggle('is-visible',showNav);
+          navigation.inert = !showNav;
+        }
+      }
+
+      function requestUpdate() { if (!frame) frame = requestAnimationFrame(update); }
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); }
+          });
+        }, {threshold:.12});
+        document.querySelectorAll('.reveal').forEach(element => observer.observe(element));
+      } else {
+        document.querySelectorAll('.reveal').forEach(element => element.classList.add('is-visible'));
+      }
+      root.classList.add('js');
+      addEventListener('scroll',requestUpdate,{passive:true});
+      addEventListener('resize',measure,{passive:true});
+      addEventListener('pageshow',measure);
+      motion.addEventListener('change',measure);
+      measure();
+    })();
+  </script>
+  <script>
+    (() => {
+      'use strict';
+      // 双向绑定：既支持自然滚动演化，又支持用户直接点击预设、拖动滑块或拖拽对比画布
+      const sheet = document.querySelector('#resume-preview');
+      const controls = ['font','line','gap','margin'].map((key,index) => ({
+        key, index,
+        track: document.querySelector(`#cv-${key}`),
+        input: document.querySelector(`#cv-${key}-input`),
+        output: document.querySelector(`#cv-${key}-value`)
+      }));
+      const presets = {
+        compact: [10.5, 1.44, 11, 20],
+        balanced: [10.8, 1.58, 14, 22],
+        airy: [11.2, 1.72, 18, 24]
+      };
+      const presetOrder = [presets.compact, presets.balanced, presets.airy];
+      const ranges = [[10, 12], [1.4, 1.8], [10, 20], [18, 26]];
+      const phases = [...document.querySelectorAll('[data-cv-preset]')];
+      const motion = matchMedia('(prefers-reduced-motion: reduce)');
+      const clamp = value => Math.max(0,Math.min(1,value));
+      const ease = value => { const t = clamp(value); return t*t*(3-2*t); };
+      const lerp = (a,b,t) => a+(b-a)*t;
+
+      let cvManual = false, restoreManual = false, weatherManual = false;
+
+      function paintRange(track, progress) {
+        track.style.setProperty('--range-fill', `${clamp(progress)*100}%`);
+      }
+
+      function applyCvValues(vals, activeIndex) {
+        controls.forEach(({key,index,track,input,output}) => {
+          const value = vals[index];
+          const unit = key === 'line' ? '' : 'px';
+          sheet.style.setProperty(`--cv-${key}`, `${value.toFixed(2)}${unit}`);
+          output.textContent = key === 'line' ? value.toFixed(2) : `${Number(value.toFixed(1))} px`;
+          if (input) input.value = String(value);
+          paintRange(track, (value - ranges[index][0]) / (ranges[index][1] - ranges[index][0]));
+        });
+        phases.forEach((el, idx) => el.classList.toggle('is-active', idx === activeIndex));
+        const phaseEl = document.querySelector('#cv-phase');
+        if (phaseEl && phases[activeIndex]) phaseEl.textContent = phases[activeIndex].textContent;
+      }
+
+      function setCvManualMode(manual) {
+        cvManual = manual;
+        const statusArea = document.querySelector('#cv-status-area');
+        if (!statusArea) return;
+        if (manual) {
+          statusArea.innerHTML = '<button type="button" class="mode-reset-btn" id="cv-reset-btn">手动调节中 · 恢复随滚动 ↺</button>';
+          document.querySelector('#cv-reset-btn').addEventListener('click', () => setCvManualMode(false));
+        } else {
+          statusArea.innerHTML = '排版随滚动展开 / <span id="cv-phase">紧凑</span>';
+        }
+      }
+
+      phases.forEach((btn, idx) => {
+        btn.addEventListener('click', () => {
+          setCvManualMode(true);
+          const key = btn.dataset.cvPreset;
+          applyCvValues(presets[key], idx);
+        });
+      });
+
+      controls.forEach(({input}, idx) => {
+        if (!input) return;
+        input.addEventListener('input', () => {
+          setCvManualMode(true);
+          const currentVals = controls.map(c => parseFloat(c.input.value));
+          applyCvValues(currentVals, idx === 0 && currentVals[0] < 10.65 ? 0 : currentVals[0] > 11.0 ? 2 : 1);
+        });
+      });
+
+      function updateResume(progress) {
+        if (cvManual) return;
+        const segment = progress < .5 ? 0 : 1;
+        const t = ease((progress - segment * .5) * 2);
+        const vals = controls.map((_, index) => lerp(presetOrder[segment][index], presetOrder[segment+1][index], t));
+        const active = progress < .25 ? 0 : progress < .75 ? 1 : 2;
+        applyCvValues(vals, active);
+      }
+
+      // 02 / AITextRestorer
+      const restoreVisual = document.querySelector('#restore-visual');
+      const restoreRange = document.querySelector('#restore-range');
+      const restoreInput = document.querySelector('#restore-range-input');
+      const comparison = document.querySelector('#restore-comparison');
+
+      function applyRestoreValue(restored) {
+        const r = Math.max(0, Math.min(100, restored));
+        restoreVisual.style.setProperty('--restore-split', `${100 - r}%`);
+        document.querySelector('#restore-value').textContent = `${Math.round(r)}%`;
+        comparison.querySelector('.before-label').style.opacity = 1 - ease((r - 80) / 20);
+        comparison.querySelector('.after-label').style.opacity = ease(r / 20);
+        if (restoreInput) restoreInput.value = String(Math.round(r));
+        paintRange(restoreRange, r / 100);
+      }
+
+      function setRestoreManualMode(manual) {
+        restoreManual = manual;
+        const statusArea = document.querySelector('#restore-status-area');
+        if (!statusArea) return;
+        if (manual) {
+          statusArea.innerHTML = '<button type="button" class="mode-reset-btn" id="restore-reset-btn">手动比对中 · 恢复随滚动 ↺</button>';
+          document.querySelector('#restore-reset-btn').addEventListener('click', () => setRestoreManualMode(false));
+        } else {
+          statusArea.textContent = 'AITextRestorer / 文字修复';
+        }
+      }
+
+      if (restoreInput) {
+        restoreInput.addEventListener('input', () => {
+          setRestoreManualMode(true);
+          applyRestoreValue(parseFloat(restoreInput.value));
+        });
+      }
+
+      function updateRestoreFromPointer(clientX) {
+        const rect = comparison.getBoundingClientRect();
+        if (rect.width <= 0) return;
+        const ratio = clamp((clientX - rect.left) / rect.width);
+        setRestoreManualMode(true);
+        applyRestoreValue((1 - ratio) * 100);
+      }
+
+      comparison.addEventListener('pointerdown', e => {
+        comparison.setPointerCapture(e.pointerId);
+        updateRestoreFromPointer(e.clientX);
+      });
+      comparison.addEventListener('pointermove', e => {
+        if (e.buttons > 0) updateRestoreFromPointer(e.clientX);
+      });
+
+      function updateComparison(progress) {
+        if (restoreManual) return;
+        const isDesktop = window.innerWidth > 700;
+        const start = isDesktop ? .03 : .06;
+        const span = isDesktop ? .58 : .88;
+        const restored = lerp(20, 92, ease((progress - start) / span));
+        applyRestoreValue(restored);
+      }
+
+      // 03 / Thermal
+      const indoor = [26.2,26,25.8,25.6,25.5,25.5,25.6,25.8,26,26.4,26.8,27.2,27.6,27.9,28.2,28.5,28.7,28.6,28.3,27.9,27.5,27.1,26.8,26.5,26.2];
+      const outdoor = [25,24.5,24.1,23.8,23.6,23.8,24.5,26,28.1,30.5,32.8,34.3,35.2,35.7,35.8,35.3,34.1,32.3,30.2,28.7,27.7,26.8,26,25.4,25];
+      const x = hour => 8 + hour*16;
+      const y = degrees => 115-(degrees-22)*7;
+      function curve(data) {
+        const points = data.map((temperature,hour) => [x(hour),y(temperature)]);
+        let path = `M${points[0].join(',')}`;
+        for (let i=0;i<points.length-1;i++) {
+          const a=points[Math.max(0,i-1)], b=points[i], c=points[i+1], d=points[Math.min(points.length-1,i+2)];
+          path += ` C${b[0]+16/3},${b[1]+(c[1]-a[1])/6} ${c[0]-16/3},${c[1]-(d[1]-b[1])/6} ${c.join(',')}`;
+        }
+        return path;
+      }
+      document.querySelector('#indoor-line').setAttribute('d',curve(indoor));
+      document.querySelector('#outdoor-line').setAttribute('d',curve(outdoor));
+      document.querySelector('#outdoor-area').setAttribute('d',`${curve(outdoor)} L392,120 L8,120 Z`);
+      const weatherRange = document.querySelector('#weather-hour');
+      const weatherInput = document.querySelector('#weather-hour-input');
+      const weatherChart = document.querySelector('#weather-chart');
+
+      function sample(data,hour) {
+        const i = Math.min(23,Math.floor(hour)), t = hour-i;
+        const a=data[Math.max(0,i-1)], b=data[i], c=data[i+1], d=data[Math.min(24,i+2)];
+        return .5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t*t+(-a+3*b-3*c+d)*t*t*t);
+      }
+
+      function applyWeatherHour(hour) {
+        const h = Math.max(0, Math.min(24, hour));
+        const minutes = Math.round(h * 60);
+        const time = `${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;
+        document.querySelector('#weather-time').textContent = time;
+        document.querySelector('#indoor-value').value = sample(indoor,h).toFixed(1);
+        document.querySelector('#outdoor-value').value = sample(outdoor,h).toFixed(1);
+        const marker = document.querySelector('#weather-marker');
+        marker.setAttribute('x1',x(h)); marker.setAttribute('x2',x(h));
+        [['indoor',indoor],['outdoor',outdoor]].forEach(([name,data]) => {
+          const point = document.querySelector(`#${name}-point`);
+          point.setAttribute('cx',x(h)); point.setAttribute('cy',y(sample(data,h)));
+        });
+        if (weatherInput) weatherInput.value = String(h);
+        paintRange(weatherRange, h / 24);
+      }
+
+      function setWeatherManualMode(manual) {
+        weatherManual = manual;
+        const statusArea = document.querySelector('#weather-status-area');
+        if (!statusArea) return;
+        if (manual) {
+          statusArea.innerHTML = '<button type="button" class="mode-reset-btn" id="weather-reset-btn">手动查看中 · 恢复随滚动 ↺</button>';
+          document.querySelector('#weather-reset-btn').addEventListener('click', () => setWeatherManualMode(false));
+        } else {
+          statusArea.textContent = 'Thermal / 体感温度';
+        }
+      }
+
+      if (weatherInput) {
+        weatherInput.addEventListener('input', () => {
+          setWeatherManualMode(true);
+          applyWeatherHour(parseFloat(weatherInput.value));
+        });
+      }
+
+      function updateWeatherFromPointer(clientX) {
+        const rect = weatherChart.getBoundingClientRect();
+        if (rect.width <= 0) return;
+        const ratio = clamp((clientX - rect.left) / rect.width);
+        setWeatherManualMode(true);
+        applyWeatherHour(ratio * 24);
+      }
+
+      weatherChart.addEventListener('pointerdown', e => {
+        weatherChart.setPointerCapture(e.pointerId);
+        updateWeatherFromPointer(e.clientX);
+      });
+      weatherChart.addEventListener('pointermove', e => {
+        if (e.buttons > 0) updateWeatherFromPointer(e.clientX);
+      });
+
+      function updateWeather(progress) {
+        if (weatherManual) return;
+        const isDesktop = window.innerWidth > 700;
+        const start = isDesktop ? .32 : .04;
+        const span = isDesktop ? .64 : .92;
+        const dayProgress = motion.matches ? progress : clamp((progress - start) / span);
+        applyWeatherHour(dayProgress * 24);
+      }
+
+      const renderers = {cv:updateResume,restore:updateComparison,weather:updateWeather};
+      const demos = [...document.querySelectorAll('[data-scroll-demo]')].map(element => ({element,pin:element.querySelector('.demo-pin'),kind:element.dataset.scrollDemo}));
+      let metrics = [], frame = 0;
+      function update() {
+        frame = 0;
+        metrics.forEach(demo => {
+          const progress = motion.matches ? (demo.kind==='weather'?14/24:.5) : clamp((scrollY-demo.start)/demo.travel);
+          if (progress === demo.last) return;
+          demo.last = progress;
+          demo.element.style.setProperty('--demo-progress',progress);
+          renderers[demo.kind](progress);
+        });
+      }
+      function requestUpdate() { if (!frame) frame = requestAnimationFrame(update); }
+      function measure() {
+        const viewport = innerHeight;
+        demos.forEach(demo => {
+          demo.top = Math.max(74,Math.min(104,(viewport-demo.pin.offsetHeight)/2));
+          demo.travel = demo.kind === 'cv' ? Math.max(460,viewport*.9) : Math.max(420,viewport*.85);
+          demo.element.style.setProperty('--demo-top',`${demo.top}px`);
+          demo.element.style.setProperty('--demo-height',`${demo.pin.offsetHeight}px`);
+          demo.element.style.setProperty('--demo-travel',`${demo.travel}px`);
+        });
+        metrics = demos.map(demo => ({...demo,start:demo.element.getBoundingClientRect().top+scrollY-demo.top,last:-1}));
+        requestUpdate();
+      }
+      addEventListener('scroll',requestUpdate,{passive:true});
+      addEventListener('resize',measure,{passive:true});
+      addEventListener('pageshow',measure);
+      motion.addEventListener('change',measure);
+      if ('ResizeObserver' in window) {
+        const observer = new ResizeObserver(measure);
+        demos.forEach(demo => observer.observe(demo.pin));
+      }
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+      measure();
+    })();
+  </script>
+</body>
+</html>
