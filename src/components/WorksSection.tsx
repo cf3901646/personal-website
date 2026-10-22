@@ -48,16 +48,160 @@ export const WorksSection: React.FC = () => {
   const restoreStageRef = useRef<HTMLDivElement>(null);
   const weatherChartRef = useRef<SVGSVGElement>(null);
 
+  // Direct DOM Refs for 0-VDOM scroll updates (sub-millisecond high-speed animation)
+  const cvResumeSheetRef = useRef<HTMLDivElement>(null);
+  const cvPhaseRef = useRef<HTMLSpanElement>(null);
+  const cvFontValRef = useRef<HTMLSpanElement>(null);
+  const cvFontTrackRef = useRef<HTMLDivElement>(null);
+  const cvFontInputRef = useRef<HTMLInputElement>(null);
+  const cvLineValRef = useRef<HTMLSpanElement>(null);
+  const cvLineTrackRef = useRef<HTMLDivElement>(null);
+  const cvLineInputRef = useRef<HTMLInputElement>(null);
+  const cvGapValRef = useRef<HTMLSpanElement>(null);
+  const cvGapTrackRef = useRef<HTMLDivElement>(null);
+  const cvGapInputRef = useRef<HTMLInputElement>(null);
+  const cvMarginValRef = useRef<HTMLSpanElement>(null);
+  const cvMarginTrackRef = useRef<HTMLDivElement>(null);
+  const cvMarginInputRef = useRef<HTMLInputElement>(null);
+  const cvPresetBtnsRef = useRef<HTMLDivElement>(null);
+
+  const restoreVisualRef = useRef<HTMLDivElement>(null);
+  const restoreBeforeLabelRef = useRef<HTMLSpanElement>(null);
+  const restoreAfterLabelRef = useRef<HTMLSpanElement>(null);
+  const restoreValRef = useRef<HTMLSpanElement>(null);
+  const restoreTrackRef = useRef<HTMLDivElement>(null);
+  const restoreInputRef = useRef<HTMLInputElement>(null);
+
+  const weatherTimeRef = useRef<HTMLTimeElement>(null);
+  const indoorValRef = useRef<HTMLOutputElement>(null);
+  const outdoorValRef = useRef<HTMLOutputElement>(null);
+  const weatherMarkerRef = useRef<SVGLineElement>(null);
+  const outdoorPointRef = useRef<SVGCircleElement>(null);
+  const indoorPointRef = useRef<SVGCircleElement>(null);
+  const weatherTrackRef = useRef<HTMLDivElement>(null);
+  const weatherInputRef = useRef<HTMLInputElement>(null);
+
+  const requestUpdateRef = useRef<() => void>(() => {});
+
   const indoorPath = useMemo(() => buildSplineCurve(INDOOR_TEMPS), []);
   const outdoorPath = useMemo(() => buildSplineCurve(OUTDOOR_TEMPS), []);
   const outdoorAreaPath = useMemo(() => `${outdoorPath} L392,120 L8,120 Z`, [outdoorPath]);
 
+  // Direct DOM applicators (bypasses React 19 VDOM Diffing during scrolling)
+  const applyCvDom = useCallback((s: CvTypographyState) => {
+    if (cvResumeSheetRef.current) {
+      const el = cvResumeSheetRef.current;
+      el.style.setProperty('--cv-font', `${s.font.toFixed(2)}px`);
+      el.style.setProperty('--cv-line', s.line.toFixed(2));
+      el.style.setProperty('--cv-gap', `${s.gap.toFixed(2)}px`);
+      el.style.setProperty('--cv-margin', `${s.margin.toFixed(2)}px`);
+    }
+    if (cvPhaseRef.current) {
+      cvPhaseRef.current.textContent = CV_PRESETS[s.preset].label;
+    }
+    if (cvFontValRef.current) cvFontValRef.current.textContent = `${Number(s.font.toFixed(1))} px`;
+    if (cvFontTrackRef.current) {
+      const fill = computeTrackFill(s.font, CV_RANGES[0][0], CV_RANGES[0][1]);
+      cvFontTrackRef.current.style.setProperty('--range-fill', `${fill}%`);
+    }
+    if (cvFontInputRef.current) cvFontInputRef.current.value = String(s.font);
+
+    if (cvLineValRef.current) cvLineValRef.current.textContent = s.line.toFixed(2);
+    if (cvLineTrackRef.current) {
+      const fill = computeTrackFill(s.line, CV_RANGES[1][0], CV_RANGES[1][1]);
+      cvLineTrackRef.current.style.setProperty('--range-fill', `${fill}%`);
+    }
+    if (cvLineInputRef.current) cvLineInputRef.current.value = String(s.line);
+
+    if (cvGapValRef.current) cvGapValRef.current.textContent = `${Number(s.gap.toFixed(1))} px`;
+    if (cvGapTrackRef.current) {
+      const fill = computeTrackFill(s.gap, CV_RANGES[2][0], CV_RANGES[2][1]);
+      cvGapTrackRef.current.style.setProperty('--range-fill', `${fill}%`);
+    }
+    if (cvGapInputRef.current) cvGapInputRef.current.value = String(s.gap);
+
+    if (cvMarginValRef.current) cvMarginValRef.current.textContent = `${Number(s.margin.toFixed(1))} px`;
+    if (cvMarginTrackRef.current) {
+      const fill = computeTrackFill(s.margin, CV_RANGES[3][0], CV_RANGES[3][1]);
+      cvMarginTrackRef.current.style.setProperty('--range-fill', `${fill}%`);
+    }
+    if (cvMarginInputRef.current) cvMarginInputRef.current.value = String(s.margin);
+
+    if (cvPresetBtnsRef.current) {
+      const btns = cvPresetBtnsRef.current.querySelectorAll<HTMLButtonElement>('button[data-cv-preset]');
+      btns.forEach((btn) => {
+        const active = btn.getAttribute('data-cv-preset') === s.preset;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', String(active));
+      });
+    }
+  }, []);
+
+  const applyRestoreDom = useCallback((pct: number) => {
+    const splitPct = 100 - pct;
+    const beforeOpacity = 1 - easeInOutCubic((pct - 80) / 20);
+    const afterOpacity = easeInOutCubic(pct / 20);
+
+    if (restoreVisualRef.current) {
+      restoreVisualRef.current.style.setProperty('--restore-split', `${splitPct}%`);
+    }
+    if (restoreBeforeLabelRef.current) {
+      restoreBeforeLabelRef.current.style.opacity = String(beforeOpacity);
+    }
+    if (restoreAfterLabelRef.current) {
+      restoreAfterLabelRef.current.style.opacity = String(afterOpacity);
+    }
+    if (restoreValRef.current) {
+      restoreValRef.current.textContent = `${pct}%`;
+    }
+    if (restoreTrackRef.current) {
+      restoreTrackRef.current.style.setProperty('--range-fill', `${pct}%`);
+    }
+    if (restoreInputRef.current) {
+      restoreInputRef.current.value = String(pct);
+    }
+  }, []);
+
+  const applyWeatherDom = useCallback((hour: number) => {
+    const formattedTime = formatHourToTime(hour);
+    const indoor = sampleTemperature(INDOOR_TEMPS, hour);
+    const outdoor = sampleTemperature(OUTDOOR_TEMPS, hour);
+    const markerX = weatherX(hour);
+    const inCy = weatherY(indoor);
+    const outCy = weatherY(outdoor);
+    const fillPct = clamp(hour / 24, 0, 1) * 100;
+
+    if (weatherTimeRef.current) weatherTimeRef.current.textContent = formattedTime;
+    if (indoorValRef.current) indoorValRef.current.textContent = indoor.toFixed(1);
+    if (outdoorValRef.current) outdoorValRef.current.textContent = outdoor.toFixed(1);
+    if (weatherMarkerRef.current) {
+      weatherMarkerRef.current.setAttribute('x1', String(markerX));
+      weatherMarkerRef.current.setAttribute('x2', String(markerX));
+    }
+    if (outdoorPointRef.current) {
+      outdoorPointRef.current.setAttribute('cx', String(markerX));
+      outdoorPointRef.current.setAttribute('cy', String(outCy));
+    }
+    if (indoorPointRef.current) {
+      indoorPointRef.current.setAttribute('cx', String(markerX));
+      indoorPointRef.current.setAttribute('cy', String(inCy));
+    }
+    if (weatherTrackRef.current) {
+      weatherTrackRef.current.style.setProperty('--range-fill', `${fillPct}%`);
+    }
+    if (weatherInputRef.current) {
+      weatherInputRef.current.value = String(hour);
+    }
+  }, []);
+
   // Preset click handler for EasyCV
   const handleSelectCvPreset = useCallback((preset: CvPresetKey) => {
     const [font, line, gap, margin] = CV_PRESETS[preset].values;
+    const next: CvTypographyState = { font, line, gap, margin, preset };
     setCvManual(true);
-    setCvState({ font, line, gap, margin, preset });
-  }, []);
+    setCvState(next);
+    applyCvDom(next);
+  }, [applyCvDom]);
 
   // Individual slider change handler for EasyCV
   const handleCvSliderChange = useCallback(
@@ -72,10 +216,11 @@ export const WorksSection: React.FC = () => {
         if (distCompact <= distBalanced && distCompact <= distAiry) next.preset = 'compact';
         else if (distAiry <= distBalanced && distAiry <= distCompact) next.preset = 'airy';
         else next.preset = 'balanced';
+        applyCvDom(next);
         return next;
       });
     },
-    []
+    [applyCvDom]
   );
 
   // Pointer drag on AITextRestorer comparison stage
@@ -84,13 +229,12 @@ export const WorksSection: React.FC = () => {
     if (!stage) return;
     const rect = stage.getBoundingClientRect();
     if (rect.width <= 0) return;
-    // Dragging divider right increases before-layer or after-layer:
-    // Note: --restore-split is (100 - restored)%, so divider x from left is (100 - restored)%
     const ratioFromLeft = clamp((clientX - rect.left) / rect.width, 0, 1);
     const restored = Math.round((1 - ratioFromLeft) * 100);
     setRestoreManual(true);
     setRestorePct(restored);
-  }, []);
+    applyRestoreDom(restored);
+  }, [applyRestoreDom]);
 
   // Pointer drag on Weather SVG chart
   const updateWeatherFromClientX = useCallback((clientX: number) => {
@@ -102,7 +246,8 @@ export const WorksSection: React.FC = () => {
     const hour = Number((ratio * 24).toFixed(2));
     setWeatherManual(true);
     setWeatherHour(hour);
-  }, []);
+    applyWeatherDom(hour);
+  }, [applyWeatherDom]);
 
   // Scroll-driven demo synchronization
   useEffect(() => {
@@ -138,11 +283,11 @@ export const WorksSection: React.FC = () => {
         demo.scrollEl.style.setProperty('--demo-progress', String(progress));
 
         if (demo.kind === 'cv' && !cvManualRef.current) {
-          setCvState(computeCvStateFromProgress(progress));
+          applyCvDom(computeCvStateFromProgress(progress));
         } else if (demo.kind === 'restore' && !restoreManualRef.current) {
-          setRestorePct(computeRestoreFromProgress(progress, isDesktop));
+          applyRestoreDom(computeRestoreFromProgress(progress, isDesktop));
         } else if (demo.kind === 'weather' && !weatherManualRef.current) {
-          setWeatherHour(computeWeatherHourFromProgress(progress, isDesktop));
+          applyWeatherDom(computeWeatherHourFromProgress(progress, isDesktop));
         }
       });
     }
@@ -150,6 +295,7 @@ export const WorksSection: React.FC = () => {
     function requestUpdate() {
       if (!frame) frame = requestAnimationFrame(updateScrollDemos);
     }
+    requestUpdateRef.current = requestUpdate;
 
     function measureDemos() {
       const viewport = window.innerHeight;
@@ -248,14 +394,18 @@ export const WorksSection: React.FC = () => {
                       <button
                         type="button"
                         className="mode-reset-btn"
-                        onClick={() => setCvManual(false)}
+                        onClick={() => {
+                          setCvManual(false);
+                          cvManualRef.current = false;
+                          requestUpdateRef.current();
+                        }}
                         aria-label="恢复 EasyCV 随页面滚动自动演示"
                       >
                         手动调节中 · 恢复随滚动 ↺
                       </button>
                     ) : (
                       <>
-                        排版随滚动展开 / <span id="cv-phase">{CV_PRESETS[cvState.preset].label}</span>
+                        排版随滚动展开 / <span id="cv-phase" ref={cvPhaseRef}>{CV_PRESETS[cvState.preset].label}</span>
                       </>
                     )}
                   </small>
@@ -266,7 +416,7 @@ export const WorksSection: React.FC = () => {
                     <h4>找到文字的呼吸感。</h4>
                     <p className="control-intro">可随页面滚动展开，也可直接点击预设或拖动滑块微调。</p>
 
-                    <div className="preset-group" role="group" aria-label="切换紧凑、均衡、舒展三种排版预设">
+                    <div className="preset-group" ref={cvPresetBtnsRef} role="group" aria-label="切换紧凑、均衡、舒展三种排版预设">
                       {(['compact', 'balanced', 'airy'] as CvPresetKey[]).map((key) => (
                         <button
                           key={key}
@@ -286,17 +436,19 @@ export const WorksSection: React.FC = () => {
                       <div className="slider-control">
                         <label className="slider-label" htmlFor="cv-font-input">
                           <span>正文字号</span>
-                          <span className="demo-value" id="cv-font-value">
+                          <span className="demo-value" id="cv-font-value" ref={cvFontValRef}>
                             {Number(cvState.font.toFixed(1))} px
                           </span>
                         </label>
                         <div
                           className="scroll-track interactive-track"
                           id="cv-font"
+                          ref={cvFontTrackRef}
                           style={{ '--range-fill': `${fontFill}%` } as React.CSSProperties}
                         >
                           <input
                             id="cv-font-input"
+                            ref={cvFontInputRef}
                             type="range"
                             min={CV_RANGES[0][0]}
                             max={CV_RANGES[0][1]}
@@ -312,17 +464,19 @@ export const WorksSection: React.FC = () => {
                       <div className="slider-control">
                         <label className="slider-label" htmlFor="cv-line-input">
                           <span>文字行距</span>
-                          <span className="demo-value" id="cv-line-value">
+                          <span className="demo-value" id="cv-line-value" ref={cvLineValRef}>
                             {cvState.line.toFixed(2)}
                           </span>
                         </label>
                         <div
                           className="scroll-track interactive-track"
                           id="cv-line"
+                          ref={cvLineTrackRef}
                           style={{ '--range-fill': `${lineFill}%` } as React.CSSProperties}
                         >
                           <input
                             id="cv-line-input"
+                            ref={cvLineInputRef}
                             type="range"
                             min={CV_RANGES[1][0]}
                             max={CV_RANGES[1][1]}
@@ -338,17 +492,19 @@ export const WorksSection: React.FC = () => {
                       <div className="slider-control">
                         <label className="slider-label" htmlFor="cv-gap-input">
                           <span>段落间距</span>
-                          <span className="demo-value" id="cv-gap-value">
+                          <span className="demo-value" id="cv-gap-value" ref={cvGapValRef}>
                             {Number(cvState.gap.toFixed(1))} px
                           </span>
                         </label>
                         <div
                           className="scroll-track interactive-track"
                           id="cv-gap"
+                          ref={cvGapTrackRef}
                           style={{ '--range-fill': `${gapFill}%` } as React.CSSProperties}
                         >
                           <input
                             id="cv-gap-input"
+                            ref={cvGapInputRef}
                             type="range"
                             min={CV_RANGES[2][0]}
                             max={CV_RANGES[2][1]}
@@ -364,17 +520,19 @@ export const WorksSection: React.FC = () => {
                       <div className="slider-control">
                         <label className="slider-label" htmlFor="cv-margin-input">
                           <span>纸面留白</span>
-                          <span className="demo-value" id="cv-margin-value">
+                          <span className="demo-value" id="cv-margin-value" ref={cvMarginValRef}>
                             {Number(cvState.margin.toFixed(1))} px
                           </span>
                         </label>
                         <div
                           className="scroll-track interactive-track"
                           id="cv-margin"
+                          ref={cvMarginTrackRef}
                           style={{ '--range-fill': `${marginFill}%` } as React.CSSProperties}
                         >
                           <input
                             id="cv-margin-input"
+                            ref={cvMarginInputRef}
                             type="range"
                             min={CV_RANGES[3][0]}
                             max={CV_RANGES[3][1]}
@@ -396,6 +554,7 @@ export const WorksSection: React.FC = () => {
                     <div
                       className="resume-sheet"
                       id="resume-preview"
+                      ref={cvResumeSheetRef}
                       role="region"
                       aria-label="简历排版示例，虚构内容"
                       style={
@@ -482,6 +641,7 @@ export const WorksSection: React.FC = () => {
             <div className="demo-pin" ref={restorePinRef}>
               <div
                 className="work-visual restore-demo"
+                ref={restoreVisualRef}
                 style={{ '--restore-split': `${restoreSplitPct}%` } as React.CSSProperties}
               >
                 <div className="demo-bar">
@@ -491,7 +651,11 @@ export const WorksSection: React.FC = () => {
                       <button
                         type="button"
                         className="mode-reset-btn"
-                        onClick={() => setRestoreManual(false)}
+                        onClick={() => {
+                          setRestoreManual(false);
+                          restoreManualRef.current = false;
+                          requestUpdateRef.current();
+                        }}
                         aria-label="恢复 AITextRestorer 随页面滚动自动演示"
                       >
                         手动比对中 · 恢复随滚动 ↺
@@ -535,6 +699,7 @@ export const WorksSection: React.FC = () => {
                     </div>
                     <span
                       className="compare-label before-label"
+                      ref={restoreBeforeLabelRef}
                       aria-hidden="true"
                       style={{ opacity: beforeLabelOpacity }}
                     >
@@ -542,6 +707,7 @@ export const WorksSection: React.FC = () => {
                     </span>
                     <span
                       className="compare-label after-label"
+                      ref={restoreAfterLabelRef}
                       aria-hidden="true"
                       style={{ opacity: afterLabelOpacity }}
                     >
@@ -554,17 +720,19 @@ export const WorksSection: React.FC = () => {
                 <div className="compare-control">
                   <label className="slider-label" htmlFor="restore-range-input">
                     <span>向下滚动或拖动滑块，文字回到原样</span>
-                    <span className="demo-value" id="restore-value">
+                    <span className="demo-value" id="restore-value" ref={restoreValRef}>
                       {restorePct}%
                     </span>
                   </label>
                   <div
                     className="scroll-track interactive-track"
                     id="restore-range"
+                    ref={restoreTrackRef}
                     style={{ '--range-fill': `${restorePct}%` } as React.CSSProperties}
                   >
                     <input
                       id="restore-range-input"
+                      ref={restoreInputRef}
                       type="range"
                       min={0}
                       max={100}
@@ -572,8 +740,10 @@ export const WorksSection: React.FC = () => {
                       value={restorePct}
                       aria-label="文字修复进度百分比"
                       onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
                         setRestoreManual(true);
-                        setRestorePct(parseInt(e.target.value, 10));
+                        setRestorePct(val);
+                        applyRestoreDom(val);
                       }}
                     />
                   </div>
@@ -627,7 +797,11 @@ export const WorksSection: React.FC = () => {
                       <button
                         type="button"
                         className="mode-reset-btn"
-                        onClick={() => setWeatherManual(false)}
+                        onClick={() => {
+                          setWeatherManual(false);
+                          weatherManualRef.current = false;
+                          requestUpdateRef.current();
+                        }}
                         aria-label="恢复体感温度计随页面滚动自动演示"
                       >
                         手动查看中 · 恢复随滚动 ↺
@@ -641,19 +815,19 @@ export const WorksSection: React.FC = () => {
                 <div className="weather-stage">
                   <div className="weather-heading">
                     <span>一天之中，身体感受到的温度</span>
-                    <time id="weather-time">{formattedTime}</time>
+                    <time id="weather-time" ref={weatherTimeRef}>{formattedTime}</time>
                   </div>
                   <div className="weather-readings">
                     <div className="weather-reading">
                       <span>室内 · 阴凉处</span>
-                      <output id="indoor-value" aria-live="off">
+                      <output id="indoor-value" ref={indoorValRef} aria-live="off">
                         {indoorTemp.toFixed(1)}
                       </output>
                       <sup>°C</sup>
                     </div>
                     <div className="weather-reading outdoor">
                       <span>室外 · 日光下</span>
-                      <output id="outdoor-value" aria-live="off">
+                      <output id="outdoor-value" ref={outdoorValRef} aria-live="off">
                         {outdoorTemp.toFixed(1)}
                       </output>
                       <sup>°C</sup>
@@ -719,6 +893,7 @@ export const WorksSection: React.FC = () => {
                     />
                     <line
                       id="weather-marker"
+                      ref={weatherMarkerRef}
                       x1={markerX}
                       x2={markerX}
                       y1="12"
@@ -728,6 +903,7 @@ export const WorksSection: React.FC = () => {
                     />
                     <circle
                       id="outdoor-point"
+                      ref={outdoorPointRef}
                       cx={markerX}
                       cy={outdoorCy}
                       r="4"
@@ -737,6 +913,7 @@ export const WorksSection: React.FC = () => {
                     />
                     <circle
                       id="indoor-point"
+                      ref={indoorPointRef}
                       cx={markerX}
                       cy={indoorCy}
                       r="4"
@@ -755,10 +932,12 @@ export const WorksSection: React.FC = () => {
                   <div
                     className="scroll-track interactive-track"
                     id="weather-hour"
+                    ref={weatherTrackRef}
                     style={{ '--range-fill': `${weatherFillPct}%` } as React.CSSProperties}
                   >
                     <input
                       id="weather-hour-input"
+                      ref={weatherInputRef}
                       type="range"
                       min={0}
                       max={24}
@@ -766,8 +945,10 @@ export const WorksSection: React.FC = () => {
                       value={weatherHour}
                       aria-label="全天24小时体感温度时刻选择"
                       onChange={(e) => {
+                        const val = parseFloat(e.target.value);
                         setWeatherManual(true);
-                        setWeatherHour(parseFloat(e.target.value));
+                        setWeatherHour(val);
+                        applyWeatherDom(val);
                       }}
                     />
                   </div>

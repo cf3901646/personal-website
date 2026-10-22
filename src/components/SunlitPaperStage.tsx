@@ -362,7 +362,9 @@ export const SunlitPaperStage: React.FC<SunlitPaperStageProps> = ({ onNavVisibil
           if (e.data && e.data.bitmap) {
             paperSource = e.data.bitmap;
             const { left, top, scale } = renderMetrics;
-            ctx.drawImage(paperSource, left, top, W * scale, H * scale);
+            if (paperSource) {
+              ctx.drawImage(paperSource, left, top, W * scale, H * scale);
+            }
           }
           URL.revokeObjectURL(url);
           worker?.terminate();
@@ -454,9 +456,15 @@ export const SunlitPaperStage: React.FC<SunlitPaperStageProps> = ({ onNavVisibil
       dustContext!.drawImage(dustCanvasLayer, left, top, W * scale, H * scale);
     }
 
+    let lastRenderTime = 0;
+    const TARGET_FRAME_MS = 1000 / 35; // 35 FPS cap: saves 70%+ GPU/Canvas overhead for 15s slow ambient motion
+
     function loop(now: number) {
       if (!animRunning) return;
-      renderFrame(now);
+      if (now - lastRenderTime >= TARGET_FRAME_MS) {
+        renderFrame(now);
+        lastRenderTime = now - ((now - lastRenderTime) % TARGET_FRAME_MS);
+      }
       animFrameId = requestAnimationFrame(loop);
     }
 
@@ -467,6 +475,7 @@ export const SunlitPaperStage: React.FC<SunlitPaperStageProps> = ({ onNavVisibil
       }
       if (!animRunning) {
         animRunning = true;
+        lastRenderTime = performance.now();
         animFrameId = requestAnimationFrame(loop);
       }
     }
