@@ -6,7 +6,7 @@
  *  - 120-second hard session timeout to protect daily quotas
  *  - Max concurrent session gating
  *  - Zero API keys exposed to browser clients
- *  - Supports runtime env.GEMINI_API_KEYS with decoded fallback
+ *  - Ensures all frames forwarded to browser are decoded UTF-8 strings (prevents [object Blob])
  */
 
 interface Env {
@@ -29,6 +29,33 @@ const MAX_CONCURRENT_PER_ISOLATE = 3;
 
 let activeSessions = 0;
 let keyCursor = Math.floor(Math.random() * OBFUSCATED_FALLBACK.length);
+
+async function toTextOrBuffer(data: any): Promise<string | ArrayBuffer> {
+  if (typeof data === 'string') return data;
+  if (typeof Blob !== 'undefined' && data instanceof Blob) {
+    try {
+      const text = await data.text();
+      return text;
+    } catch (_) {
+      return await data.arrayBuffer();
+    }
+  }
+  if (data instanceof ArrayBuffer) {
+    try {
+      return new TextDecoder('utf-8').decode(data);
+    } catch (_) {
+      return data;
+    }
+  }
+  if (ArrayBuffer.isView(data)) {
+    try {
+      return new TextDecoder('utf-8').decode(data);
+    } catch (_) {
+      return data.buffer;
+    }
+  }
+  return String(data);
+}
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
@@ -58,25 +85,35 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   // 3. Resolve key pool: prioritize Cloudflare Pages environment variables
   const rawEnvKeys = env.GEMINI_API_KEYS;
-  const keyPool = rawEnvKeys
-    ? rawEnvKeys.split(',').map((k) => k.trim()).filter(Boolean)
-    : OBFUSCATED_FALLBACK.map((b64) => {
-        try {
-          return atob(b64);
-        } catch (_) {
-          return '';
-        }
-      }).filter(Boolean);
+  let keyPool: string[] = [];
 
-  if (keyPool.length === 0) {
-    return new Response('No valid API keys configured in pool', { status: 500 });
+  if (rawEnvKeys && rawEnvKeys.trim().length > 0) {
+    keyPool = rawEnvKeys
+      .split(/[,\n]/)
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0);
   }
 
-  const selectedKey = keyPool[keyCursor % keyPool.length];
-  keyCursor++;
+  if (keyPool.length === 0) {
+    keyPool = OBFUSCATED_FALLBACK.map((b64) => {
+      try {
+        return atob(b64);
+      } catch (_) {
+        return '';
+      }
+    }).filter(Boolean);
+  }
 
-  // 4. Create client WebSocketPair
-  // @ts-ignore - Cloudflare Workers runtime global
+  if (keyPool.length === 0) {
+    return new Response('Gateway Key Pool Unavailable', { status: 500 });
+  }
+
+  // Rotate key cursor
+  keyCursor = (keyCursor + 1) % keyPool.length;
+  const selectedKey = keyPool[keyCursor];
+
+  // 4. Create client <-> worker WebSocket pair
+  // @ts-ignore
   const webSocketPair = new WebSocketPair();
   const [clientWs, serverWs] = Object.values(webSocketPair) as [WebSocket, WebSocket];
 
@@ -147,10 +184,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }, MAX_SESSION_DURATION_MS);
 
   // 7. Bidirectional message forwarding
-  serverWs.addEventListener('message', (event) => {
+  serverWs.addEventListener('message', async (event) => {
     try {
       if (upstreamWs && upstreamWs.readyState === WebSocket.OPEN) {
-        upstreamWs.send(event.data);
+        const payload = await toTextOrBuffer(event.data);
+        upstreamWs.send(payload);
       }
     } catch (err) {
       console.warn('Error forwarding client message to upstream:', err);
@@ -158,10 +196,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   });
 
   if (upstreamWs) {
-    upstreamWs.addEventListener('message', (event) => {
+    upstreamWs.addEventListener('message', async (event) => {
       try {
         if (serverWs.readyState === WebSocket.OPEN) {
-          serverWs.send(event.data);
+          const payload = await toTextOrBuffer(event.data);
+          serverWs.send(payload);
         }
       } catch (err) {
         console.warn('Error forwarding upstream message to client:', err);
