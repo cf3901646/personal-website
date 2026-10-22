@@ -183,35 +183,17 @@ export default function App() {
                 <br />
                 一起做的想法？
               </h2>
-              <div className="contact-actions">
-                <a className="contact-link" href="mailto:cf3901646@gmail.com">
-                  cf3901646@gmail.com
-                </a>
-                <button
-                  type="button"
-                  className="copy-email-btn"
-                  onClick={handleCopyEmail}
-                  aria-label="复制邮箱地址 cf3901646@gmail.com"
-                >
-                  {copiedEmail ? '已复制邮箱 ✓' : '复制邮箱'}
-                </button>
-              </div>
+              <a className="contact-link" href="mailto:cf3901646@gmail.com">
+                cf3901646@gmail.com
+              </a>
             </div>
             <div className="colophon">
-              <span>Charlie Freeman · cf. / A personal notebook</span>
-              <div className="colophon-links">
-                <a href="https://github.com/cf3901646" target="_blank" rel="noopener noreferrer">
-                  {'更多记录，在 GitHub ↗\uFE0E'}
-                  <span className="sr-only">（新窗口）</span>
-                </a>
-                <a
-                  href="/assets/aistudio/sunlit-letterpress_6610e584.html"
-                  download="charlie-freeman-notebook.html"
-                >
-                  {'下载单文件 HTML ↓\uFE0E'}
-                </a>
-                <a href="#top">{'回到日光里 ↑\uFE0E'}</a>
-              </div>
+              <span>cf. / A personal notebook</span>
+              <a href="https://github.com/cf3901646" target="_blank" rel="noopener noreferrer">
+                {'更多记录，在 GitHub ↗\uFE0E'}
+                <span className="sr-only">（新窗口）</span>
+              </a>
+              <a href="#top">{'回到日光里 ↑\uFE0E'}</a>
             </div>
           </footer>
         </div>

@@ -501,6 +501,8 @@ export const SunlitPaperStage: React.FC<SunlitPaperStageProps> = ({ onNavVisibil
 
     function updateOpeningScroll() {
       scrollFrame = 0;
+      stageHeight = paperEl!.offsetHeight || window.innerHeight;
+      travel = Math.max(1, opening!.offsetHeight - stageHeight);
       const y = Math.max(0, window.scrollY);
       const progress = clamp(y / travel, 0, 1);
       const depth = motion.matches ? 0 : progress;
@@ -556,7 +558,8 @@ export const SunlitPaperStage: React.FC<SunlitPaperStageProps> = ({ onNavVisibil
     }
 
     function measureOpening() {
-      stageHeight = paperEl!.offsetHeight;
+      document.documentElement.classList.add('js');
+      stageHeight = paperEl!.offsetHeight || window.innerHeight;
       travel = Math.max(1, opening!.offsetHeight - stageHeight);
       lastProgress = -1;
       updateCanvasMetrics();

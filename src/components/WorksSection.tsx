@@ -264,7 +264,6 @@ export const WorksSection: React.FC = () => {
       pinEl: HTMLDivElement;
       top: number;
       travel: number;
-      start: number;
       last: number;
     }[] = [];
     let frame = 0;
@@ -273,11 +272,12 @@ export const WorksSection: React.FC = () => {
       frame = 0;
       const isDesktop = window.innerWidth > 700;
       metrics.forEach((demo) => {
+        const rectTop = demo.scrollEl.getBoundingClientRect().top;
         const progress = motion.matches
           ? demo.kind === 'weather'
             ? 14 / 24
             : 0.5
-          : clamp((window.scrollY - demo.start) / demo.travel, 0, 1);
+          : clamp((demo.top - rectTop) / demo.travel, 0, 1);
         if (progress === demo.last) return;
         demo.last = progress;
         demo.scrollEl.style.setProperty('--demo-progress', String(progress));
@@ -298,6 +298,7 @@ export const WorksSection: React.FC = () => {
     requestUpdateRef.current = requestUpdate;
 
     function measureDemos() {
+      document.documentElement.classList.add('js');
       const viewport = window.innerHeight;
       metrics = [];
       demoConfigs.forEach(({ kind, scrollEl, pinEl }) => {
@@ -308,14 +309,12 @@ export const WorksSection: React.FC = () => {
         scrollEl.style.setProperty('--demo-top', `${top}px`);
         scrollEl.style.setProperty('--demo-height', `${pinHeight}px`);
         scrollEl.style.setProperty('--demo-travel', `${travel}px`);
-        const rect = scrollEl.getBoundingClientRect();
         metrics.push({
           kind,
           scrollEl,
           pinEl,
           top,
           travel,
-          start: rect.top + window.scrollY - top,
           last: -1,
         });
       });

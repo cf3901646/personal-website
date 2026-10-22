@@ -475,10 +475,10 @@ h1 {
 
 .js .demo-pin {
   position: sticky;
-  top: var(--demo-top, 84px);
+  top: var(--demo-top, 90px);
 }
 
-.demo-scroll .work-visual::after {
+.demo-scroll .demo-pin::after {
   content: "";
   position: absolute;
   left: 0;
@@ -1033,7 +1033,7 @@ h1 {
   --track-rest: #e6e9df;
 }
 
-.weather-demo.work-visual::after {
+.weather-demo.demo-pin::after {
   background: #c2ccb7;
 }
 
