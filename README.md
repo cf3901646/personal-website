@@ -13,7 +13,7 @@
 1. **EasyCV**（[https://cv.3901646.xyz](https://cv.3901646.xyz)）：文字排版节奏工作台，支持字号、行距、留白实时调优与双向联动。
 2. **AITextRestorer**（[https://restore.3901646.xyz](https://restore.3901646.xyz)）：AI 图像增强与文字笔画精准复原对比工具。
 3. **Thermal**（[体感温度计](https://github.com/cf3901646/thermal-feels-like)）：24 小时全天室内外温感变化曲线与交互估算。
-4. **Space DJ**（[https://3901646.xyz/space/](https://3901646.xyz/space/)）：基于 Google Magenta 与 Lyria RealTime 实时音频大模型深度改造的 3D 星系声景漫游。自建 Cloudflare Pages 边缘 WebSocket 网关实现国内免梯直连、多 Key 配额池轮询与 2 分钟安全熔断。
+4. **Space DJ**（[https://3901646.xyz/space/](https://3901646.xyz/space/)）：基于 Google Magenta 与 Lyria RealTime 实时音频大模型深度改造的 3D 星系声景漫游。自建 Cloudflare Pages 边缘 WebSocket 网关实现国内免梯直连与多 Key 配额池轮询，体验不限时长。
 
 ---
 

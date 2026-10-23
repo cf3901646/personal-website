@@ -3,7 +3,7 @@
  * Handles WebSocket proxying between client and Google Gemini Lyria RealTime API.
  * Features:
  *  - 7-Key Pool with Round-Robin & Failover
- *  - 120-second hard session timeout to protect daily quotas
+ *  - No session time limit (sessions end only when the client or upstream closes)
  *  - Max concurrent session gating
  *  - Zero API keys exposed to browser clients
  *  - Ensures all frames forwarded to browser are decoded UTF-8 strings (prevents [object Blob])
@@ -16,7 +16,6 @@ interface Env {
   GEMINI_API_KEYS?: string;
 }
 
-const MAX_SESSION_DURATION_MS = 120_000; // 2 minutes hard limit per session
 const MAX_CONCURRENT_PER_ISOLATE = 3;
 
 let activeSessions = 0;
@@ -127,16 +126,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   let isCleanedUp = false;
-  let durationTimeout: any = null;
 
   const cleanup = () => {
     if (isCleanedUp) return;
     isCleanedUp = true;
     activeSessions = Math.max(0, activeSessions - 1);
-    if (durationTimeout) {
-      clearTimeout(durationTimeout);
-      durationTimeout = null;
-    }
     try {
       if (serverWs.readyState === WebSocket.OPEN) {
         serverWs.close();
@@ -149,17 +143,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     } catch (_) {}
   };
 
-  // 6. Hard session timeout (120 seconds) to protect API quotas
-  durationTimeout = setTimeout(() => {
-    if (!isCleanedUp) {
-      try {
-        if (serverWs.readyState === WebSocket.OPEN) {
-          serverWs.close(1000, 'SESSION_TIME_LIMIT_REACHED');
-        }
-      } catch (_) {}
-      cleanup();
-    }
-  }, MAX_SESSION_DURATION_MS);
+  // 6. No session time limit: the session lasts until the client or upstream closes it.
 
   // 7. Bidirectional message forwarding
   serverWs.addEventListener('message', async (event) => {

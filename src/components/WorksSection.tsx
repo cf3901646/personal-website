@@ -703,7 +703,7 @@ export const WorksSection: React.FC = () => {
                     启动飞船 · 立即体验 ↗
                   </a>
                   <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-                    支持 WASD / 键盘方向键 6-DOF 飞行控制 · 2 分钟安全限额保护
+                    支持 WASD / 键盘方向键 6-DOF 飞行控制 · 不限时长
                   </span>
                 </div>
 
