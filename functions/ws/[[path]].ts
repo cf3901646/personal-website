@@ -7,28 +7,20 @@
  *  - Max concurrent session gating
  *  - Zero API keys exposed to browser clients
  *  - Ensures all frames forwarded to browser are decoded UTF-8 strings (prevents [object Blob])
+ *
+ * Keys come only from the GEMINI_API_KEYS secret (comma or newline separated),
+ * set in Cloudflare Pages > Settings > Variables and Secrets. Never commit keys to this repo.
  */
 
 interface Env {
   GEMINI_API_KEYS?: string;
 }
 
-// Fallback obfuscated key pool (decoded at edge runtime to avoid public GitHub auto-revocation)
-const OBFUSCATED_FALLBACK = [
-  'QUl6YVN5RFdVT0lBdURvRWxmMUZJaUpNTHhSQmpFU19nNmZVUWgw',
-  'QUl6YVN5QjhEbmtIR3VHRmppaFppZFdhMHJsM2J2SklJRHdMeUI0',
-  'QUl6YVN5RHBQMjU4RTdTc3l0SUo0bXgxODdpZ2pMODJJTml0a2RJ',
-  'QUl6YVN5QldRd1ZGakQzQWF4MWZuN0hCeDF6TldGSWhzbTN3YWh3',
-  'QUl6YVN5QmNJTG1QOWh5VXV2VzVHN2djMUZOTVR6c1dpdHZZODVV',
-  'QUl6YVN5RGwyd2ZnaWRBS0NGd2pNUG4zc1N6dDg4QmRlODVZcnVB',
-  'QUl6YVN5RC1PX2xFdjVhQ05qcFRpSlR4OHpJb3R5bThubXJPalE0',
-];
-
 const MAX_SESSION_DURATION_MS = 120_000; // 2 minutes hard limit per session
 const MAX_CONCURRENT_PER_ISOLATE = 3;
 
 let activeSessions = 0;
-let keyCursor = Math.floor(Math.random() * OBFUSCATED_FALLBACK.length);
+let keyCursor = Math.floor(Math.random() * 1000);
 
 async function toTextOrBuffer(data: any): Promise<string | ArrayBuffer> {
   if (typeof data === 'string') return data;
@@ -83,29 +75,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     });
   }
 
-  // 3. Resolve key pool: prioritize Cloudflare Pages environment variables
-  const rawEnvKeys = env.GEMINI_API_KEYS;
-  let keyPool: string[] = [];
-
-  if (rawEnvKeys && rawEnvKeys.trim().length > 0) {
-    keyPool = rawEnvKeys
-      .split(/[,\n]/)
-      .map((k) => k.trim())
-      .filter((k) => k.length > 0);
-  }
+  // 3. Resolve key pool from the Cloudflare Pages secret only
+  const keyPool = (env.GEMINI_API_KEYS || '')
+    .split(/[,\n]/)
+    .map((k) => k.trim())
+    .filter((k) => k.length > 0);
 
   if (keyPool.length === 0) {
-    keyPool = OBFUSCATED_FALLBACK.map((b64) => {
-      try {
-        return atob(b64);
-      } catch (_) {
-        return '';
-      }
-    }).filter(Boolean);
-  }
-
-  if (keyPool.length === 0) {
-    return new Response('Gateway Key Pool Unavailable', { status: 500 });
+    console.error('GEMINI_API_KEYS secret is not configured for this deployment');
+    return new Response('Music gateway is not configured', { status: 503 });
   }
 
   // Rotate key cursor
