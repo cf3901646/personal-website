@@ -7,6 +7,10 @@
     <meta name="description" content="Fly through an infinite, cinematic cosmos with 6-DOF spaceship controls and real-time reactive soundscapes." />
     <meta property="og:title" content="Remix SpaceDJ · 3901646.xyz" />
     <meta property="og:description" content="Fly through an infinite, cinematic cosmos with 6-DOF spaceship controls and real-time reactive soundscapes." />
+    <style>
+      /* 全屏应用不需要横向滚动；防止窄屏下被撑宽 */
+      html { overflow-x: hidden; }
+    </style>
     <script>
       // Force kill and unregister any legacy service worker from root scope and wipe stale caches
       if ('serviceWorker' in navigator) {
@@ -21,6 +25,8 @@
       }
     </script>
     <script type="module" crossorigin src="/space/assets/index-gMoBQOj5.js"></script>
+    <!-- 手机/平板触屏摇杆：把手指操作翻译成飞船的键盘控制 -->
+    <script defer src="/space/touch-controls.js?v=20261026"></script>
     <link rel="stylesheet" crossorigin href="/space/assets/index-CZSvzqYC.css">
   </head>
   <body>
