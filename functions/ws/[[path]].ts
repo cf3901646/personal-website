@@ -3,28 +3,16 @@
  * Handles WebSocket proxying between client and Google Gemini Lyria RealTime API.
  * Features:
  *  - 7-Key Pool with Round-Robin & Failover
- *  - Prioritizes Cloudflare Pages secret GEMINI_API_KEYS, falls back to decoded key pool
- *  - No session time limit: sessions last until client or upstream closes
- *  - Max concurrent session gating
- *  - Zero API keys exposed to browser clients
+ *  - Keys strictly managed via Cloudflare Pages Encrypted Secrets (GEMINI_API_KEYS)
+ *  - Zero API keys exposed to browser clients or committed to GitHub
  *  - Ensures all frames forwarded to browser are decoded UTF-8 strings (prevents [object Blob])
  *  - Strict WebSocket handshake headers propagation to upstream
+ *  - No session time limit: sessions last until client or upstream closes
  */
 
 interface Env {
   GEMINI_API_KEYS?: string;
 }
-
-// Fallback obfuscated key pool (decoded at edge runtime to avoid public GitHub auto-revocation)
-const OBFUSCATED_FALLBACK = [
-  'QUl6YVN5RFdVT0lBdURvRWxmMUZJaUpNTHhSQmpFU19nNmZVUWgw',
-  'QUl6YVN5QjhEbmtIR3VHRmppaFppZFdhMHJsM2J2SklJRHdMeUI0',
-  'QUl6YVN5RHBQMjU4RTdTc3l0SUo0bXgxODdpZ2pMODJJTml0a2RJ',
-  'QUl6YVN5QldRd1ZGakQzQWF4MWZuN0hCeDF6TldGSWhzbTN3YWh3',
-  'QUl6YVN5QmNJTG1QOWh5VXV2VzVHN2djMUZOTVR6c1dpdHZZODVV',
-  'QUl6YVN5RGwyd2ZnaWRBS0NGd2pNUG4zc1N6dDg4QmRlODVZcnVB',
-  'QUl6YVN5RC1PX2xFdjVhQ05qcFRpSlR4OHpJb3R5bThubXJPalE0',
-];
 
 const MAX_CONCURRENT_PER_ISOLATE = 3;
 
@@ -84,24 +72,24 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     });
   }
 
-  // 3. Resolve key pool: prioritize Cloudflare Pages secret, fallback to decoded pool
+  // 3. Resolve key pool strictly from Cloudflare Pages Encrypted Secrets
   const rawEnvKeys = env.GEMINI_API_KEYS;
-  const envPool = rawEnvKeys
-    ? rawEnvKeys.split(/[,\n]/).map((k) => k.trim()).filter((k) => k.length > 0)
-    : [];
-
-  const keyPool = envPool.length > 0
-    ? envPool
-    : OBFUSCATED_FALLBACK.map((b64) => {
-        try {
-          return atob(b64);
-        } catch (_) {
-          return '';
-        }
-      }).filter(Boolean);
+  const keyPool = (rawEnvKeys || '')
+    .split(/[,\n]/)
+    .map((k) => k.trim())
+    .filter((k) => k.length > 0);
 
   if (keyPool.length === 0) {
-    return new Response('No valid API keys configured in pool', { status: 500 });
+    console.error('GEMINI_API_KEYS secret is not configured in Cloudflare Pages dashboard');
+    return new Response(
+      JSON.stringify({
+        error: 'Music gateway secret is not configured in Cloudflare Pages dashboard',
+      }),
+      {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   keyCursor = (keyCursor + 1) % keyPool.length;
