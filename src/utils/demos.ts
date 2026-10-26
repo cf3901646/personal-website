@@ -197,3 +197,109 @@ export function getSolarConditions(hourFloat?: number): SolarConditions {
     };
   }
 }
+
+// ---- 一车之地：标准车位里的开门余量 ----
+// 车位按商场常见的 5300 × 2500 mm；开门余量的算法和阈值与一车之地保持一致。
+export const CAR_SPOT = { length: 5300, width: 2500 };
+
+export interface CarModel {
+  key: string;
+  name: string;
+  length: number;
+  width: number;
+}
+
+// 尺寸取自一车之地 data/series.json 的官方参配
+export const CAR_MODELS: CarModel[] = [
+  { key: 'dolphin', name: '比亚迪海豚', length: 4125, width: 1770 },
+  { key: 'qin', name: '比亚迪秦PLUS', length: 4780, width: 1837 },
+  { key: 'model-y', name: '特斯拉Model Y', length: 4797, width: 1920 },
+  { key: 'su7', name: '小米SU7', length: 4997, width: 1963 },
+  { key: 'l9', name: '理想L9', length: 5255, width: 2000 },
+];
+
+export type DoorTone = 'roomy' | 'normal' | 'tight';
+
+export interface CarFit {
+  door: number;
+  front: number;
+  tone: DoorTone;
+  verdict: string;
+}
+
+export function computeCarFit(model: CarModel, spot = CAR_SPOT): CarFit {
+  const door = Math.round((spot.width - model.width) / 2);
+  const front = spot.length - model.length;
+  const tone: DoorTone = door < 280 ? 'tight' : door < 320 ? 'normal' : 'roomy';
+  const verdict = tone === 'tight' ? '开门狭窄易碰' : tone === 'normal' ? '正常开门' : '开门充裕';
+  return { door, front, tone, verdict };
+}
+
+export function carIndexFromProgress(progress: number, count = CAR_MODELS.length): number {
+  const t = clamp((progress - 0.04) / 0.88, 0, 1);
+  return Math.min(count - 1, Math.floor(t * count));
+}
+
+// ---- Space DJ：飞船沿星座航行，音乐风格按位置混合 ----
+export interface SpaceStar {
+  name: string;
+  x: number; // 0..1，占星图宽度的比例
+  y: number; // 0..1，占星图高度的比例
+}
+
+export const SPACE_STARS: SpaceStar[] = [
+  { name: 'piano', x: 0.1, y: 0.62 },
+  { name: 'ambient', x: 0.26, y: 0.3 },
+  { name: 'lo-fi', x: 0.43, y: 0.6 },
+  { name: 'bossa nova', x: 0.6, y: 0.27 },
+  { name: 'dub', x: 0.76, y: 0.63 },
+  { name: 'techno', x: 0.9, y: 0.33 },
+];
+
+export interface SpaceMix {
+  segment: number; // 当前所在的星座线段序号
+  local: number; // 线段内的进度 0..1
+  x: number;
+  y: number;
+}
+
+export function computeSpaceMix(t: number, stars: SpaceStar[] = SPACE_STARS): SpaceMix {
+  const spans = stars.length - 1;
+  const pos = clamp(t, 0, 1) * spans;
+  const segment = Math.min(spans - 1, Math.floor(pos));
+  const local = pos - segment;
+  const a = stars[segment];
+  const b = stars[segment + 1];
+  return { segment, local, x: lerp(a.x, b.x, local), y: lerp(a.y, b.y, local) };
+}
+
+export function spaceProgressFromScroll(progress: number): number {
+  return clamp((progress - 0.05) / 0.85, 0, 1);
+}
+
+// 按横坐标反查航线进度（星座沿 x 单调排列）
+export function spaceProgressFromX(ratio: number, stars: SpaceStar[] = SPACE_STARS): number {
+  const spans = stars.length - 1;
+  if (ratio <= stars[0].x) return 0;
+  for (let i = 0; i < spans; i++) {
+    const a = stars[i].x;
+    const b = stars[i + 1].x;
+    if (ratio <= b) return (i + (ratio - a) / (b - a)) / spans;
+  }
+  return 1;
+}
+
+// 背景小星：固定种子的伪随机分布，每次渲染一致
+export const SPACE_DUST: { x: number; y: number; r: number; o: number }[] = (() => {
+  let seed = 20261026;
+  const rand = () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+  return Array.from({ length: 54 }, () => ({
+    x: rand(),
+    y: rand(),
+    r: 0.5 + rand() * 0.8,
+    o: 0.18 + rand() * 0.42,
+  }));
+})();

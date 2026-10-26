@@ -13,7 +13,8 @@
 1. **EasyCV**（[https://cv.3901646.xyz](https://cv.3901646.xyz)）：文字排版节奏工作台，支持字号、行距、留白实时调优与双向联动。
 2. **AITextRestorer**（[https://restore.3901646.xyz](https://restore.3901646.xyz)）：AI 图像增强与文字笔画精准复原对比工具。
 3. **Thermal**（[体感温度计](https://github.com/cf3901646/thermal-feels-like)）：24 小时全天室内外温感变化曲线与交互估算。
-4. **Space DJ**（[https://3901646.xyz/space/](https://3901646.xyz/space/)）：基于 Google Magenta 与 Lyria RealTime 实时音频大模型深度改造的 3D 星系声景漫游。自建 Cloudflare Pages 边缘 WebSocket 网关实现国内免梯直连与多 Key 配额池轮询，体验不限时长。
+4. **一车之地**（[在线使用](https://cf3901646.github.io/car-dimension-filter/) · [源码](https://github.com/cf3901646/car-dimension-filter)）：按尺寸选车，看标准车位停不停得下、开门够不够。首页演示把 5 款车按官方车宽画进 5300 × 2500 mm 车位。
+5. **Space DJ**（[https://3901646.xyz/space/](https://3901646.xyz/space/)）：基于 Google Magenta 与 Lyria RealTime 实时音频大模型深度改造的 3D 星系声景漫游。自建 Cloudflare Pages 边缘 WebSocket 网关实现国内免梯直连与多 Key 配额池轮询，体验不限时长。手机和平板上显示触屏摇杆（`public/space/touch-controls.js`），把手指操作翻译成飞船原有的键盘控制；网址加 `?touch=1` 可在电脑上强制显示。
 
 ---
 

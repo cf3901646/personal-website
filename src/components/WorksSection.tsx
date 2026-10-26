@@ -1,9 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   buildSplineCurve,
+  CAR_MODELS,
+  CAR_SPOT,
+  carIndexFromProgress,
   clamp,
+  computeCarFit,
   computeCvStateFromProgress,
   computeRestoreFromProgress,
+  computeSpaceMix,
   computeTrackFill,
   computeWeatherHourFromProgress,
   CV_PRESETS,
@@ -15,9 +20,17 @@ import {
   INDOOR_TEMPS,
   OUTDOOR_TEMPS,
   sampleTemperature,
+  SPACE_DUST,
+  SPACE_STARS,
+  spaceProgressFromScroll,
+  spaceProgressFromX,
   weatherX,
   weatherY,
 } from '../utils/demos';
+
+type DemoKind = 'cv' | 'restore' | 'weather' | 'car' | 'space';
+
+const SPACE_DEFAULT_PROGRESS = 0.42;
 
 export const WorksSection: React.FC = () => {
   // 1. EasyCV State (Bidirectional: Scroll + Direct Click/Drag)
@@ -38,12 +51,31 @@ export const WorksSection: React.FC = () => {
   const weatherManualRef = useRef(false);
   weatherManualRef.current = weatherManual;
 
+  // 4. 一车之地 State (Bidirectional: Scroll + Model Click)
+  const [carIndex, setCarIndex] = useState<number>(2);
+  const [carManual, setCarManual] = useState(false);
+  const carManualRef = useRef(false);
+  carManualRef.current = carManual;
+
+  // 5. Space DJ State (Bidirectional: Scroll + Sky Drag)
+  const [spaceManual, setSpaceManual] = useState(false);
+  const spaceManualRef = useRef(false);
+  spaceManualRef.current = spaceManual;
+  const spaceProgressRef = useRef(SPACE_DEFAULT_PROGRESS);
+  const [skySize, setSkySize] = useState({ w: 960, h: 330 });
+  const skySizeRef = useRef(skySize);
+  skySizeRef.current = skySize;
+
   const cvScrollRef = useRef<HTMLDivElement>(null);
   const cvPinRef = useRef<HTMLDivElement>(null);
   const restoreScrollRef = useRef<HTMLDivElement>(null);
   const restorePinRef = useRef<HTMLDivElement>(null);
   const weatherScrollRef = useRef<HTMLDivElement>(null);
   const weatherPinRef = useRef<HTMLDivElement>(null);
+  const carScrollRef = useRef<HTMLDivElement>(null);
+  const carPinRef = useRef<HTMLDivElement>(null);
+  const spaceScrollRef = useRef<HTMLDivElement>(null);
+  const spacePinRef = useRef<HTMLDivElement>(null);
 
   const restoreStageRef = useRef<HTMLDivElement>(null);
   const weatherChartRef = useRef<SVGSVGElement>(null);
@@ -80,6 +112,23 @@ export const WorksSection: React.FC = () => {
   const indoorPointRef = useRef<SVGCircleElement>(null);
   const weatherTrackRef = useRef<HTMLDivElement>(null);
   const weatherInputRef = useRef<HTMLInputElement>(null);
+
+  const carVisualRef = useRef<HTMLDivElement>(null);
+  const carNameRef = useRef<HTMLSpanElement>(null);
+  const carSizeRef = useRef<HTMLSpanElement>(null);
+  const carDoorMarkRef = useRef<HTMLElement>(null);
+  const carDoorValRef = useRef<HTMLOutputElement>(null);
+  const carFrontValRef = useRef<HTMLOutputElement>(null);
+  const carVerdictRef = useRef<HTMLParagraphElement>(null);
+  const carModelBtnsRef = useRef<HTMLDivElement>(null);
+  const carLotRef = useRef<HTMLDivElement>(null);
+
+  const spaceSkyRef = useRef<HTMLDivElement>(null);
+  const spaceShipRef = useRef<SVGGElement>(null);
+  const spaceTrailRef = useRef<SVGPolylineElement>(null);
+  const spaceStarsRef = useRef<SVGGElement>(null);
+  const spaceLabelsRef = useRef<HTMLDivElement>(null);
+  const spaceMixRef = useRef<HTMLSpanElement>(null);
 
   const requestUpdateRef = useRef<() => void>(() => {});
 
@@ -194,6 +243,118 @@ export const WorksSection: React.FC = () => {
     }
   }, []);
 
+  const applyCarDom = useCallback((index: number) => {
+    const model = CAR_MODELS[index];
+    const fit = computeCarFit(model);
+    const visual = carVisualRef.current;
+    if (visual) {
+      visual.style.setProperty('--car-l', `${((model.length / CAR_SPOT.length) * 100).toFixed(2)}%`);
+      visual.style.setProperty('--car-w', `${((model.width / CAR_SPOT.width) * 100).toFixed(2)}%`);
+      visual.dataset.tone = fit.tone;
+    }
+    if (carNameRef.current) carNameRef.current.textContent = model.name;
+    if (carSizeRef.current) carSizeRef.current.textContent = `${model.length} × ${model.width} mm`;
+    if (carDoorMarkRef.current) carDoorMarkRef.current.textContent = String(fit.door);
+    if (carDoorValRef.current) carDoorValRef.current.textContent = String(fit.door);
+    if (carFrontValRef.current) carFrontValRef.current.textContent = String(fit.front);
+    if (carVerdictRef.current) carVerdictRef.current.textContent = fit.verdict;
+    if (carLotRef.current) {
+      carLotRef.current.setAttribute(
+        'aria-label',
+        `标准车位俯视示意：${model.name}，车长 ${model.length} 毫米、车宽 ${model.width} 毫米，单侧开门余量 ${fit.door} 毫米，${fit.verdict}`
+      );
+    }
+    if (carModelBtnsRef.current) {
+      carModelBtnsRef.current.querySelectorAll<HTMLButtonElement>('button[data-car-index]').forEach((btn) => {
+        const active = Number(btn.dataset.carIndex) === index;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', String(active));
+      });
+    }
+  }, []);
+
+  const applySpaceDom = useCallback((t: number) => {
+    spaceProgressRef.current = t;
+    const { w, h } = skySizeRef.current;
+    const mix = computeSpaceMix(t);
+    const shipX = mix.x * w;
+    const shipY = mix.y * h;
+
+    spaceShipRef.current?.setAttribute('transform', `translate(${shipX.toFixed(1)} ${shipY.toFixed(1)})`);
+    if (spaceTrailRef.current) {
+      const pts = SPACE_STARS.slice(0, mix.segment + 1).map((s) => `${(s.x * w).toFixed(1)},${(s.y * h).toFixed(1)}`);
+      pts.push(`${shipX.toFixed(1)},${shipY.toFixed(1)}`);
+      spaceTrailRef.current.setAttribute('points', pts.join(' '));
+    }
+
+    const from = SPACE_STARS[mix.segment];
+    const to = SPACE_STARS[mix.segment + 1];
+    const toPct = Math.round(mix.local * 100);
+    const fromPct = 100 - toPct;
+    const nearIndex = fromPct >= toPct ? mix.segment : mix.segment + 1;
+    if (spaceMixRef.current) {
+      const major = fromPct >= toPct ? [from.name, fromPct] : [to.name, toPct];
+      const minor = fromPct >= toPct ? [to.name, toPct] : [from.name, fromPct];
+      spaceMixRef.current.textContent =
+        minor[1] === 0 ? `${major[0]} 100%` : `${major[0]} ${major[1]}% · ${minor[0]} ${minor[1]}%`;
+    }
+
+    const litUntil = mix.local >= 0.999 ? mix.segment + 1 : mix.segment;
+    const mark = (el: Element) => {
+      const i = Number((el as HTMLElement).dataset.star);
+      el.classList.toggle('is-lit', i <= litUntil);
+      el.classList.toggle('is-near', i === nearIndex);
+    };
+    spaceStarsRef.current?.querySelectorAll('[data-star]').forEach(mark);
+    spaceLabelsRef.current?.querySelectorAll('[data-star]').forEach(mark);
+  }, []);
+
+  const handleSelectCar = useCallback(
+    (index: number) => {
+      setCarManual(true);
+      setCarIndex(index);
+      applyCarDom(index);
+    },
+    [applyCarDom]
+  );
+
+  const updateSpaceFromClientX = useCallback(
+    (clientX: number) => {
+      const sky = spaceSkyRef.current;
+      if (!sky) return;
+      const rect = sky.getBoundingClientRect();
+      if (rect.width <= 0) return;
+      const t = spaceProgressFromX(clamp((clientX - rect.left) / rect.width, 0, 1));
+      setSpaceManual(true);
+      applySpaceDom(t);
+    },
+    [applySpaceDom]
+  );
+
+  // 星图按实际像素尺寸绘制，避免拉伸导致线宽不均
+  useEffect(() => {
+    const sky = spaceSkyRef.current;
+    if (!sky) return;
+    const measure = () => {
+      const w = Math.round(sky.clientWidth);
+      const h = Math.round(sky.clientHeight);
+      if (w <= 0 || h <= 0) return;
+      setSkySize((prev) => (prev.w === w && prev.h === h ? prev : { w, h }));
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure, { passive: true });
+      return () => window.removeEventListener('resize', measure);
+    }
+    const ro = new ResizeObserver(measure);
+    ro.observe(sky);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    applySpaceDom(spaceProgressRef.current);
+  }, [skySize, applySpaceDom]);
+
   // Preset click handler for EasyCV
   const handleSelectCvPreset = useCallback((preset: CvPresetKey) => {
     const [font, line, gap, margin] = CV_PRESETS[preset].values;
@@ -252,14 +413,16 @@ export const WorksSection: React.FC = () => {
   // Scroll-driven demo synchronization
   useEffect(() => {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const demoConfigs = [
-      { kind: 'cv' as const, scrollEl: cvScrollRef.current, pinEl: cvPinRef.current },
-      { kind: 'restore' as const, scrollEl: restoreScrollRef.current, pinEl: restorePinRef.current },
-      { kind: 'weather' as const, scrollEl: weatherScrollRef.current, pinEl: weatherPinRef.current },
+    const demoConfigs: { kind: DemoKind; scrollEl: HTMLDivElement | null; pinEl: HTMLDivElement | null }[] = [
+      { kind: 'cv', scrollEl: cvScrollRef.current, pinEl: cvPinRef.current },
+      { kind: 'restore', scrollEl: restoreScrollRef.current, pinEl: restorePinRef.current },
+      { kind: 'weather', scrollEl: weatherScrollRef.current, pinEl: weatherPinRef.current },
+      { kind: 'car', scrollEl: carScrollRef.current, pinEl: carPinRef.current },
+      { kind: 'space', scrollEl: spaceScrollRef.current, pinEl: spacePinRef.current },
     ];
 
     let metrics: {
-      kind: 'cv' | 'restore' | 'weather';
+      kind: DemoKind;
       scrollEl: HTMLDivElement;
       pinEl: HTMLDivElement;
       top: number;
@@ -288,6 +451,10 @@ export const WorksSection: React.FC = () => {
           applyRestoreDom(computeRestoreFromProgress(progress, isDesktop));
         } else if (demo.kind === 'weather' && !weatherManualRef.current) {
           applyWeatherDom(computeWeatherHourFromProgress(progress, isDesktop));
+        } else if (demo.kind === 'car' && !carManualRef.current) {
+          applyCarDom(carIndexFromProgress(progress));
+        } else if (demo.kind === 'space' && !spaceManualRef.current) {
+          applySpaceDom(spaceProgressFromScroll(progress));
         }
       });
     }
@@ -366,6 +533,17 @@ export const WorksSection: React.FC = () => {
   const outdoorCy = weatherY(outdoorTemp);
   const weatherFillPct = clamp(weatherHour / 24, 0, 1) * 100;
 
+  // Derived values for 一车之地
+  const carModel = CAR_MODELS[carIndex];
+  const carFit = computeCarFit(carModel);
+
+  // Derived values for Space DJ（星图静态部分，按像素尺寸绘制）
+  const skyPoint = (x: number, y: number) => `${(x * skySize.w).toFixed(1)},${(y * skySize.h).toFixed(1)}`;
+  const spaceRoute = SPACE_STARS.map((s) => skyPoint(s.x, s.y)).join(' ');
+  const spaceHorizon = `M${(-0.1 * skySize.w).toFixed(1)},${(1.08 * skySize.h).toFixed(1)} Q${(0.5 * skySize.w).toFixed(1)},${(
+    0.66 * skySize.h
+  ).toFixed(1)} ${(1.1 * skySize.w).toFixed(1)},${(1.08 * skySize.h).toFixed(1)}`;
+
   return (
     <section className="works wrap" id="works" aria-labelledby="works-title">
       <header className="section-heading reveal">
@@ -374,9 +552,9 @@ export const WorksSection: React.FC = () => {
           <h2 id="works-title">想法，在这里成为工具。</h2>
         </div>
         <p>
-          关于日常工具、排版节奏与前沿声景生成的小小回应。
+          关于排版、天气、车位和声音的一些小小回应。
           <br />
-          向下滚动自动演示，也可直接点击把玩或启动飞船体验。
+          向下滚动自动演示，也可以直接点击把玩。
         </p>
       </header>
 
@@ -627,113 +805,6 @@ export const WorksSection: React.FC = () => {
                   rel="noopener noreferrer"
                 >
                   {'查看源码 ↗\uFE0E'}
-                  <span className="sr-only">（新窗口）</span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        {/* 04 / Space DJ */}
-        <article className="work work-featured" id="spacedj" aria-labelledby="spacedj-title">
-          <div className="demo-scroll">
-            <div className="demo-pin">
-              <div
-                className="work-visual space-preview-stage"
-                style={{
-                  background: 'radial-gradient(ellipse at center, #182232 0%, #080a0f 100%)',
-                  color: '#fff',
-                  borderRadius: '12px',
-                  minHeight: '340px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  padding: '28px',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  boxShadow: 'inset 0 0 40px rgba(0,0,0,0.6)',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 2 }}>
-                  <span style={{ fontSize: '12px', letterSpacing: '0.1em', fontWeight: 600, color: '#ffca28', textTransform: 'uppercase' }}>
-                    Google Magenta × Lyria RealTime
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      padding: '3px 8px',
-                      borderRadius: '4px',
-                      background: 'rgba(255,202,40,0.15)',
-                      border: '1px solid rgba(255,202,40,0.3)',
-                      color: '#ffca28',
-                    }}
-                  >
-                    国内免翻直连 · 多Key配额池
-                  </span>
-                </div>
-
-                <div style={{ margin: 'auto 0', zIndex: 2 }}>
-                  <h3 style={{ fontSize: '26px', fontWeight: 700, margin: '0 0 10px 0', letterSpacing: '-0.02em', color: '#ffffff' }}>
-                    Space DJ · 3D 潜空间星际漫游
-                  </h3>
-                  <p style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.8)', maxWidth: '520px', margin: 0 }}>
-                    驾驶飞船在 3D 音符星座中自由穿梭。基于航行坐标实时融合风格 Prompt，通过 Google Lyria RealTime API 持续无缝生成流式合成音乐。
-                  </p>
-                </div>
-
-                <div style={{ display: 'flex', gap: '14px', alignItems: 'center', zIndex: 2, flexWrap: 'wrap' }}>
-                  <a
-                    href="/space/"
-                    target="_blank"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '10px 22px',
-                      borderRadius: '8px',
-                      background: '#ffca28',
-                      color: '#121316',
-                      fontWeight: 700,
-                      fontSize: '14px',
-                      textDecoration: 'none',
-                      boxShadow: '0 4px 16px rgba(255,202,40,0.4)',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    启动飞船 · 立即体验 ↗
-                  </a>
-                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-                    支持 WASD / 键盘方向键 6-DOF 飞行控制 · 不限时长
-                  </span>
-                </div>
-
-                {/* Decorative cosmic stars background glow */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    opacity: 0.4,
-                    pointerEvents: 'none',
-                    background:
-                      'radial-gradient(circle at 20% 30%, rgba(120, 119, 198, 0.45), transparent 45%), radial-gradient(circle at 80% 70%, rgba(255, 202, 40, 0.25), transparent 45%)',
-                  }}
-                />
-              </div>
-
-              <div className="work-meta">
-                <h3 id="spacedj-title">Space DJ</h3>
-                <span>04 / 声音与星际</span>
-              </div>
-              <div className="work-summary">
-                <h4>当音乐在宇宙空间中拥有坐标。</h4>
-                <p>
-                  改造自 Google Magenta 实验项目。将数百种音乐风格通过 UMAP 映射为三维星系，当飞船掠过不同星辰，Lyria 实时模型动态平滑插值合成流式音乐。自建边缘网关保障国内极速直连。
-                </p>
-              </div>
-              <div className="work-links">
-                <a className="text-button" href="/space/" target="_blank">
-                  全屏进入
-                  <span aria-hidden="true">{'↗︎'}</span>
                   <span className="sr-only">（新窗口）</span>
                 </a>
               </div>
@@ -1084,6 +1155,272 @@ export const WorksSection: React.FC = () => {
                   rel="noopener noreferrer"
                 >
                   了解这个工具
+                  <span aria-hidden="true">{'↗\uFE0E'}</span>
+                  <span className="sr-only">（新窗口）</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        {/* 04 / 一车之地 */}
+        <article className="work work-featured" id="footprint" aria-labelledby="footprint-title">
+          <div className="demo-scroll" data-scroll-demo="car" ref={carScrollRef}>
+            <div className="demo-pin" ref={carPinRef}>
+              <div
+                className="work-visual car-demo"
+                ref={carVisualRef}
+                data-tone={carFit.tone}
+                style={
+                  {
+                    '--car-l': `${((carModel.length / CAR_SPOT.length) * 100).toFixed(2)}%`,
+                    '--car-w': `${((carModel.width / CAR_SPOT.width) * 100).toFixed(2)}%`,
+                  } as React.CSSProperties
+                }
+              >
+                <div className="demo-bar">
+                  <span className="demo-brand">一车之地</span>
+                  <small>
+                    {carManual ? (
+                      <button
+                        type="button"
+                        className="mode-reset-btn"
+                        onClick={() => {
+                          setCarManual(false);
+                          carManualRef.current = false;
+                          requestUpdateRef.current();
+                        }}
+                        aria-label="恢复一车之地随页面滚动自动演示"
+                      >
+                        手动选车中 · 恢复随滚动 ↺
+                      </button>
+                    ) : (
+                      <>
+                        标准车位 5.3 × 2.5 m / <span ref={carNameRef}>{carModel.name}</span>
+                      </>
+                    )}
+                  </small>
+                </div>
+
+                <div className="car-workbench">
+                  <div className="car-stage">
+                    <div
+                      className="car-slot"
+                      ref={carLotRef}
+                      role="img"
+                      aria-label={`标准车位俯视示意：${carModel.name}，车长 ${carModel.length} 毫米、车宽 ${carModel.width} 毫米，单侧开门余量 ${carFit.door} 毫米，${carFit.verdict}`}
+                    >
+                      <div className="car-body" aria-hidden="true">
+                        <i className="car-glass" />
+                      </div>
+                      <span className="car-dim car-dim-top" aria-hidden="true">
+                        <b ref={carDoorMarkRef}>{carFit.door}</b>
+                      </span>
+                      <span className="car-dim car-dim-bottom" aria-hidden="true" />
+                      <span className="car-dim-front" aria-hidden="true" />
+                    </div>
+                    <p className="car-size" aria-hidden="true">
+                      <span ref={carSizeRef}>{`${carModel.length} × ${carModel.width} mm`}</span>
+                      <span>车位 5300 × 2500 mm</span>
+                    </p>
+                  </div>
+
+                  <div className="car-controls">
+                    <h4>停得进去，还要开得了门。</h4>
+                    <p className="control-intro">按官方车宽画进标准车位。随页面滚动换车，也可以直接点选。</p>
+
+                    <div className="car-models" ref={carModelBtnsRef} role="group" aria-label="切换示例车型">
+                      {CAR_MODELS.map((model, index) => (
+                        <button
+                          key={model.key}
+                          type="button"
+                          data-car-index={index}
+                          className={carIndex === index ? 'is-active' : ''}
+                          aria-pressed={carIndex === index}
+                          onClick={() => handleSelectCar(index)}
+                        >
+                          <span>{model.name}</span>
+                          <span className="demo-value">{model.width}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <dl className="car-readings">
+                      <div className="is-door">
+                        <dt>单侧开门余量</dt>
+                        <dd>
+                          <output ref={carDoorValRef}>{carFit.door}</output>
+                          <sup>mm</sup>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>车头前方余量</dt>
+                        <dd>
+                          <output ref={carFrontValRef}>{carFit.front}</output>
+                          <sup>mm</sup>
+                        </dd>
+                      </div>
+                    </dl>
+                    <p className="car-verdict" ref={carVerdictRef} aria-live="polite">
+                      {carFit.verdict}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="demo-caption">
+                  <span>单侧余量 = (车位宽 − 车宽) ÷ 2，低于 280 mm 容易碰门。</span>
+                  <span>收录 1693 款车系的官方尺寸</span>
+                </div>
+              </div>
+
+              <div className="work-meta">
+                <h3 id="footprint-title">一车之地</h3>
+                <span>04 / 车与车位</span>
+              </div>
+              <div className="work-summary">
+                <h4>
+                  一辆车要占多大地方，
+                  <br />
+                  买之前先量一量。
+                </h4>
+                <p>
+                  按长宽高和轴距筛车，看商场车位停不停得下、开门够不够，比较轴距占车长的比例，再找同级的替代车型。收录国内 1693 款车系、12550 款配置的官方参数，筛选条件写进网址，可以直接分享。
+                </p>
+              </div>
+              <div className="work-links">
+                <a
+                  className="text-button"
+                  href="https://cf3901646.github.io/car-dimension-filter/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  打开一车之地
+                  <span aria-hidden="true">{'↗\uFE0E'}</span>
+                  <span className="sr-only">（新窗口）</span>
+                </a>
+                <a
+                  className="quiet-link"
+                  href="https://github.com/cf3901646/car-dimension-filter"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {'查看源码 ↗\uFE0E'}
+                  <span className="sr-only">（新窗口）</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        {/* 05 / Space DJ：夜间纸 */}
+        <article className="work work-featured" id="spacedj" aria-labelledby="spacedj-title">
+          <div className="demo-scroll" data-scroll-demo="space" ref={spaceScrollRef}>
+            <div className="demo-pin" ref={spacePinRef}>
+              <div className="work-visual space-demo">
+                <div className="demo-bar">
+                  <span className="demo-brand">Space DJ</span>
+                  <small>
+                    {spaceManual ? (
+                      <button
+                        type="button"
+                        className="mode-reset-btn"
+                        onClick={() => {
+                          setSpaceManual(false);
+                          spaceManualRef.current = false;
+                          requestUpdateRef.current();
+                        }}
+                        aria-label="恢复 Space DJ 随页面滚动自动演示"
+                      >
+                        手动航行中 · 恢复随滚动 ↺
+                      </button>
+                    ) : (
+                      '夜航 / 音乐随坐标生成'
+                    )}
+                  </small>
+                </div>
+
+                <div
+                  className="space-sky interactive-stage"
+                  ref={spaceSkyRef}
+                  role="img"
+                  aria-label="星图示意：飞船沿着由 piano、ambient、lo-fi、bossa nova、dub、techno 连成的星座航行，靠近哪颗星，音乐就更偏向哪种风格；可左右拖动"
+                  onPointerDown={(e) => {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    updateSpaceFromClientX(e.clientX);
+                  }}
+                  onPointerMove={(e) => {
+                    if (e.buttons > 0) updateSpaceFromClientX(e.clientX);
+                  }}
+                >
+                  <svg
+                    className="space-chart"
+                    viewBox={`0 0 ${skySize.w} ${skySize.h}`}
+                    width={skySize.w}
+                    height={skySize.h}
+                    aria-hidden="true"
+                  >
+                    <path className="space-horizon" d={spaceHorizon} />
+                    <g className="space-dust">
+                      {SPACE_DUST.map((d, i) => (
+                        <circle key={i} cx={(d.x * skySize.w).toFixed(1)} cy={(d.y * skySize.h).toFixed(1)} r={d.r} opacity={d.o} />
+                      ))}
+                    </g>
+                    <polyline className="space-route" points={spaceRoute} />
+                    <polyline className="space-trail" ref={spaceTrailRef} />
+                    <g className="space-stars" ref={spaceStarsRef}>
+                      {SPACE_STARS.map((s, i) => (
+                        <circle
+                          key={s.name}
+                          data-star={i}
+                          cx={(s.x * skySize.w).toFixed(1)}
+                          cy={(s.y * skySize.h).toFixed(1)}
+                          r={2.4}
+                        />
+                      ))}
+                    </g>
+                    <g className="space-ship" ref={spaceShipRef}>
+                      <circle className="ring" r={9} />
+                      <circle className="core" r={1.8} />
+                      <path d="M0,-13V-10 M0,10V13 M-13,0H-10 M10,0H13" />
+                    </g>
+                  </svg>
+                  <div className="space-labels" ref={spaceLabelsRef} aria-hidden="true">
+                    {SPACE_STARS.map((s, i) => (
+                      <span
+                        key={s.name}
+                        data-star={i}
+                        className={s.y < 0.5 ? 'is-above' : 'is-below'}
+                        style={{ left: `${s.x * 100}%`, top: `${s.y * 100}%` }}
+                      >
+                        {s.name}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="space-mix" aria-hidden="true">
+                    <span>正在混合</span>
+                    <span ref={spaceMixRef} />
+                  </p>
+                </div>
+
+                <div className="demo-caption">
+                  <span>拖动星图，或随滚动航行。</span>
+                  <span>电脑用 WASD 与方向键 · 手机用屏幕摇杆</span>
+                </div>
+              </div>
+
+              <div className="work-meta">
+                <h3 id="spacedj-title">Space DJ</h3>
+                <span>05 / 声音与星际</span>
+              </div>
+              <div className="work-summary">
+                <h4>当音乐在宇宙空间中拥有坐标。</h4>
+                <p>
+                  改造自 Google Magenta 的实验项目。数百种音乐风格被排成一片三维星系，飞船靠近哪片星辰，Lyria RealTime 就把那里的风格平滑地混进正在生成的音乐。自建边缘网关，国内可以直接连接，不限时长。
+                </p>
+              </div>
+              <div className="work-links">
+                <a className="text-button" href="/space/" target="_blank" rel="noopener">
+                  入夜，起航
                   <span aria-hidden="true">{'↗\uFE0E'}</span>
                   <span className="sr-only">（新窗口）</span>
                 </a>
