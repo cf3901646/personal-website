@@ -1290,7 +1290,7 @@ export const WorksSection: React.FC = () => {
               <div className="work-links">
                 <a
                   className="text-button"
-                  href="https://cf3901646.github.io/car-dimension-filter/"
+                  href="https://car.3901646.xyz"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
